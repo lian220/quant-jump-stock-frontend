@@ -140,7 +140,7 @@ export const MetaTags: React.FC<SEOProps> = ({
       });
 
       // 새로운 JSON-LD 추가
-      structuredData.forEach((data, index) => {
+      structuredData.forEach((data) => {
         const script = document.createElement('script');
         script.type = 'application/ld+json';
         script.setAttribute('data-dynamic', 'true');
@@ -148,6 +148,7 @@ export const MetaTags: React.FC<SEOProps> = ({
         document.head.appendChild(script);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta, openGraph, twitter, structuredData, noindex, nofollow]);
 
   // App Router에서는 실제 JSX를 반환하지 않고 useEffect로 처리

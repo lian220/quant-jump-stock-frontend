@@ -68,7 +68,7 @@ export interface NaverPaymentData {
 }
 
 // 네이버페이 결제 URL 생성 (개발/운영 환경)
-const getNaverPayBaseUrl = () => {
+export const getNaverPayBaseUrl = () => {
   return MODE === 'production'
     ? 'https://pay.naver.com/o/checkout'
     : 'https://test-pay.naver.com/o/checkout';
