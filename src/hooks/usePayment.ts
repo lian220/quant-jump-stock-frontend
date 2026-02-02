@@ -7,6 +7,7 @@ import {
   generateOrderId,
   generateCustomerKey,
   translateErrorCode,
+  isTossPaymentsConfigured,
 } from '@/lib/toss-payments';
 
 export const usePayment = () => {
@@ -15,6 +16,11 @@ export const usePayment = () => {
 
   // 결제 요청 함수
   const handleRequestPayment = useCallback(async (data: PaymentData) => {
+    if (!isTossPaymentsConfigured) {
+      setError('결제 시스템이 설정되지 않았습니다. 환경변수를 확인해주세요.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -60,5 +66,6 @@ export const usePayment = () => {
     loading,
     error,
     clearError,
+    isConfigured: isTossPaymentsConfigured,
   };
 };

@@ -8,12 +8,11 @@ import {
 } from '@/types/payment';
 
 // 환경변수 확인
-const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || '';
 const API_BASE_URL = 'https://api.tosspayments.com/v1';
 
-if (!CLIENT_KEY) {
-  throw new Error('NEXT_PUBLIC_TOSS_CLIENT_KEY is required');
-}
+// TossPayments 설정 여부 확인
+export const isTossPaymentsConfigured = !!CLIENT_KEY;
 
 // TossPayments SDK 타입 정의
 declare global {
@@ -74,6 +73,11 @@ let tossPaymentsInstance: TossPaymentsInstance | null = null;
 
 export const initializeTossPayments = (): Promise<TossPaymentsInstance> => {
   return new Promise((resolve, reject) => {
+    if (!isTossPaymentsConfigured) {
+      reject(new Error('TossPayments가 설정되지 않았습니다. 환경변수를 확인해주세요.'));
+      return;
+    }
+
     if (tossPaymentsInstance) {
       resolve(tossPaymentsInstance);
       return;

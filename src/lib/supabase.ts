@@ -1,14 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+// Supabase 설정 여부 확인
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
 // 클라이언트 사이드용 Supabase 클라이언트
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase: SupabaseClient | null = isSupabaseConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Next.js App Router용 브라우저 클라이언트 (SSR 지원)
 export const createSupabaseBrowserClient = () => {
+  if (!isSupabaseConfigured) return null;
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 };
 

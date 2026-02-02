@@ -2,17 +2,16 @@ import { SeoConfigProps } from '@/types/seo';
 
 // 사이트 기본 SEO 설정
 export const seoConfig: SeoConfigProps = {
-  defaultTitle: '바이브코딩 올인원 스타터킷',
-  titleTemplate: '%s | 바이브코딩 스타터킷',
+  defaultTitle: '퀀트점프 - AI 기반 스마트 투자 플랫폼',
+  titleTemplate: '%s | 퀀트점프',
   defaultDescription:
-    '수강생들의 개발 시간을 70% 단축시키는 완성형 개발 환경. Supabase 인증, 토스페이먼츠 결제, SEO 최적화까지 모든 것이 준비된 스타터킷.',
+    'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼.',
   defaultKeywords:
-    '바이브코딩, 스타터킷, Next.js, React, TypeScript, Supabase, 토스페이먼츠, SEO 최적화, 웹 개발, 프론트엔드',
-  siteUrl:
-    process.env.NEXT_PUBLIC_SITE_URL || 'https://dingco-vibecoding-web-starter-kit.vercel.app',
-  siteName: '바이브코딩 스타터킷',
+    '퀀트투자, 주식투자, AI투자, 알고리즘트레이딩, 백테스팅, 실시간시세, 주식분석, 퀀트전략, 모멘텀투자, 자동매매',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://quantjump.co.kr',
+  siteName: '퀀트점프',
   defaultImage: '/og-image.jpg',
-  twitterUsername: '@vibecoding',
+  twitterUsername: '@quantjump',
   language: 'ko',
   locale: 'ko_KR',
 };
@@ -20,20 +19,20 @@ export const seoConfig: SeoConfigProps = {
 // 페이지별 기본 SEO 설정들
 export const pageDefaults = {
   home: {
-    title: '개발 시간 70% 단축 올인원 스타터킷',
+    title: 'AI 기반 퀀트 투자 플랫폼',
     description:
-      'Supabase 인증, 토스페이먼츠 결제, SEO 최적화까지 모든 것이 준비된 완성형 개발 환경',
-    keywords: '웹 개발 스타터킷, Next.js 템플릿, React 보일러플레이트, 빠른 개발',
+      'AI와 빅데이터로 스마트한 주식 투자. 실시간 시세, 퀀트 분석, 백테스팅으로 데이터 기반 투자를 시작하세요.',
+    keywords: '퀀트투자, AI주식분석, 실시간시세, 백테스팅, 알고리즘트레이딩',
   },
   auth: {
     title: '로그인 / 회원가입',
-    description: 'Supabase 기반의 안전하고 빠른 인증 시스템으로 로그인하세요',
-    keywords: '로그인, 회원가입, 인증, Supabase, 소셜 로그인',
+    description: '퀀트점프에 가입하고 AI 기반 투자 분석 서비스를 무료로 시작하세요',
+    keywords: '퀀트점프 로그인, 회원가입, 주식투자 시작',
   },
   payment: {
-    title: '결제 시스템',
-    description: '토스페이먼츠 기반의 안전하고 편리한 결제 시스템을 체험해보세요',
-    keywords: '결제, 토스페이먼츠, 온라인 결제, 카드 결제, 간편결제',
+    title: '프리미엄 플랜',
+    description: '프리미엄 구독으로 고급 퀀트 전략과 실시간 매매 신호를 받아보세요',
+    keywords: '퀀트점프 프리미엄, 유료 구독, 투자 신호, VIP 서비스',
   },
 } as const;
 
@@ -55,11 +54,7 @@ export const structuredDataTemplates = {
     url: seoConfig.siteUrl,
     logo: `${seoConfig.siteUrl}/logo.png`,
     description: seoConfig.defaultDescription,
-    sameAs: [
-      // 소셜 미디어 링크들 (실제 링크로 교체 필요)
-      'https://github.com/vibecoding',
-      'https://twitter.com/vibecoding',
-    ],
+    sameAs: ['https://github.com/quantjump', 'https://twitter.com/quantjump'],
   },
 
   // 웹사이트 정보
@@ -84,7 +79,7 @@ export const structuredDataTemplates = {
     name: seoConfig.siteName,
     description: seoConfig.defaultDescription,
     url: seoConfig.siteUrl,
-    applicationCategory: 'WebApplication',
+    applicationCategory: 'FinanceApplication',
     operatingSystem: 'Any',
     offers: {
       '@type': 'Offer',
@@ -93,7 +88,7 @@ export const structuredDataTemplates = {
     },
     author: {
       '@type': 'Organization',
-      name: '바이브코딩',
+      name: '퀀트점프',
     },
   },
 };

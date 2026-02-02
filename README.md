@@ -1,21 +1,20 @@
-# 🚀 딩코딩코 올인원 스타터킷
+# 📈 퀀트점프 - AI 기반 스마트 투자 플랫폼
 
-수강생들의 개발 시간을 **70% 단축**시키는 완성형 개발 환경
+데이터로 **스마트하게** 투자하세요
 
-> 📚 **인프런 강의 전용 스타터킷**  
-> 이 프로젝트는 [비개발자 4주만에 수익화 서비스 만들기: AI 바이브 코딩 웹+앱 ALL IN ONE](https://www.inflearn.com/course/%EB%B9%84%EA%B0%9C%EB%B0%9C%EC%9E%90-4%EC%A3%BC%EB%A7%8C%EC%97%90-%EC%88%98%EC%9D%B5%ED%99%94-%EC%84%9C%EB%B9%84%EC%8A%A4-%EB%A7%8C%EB%93%A4) 강의의 공식 스타터킷입니다.
+> AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하는 퀀트 투자 플랫폼
 
 ## 📋 개요
 
-딩코딩코 올인원 스타터킷은 강의 수강생들이 환경 설정에 시간을 낭비하지 않고, **바로 핵심 기능 개발에 집중**할 수 있도록 만들어진 완성형 스타터킷입니다.
+퀀트점프는 감정이 아닌 데이터 기반의 체계적인 투자를 지원하는 AI 퀀트 투자 플랫폼입니다.
 
 ### ✨ 핵심 기능
-- 🔐 **Supabase 인증** - 이메일/소셜 로그인, 회원가입
-- 💳 **토스페이먼츠 결제** - 카드 결제, 간편결제, 결제 승인
-- 🎨 **Shadcn/ui 컴포넌트** - 모던하고 접근성 좋은 UI
-- 🚀 **SEO 최적화** - 동적 메타태그, 사이트맵, 구조화된 데이터
-- 📱 **반응형 디자인** - 모든 디바이스 지원
-- 🔧 **개발 도구** - ESLint, Prettier, Husky 완전 설정
+- 📊 **실시간 시세** - 국내외 주식 실시간 시세 및 차트
+- 🤖 **AI 퀀트 분석** - 머신러닝 기반 종목 분석 및 투자 신호
+- 📈 **백테스팅** - 과거 데이터 기반 전략 검증 시스템
+- 🔔 **알림 시스템** - 맞춤형 매매 신호 및 포트폴리오 알림
+- 💳 **구독 결제** - 토스페이먼츠 기반 프리미엄 플랜
+- 🔐 **보안 인증** - Supabase 기반 안전한 사용자 인증
 
 ## 🛠️ 기술 스택
 
@@ -35,31 +34,30 @@
 - **Vercel** 배포
 - **ESLint + Prettier** 코드 품질
 - **Husky + Commitlint** Git 훅
-- **Cursor Rules** AI 개발 지원
 
 ## 🚀 빠른 시작
 
 ### 1. 프로젝트 설정
 ```bash
 # 프로젝트 복제
-git clone [repository-url]
-cd dingco-vibecoding-web-starter-kit
+git clone https://github.com/lian220/quant-jump-stock-frontend.git
+cd quant-jump-stock-frontend
 
 # 의존성 설치
-npm install
+pnpm install
 
 # 환경 변수 설정
 cp .env.example .env.local
 # .env.local 파일을 열어 실제 값으로 수정
 
 # 개발 서버 실행
-npm run dev
+pnpm run dev
 ```
 
 ### 2. 브라우저에서 확인
 - 홈페이지: [http://localhost:3000](http://localhost:3000)
 - 인증 페이지: [http://localhost:3000/auth](http://localhost:3000/auth)
-- 결제 페이지: [http://localhost:3000/payment](http://localhost:3000/payment)
+- 구독 플랜: [http://localhost:3000/payment](http://localhost:3000/payment)
 
 ## 📁 프로젝트 구조
 
@@ -80,13 +78,22 @@ src/
 └── types/              # TypeScript 타입
 ```
 
+## 💰 구독 플랜
+
+| 플랜 | 가격 | 기능 |
+|------|------|------|
+| 베이직 | ₩29,000/월 | 기본 퀀트 분석, 알림 |
+| 프로 | ₩79,000/월 | AI 분석, 백테스팅, 실시간 신호 |
+| 프리미엄 | ₩149,000/월 | 모든 기능 + 1:1 투자 상담 |
+| 연간 프리미엄 | ₩1,490,000/년 | 프리미엄 + 2개월 무료 |
+
 ## 🎯 개발 가이드
 
 ### 커밋 규칙
 ```bash
 # 형식: feat|fix|docs|style|refactor|test|chore: 작업 내용
-git commit -m "feat: 토스페이먼츠 결제 시스템 구현"
-git commit -m "fix: Supabase 인증 오류 수정"
+git commit -m "feat: AI 종목 분석 기능 구현"
+git commit -m "fix: 실시간 시세 연동 오류 수정"
 ```
 
 ### 코드 스타일
@@ -113,52 +120,25 @@ NEXT_PUBLIC_TOSS_CLIENT_KEY=your_toss_client_key
 TOSS_SECRET_KEY=your_toss_secret_key
 
 # SEO
-NEXT_PUBLIC_SITE_URL=https://your-domain.com
+NEXT_PUBLIC_SITE_URL=https://quantjump.co.kr
 ```
 
-## 🤖 Cursor Rules 적용하기
+## ⚠️ 투자 유의사항
 
-이 프로젝트는 **Cursor AI 에디터**에 최적화된 개발 규칙을 제공합니다.
-
-### 1. Cursor Rules 자동 적용
-```bash
-# Cursor 에디터에서 프로젝트 열기
-cursor .
-
-# .cursor/rules/ 폴더의 규칙들이 자동으로 적용됩니다
-```
-
-### 2. 포함된 AI 개발 규칙
-- 🏗️ **프로젝트 구조** - 파일 구조와 네이밍 컨벤션
-- 📝 **TypeScript 코딩** - 타입 안전성과 베스트 프랙티스
-- 🔐 **Supabase 인증** - 인증 시스템 구현 가이드
-- 💳 **토스페이먼츠** - 결제 시스템 연동 방법
-- 🚀 **SEO 최적화** - 검색엔진 최적화 전략
-
-### 3. AI 어시스턴트 활용
-Cursor의 AI 어시스턴트에게 다음과 같이 요청하세요:
-```
-"Supabase 인증 컴포넌트를 만들어줘"
-"토스페이먼츠 결제 버튼을 구현해줘"
-"SEO 메타태그를 추가해줘"
-```
-
-## 📖 추가 문서
-
-- 📝 [개발 진행 상황](./TODO.md)
-- 🤖 [Cursor AI 규칙](./.cursor/rules/)
-- 📋 [환경 변수 예시](./.env.example)
+- 본 서비스에서 제공하는 정보는 투자 참고 자료이며, 투자 권유가 아닙니다.
+- 투자에 대한 최종 결정은 투자자 본인에게 있습니다.
+- 투자 손실에 대한 책임은 투자자 본인에게 있습니다.
 
 ## 🤝 라이선스
 
-MIT License © 2025 dingcodingco
+MIT License © 2025 QuantJump
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by [딩코딩코](https://www.inflearn.com/users/408812/@dingcodingco)**
+**퀀트점프** - AI 기반 스마트 투자 플랫폼
 
-🎓 **인프런에서 더 많은 강의를 만나보세요!**
+📧 support@quantjump.co.kr
 
 </div>

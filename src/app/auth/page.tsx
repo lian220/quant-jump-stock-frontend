@@ -37,8 +37,14 @@ export default function AuthPage() {
         ogImage="/images/og/auth.jpg"
       />
 
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              퀀트점프
+            </h1>
+            <p className="text-slate-400 mt-2">AI 기반 스마트 투자 플랫폼</p>
+          </div>
           {isLogin ? (
             <LoginForm onSuccess={handleAuthSuccess} onSwitchToSignUp={() => setIsLogin(false)} />
           ) : (
