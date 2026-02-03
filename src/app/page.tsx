@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,33 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageSEO } from '@/components/seo';
 import { pageDefaults } from '@/lib/seo/config';
+import { getStrategies } from '@/lib/api/strategies';
+import type { Strategy } from '@/types/strategy';
 
 export default function Home() {
   const { user, signOut } = useAuth();
+  const [featuredStrategies, setFeaturedStrategies] = useState<Strategy[]>([]);
+  const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
+
+  // 추천 전략 가져오기 (인기순 상위 3개)
+  useEffect(() => {
+    const fetchFeaturedStrategies = async () => {
+      try {
+        const response = await getStrategies({
+          sortBy: 'subscribers',
+          page: 0,
+          size: 3,
+        });
+        setFeaturedStrategies(response.strategies);
+      } catch (error) {
+        console.error('Failed to fetch featured strategies:', error);
+      } finally {
+        setIsLoadingStrategies(false);
+      }
+    };
+
+    fetchFeaturedStrategies();
+  }, []);
 
   const features = [
     {
@@ -181,16 +205,41 @@ export default function Home() {
         <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-2">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                  퀀트점프
-                </h1>
-                <Badge
-                  variant="secondary"
-                  className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                >
-                  BETA
-                </Badge>
+              <div className="flex items-center space-x-8">
+                <div className="flex items-center space-x-2">
+                  <Link href="/">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
+                      퀀트점프
+                    </h1>
+                  </Link>
+                  <Badge
+                    variant="secondary"
+                    className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                  >
+                    BETA
+                  </Badge>
+                </div>
+                {/* 네비게이션 메뉴 */}
+                <nav className="hidden md:flex items-center space-x-6">
+                  <Link
+                    href="/strategies"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
+                  >
+                    전략 마켓플레이스
+                  </Link>
+                  <Link
+                    href="#features"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors"
+                  >
+                    기능
+                  </Link>
+                  <Link
+                    href="#pricing"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors"
+                  >
+                    요금제
+                  </Link>
+                </nav>
               </div>
               <div className="flex items-center space-x-4">
                 {user ? (
@@ -245,21 +294,118 @@ export default function Home() {
               감정이 아닌 데이터 기반의 체계적인 투자를 경험해보세요.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth">
+              <Link href="/strategies">
                 <Button size="lg" className="min-w-[200px] bg-emerald-600 hover:bg-emerald-700">
-                  무료로 시작하기
+                  전략 둘러보기
                 </Button>
               </Link>
-              <Link href="/payment">
+              <Link href="/auth">
                 <Button
                   variant="outline"
                   size="lg"
                   className="min-w-[200px] border-slate-600 text-slate-300 hover:bg-slate-700"
                 >
-                  프리미엄 플랜 보기
+                  무료로 시작하기
                 </Button>
               </Link>
             </div>
+          </div>
+
+          {/* 추천 전략 미리보기 */}
+          <div className="mb-16">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">인기 투자 전략</h2>
+                <p className="text-slate-400">검증된 퀀트 전략으로 시작하세요</p>
+              </div>
+              <Link href="/strategies">
+                <Button
+                  variant="outline"
+                  className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                >
+                  모든 전략 보기 →
+                </Button>
+              </Link>
+            </div>
+
+            {isLoadingStrategies ? (
+              <div className="grid md:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="bg-slate-800/50 border-slate-700">
+                    <CardContent className="pt-6">
+                      <div className="animate-pulse">
+                        <div className="h-6 bg-slate-700 rounded mb-4"></div>
+                        <div className="h-4 bg-slate-700 rounded mb-2"></div>
+                        <div className="h-4 bg-slate-700 rounded w-2/3"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : featuredStrategies.length > 0 ? (
+              <div className="grid md:grid-cols-3 gap-6">
+                {featuredStrategies.map((strategy) => (
+                  <Link key={strategy.id} href={`/strategies/${strategy.id}`}>
+                    <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all h-full">
+                      <CardHeader>
+                        <div className="flex justify-between items-start mb-2">
+                          <Badge
+                            className={`
+                              ${strategy.category === 'momentum' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : ''}
+                              ${strategy.category === 'value' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : ''}
+                              ${strategy.category === 'factor' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : ''}
+                            `}
+                          >
+                            {strategy.category === 'momentum' && '모멘텀'}
+                            {strategy.category === 'value' && '가치'}
+                            {strategy.category === 'factor' && '팩터'}
+                          </Badge>
+                          {strategy.isPremium && (
+                            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                              프리미엄
+                            </Badge>
+                          )}
+                        </div>
+                        <CardTitle className="text-xl text-white">{strategy.name}</CardTitle>
+                        <CardDescription className="text-slate-400 line-clamp-2">
+                          {strategy.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-slate-400">연평균 수익률</p>
+                            <p className="text-emerald-400 font-semibold">
+                              {strategy.annualReturn}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400">샤프 비율</p>
+                            <p className="text-cyan-400 font-semibold">{strategy.sharpeRatio}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400">구독자</p>
+                            <p className="text-slate-300 font-semibold">
+                              {strategy.subscribers.toLocaleString()}명
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400">평점</p>
+                            <p className="text-yellow-400 font-semibold">⭐ {strategy.rating}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="pt-6 text-center text-slate-400">
+                  전략을 불러오는데 실패했습니다
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* 통계 섹션 */}
