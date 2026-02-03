@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,10 +8,21 @@ import { Badge } from '@/components/ui/badge';
 import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
-import { mockStrategies } from '@/lib/mock/strategies';
-import type { StrategyCategory, RiskLevel, SortOption, PaginationInfo } from '@/types/strategy';
+import { getStrategies } from '@/lib/api/strategies';
+import type {
+  Strategy,
+  StrategyCategory,
+  RiskLevel,
+  SortOption,
+  PaginationInfo,
+} from '@/types/strategy';
 
 export default function StrategiesPage() {
+  // 데이터 상태
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // 필터 상태
   const [selectedCategory, setSelectedCategory] = useState<StrategyCategory>('all');
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | 'all'>('all');
@@ -19,64 +30,75 @@ export default function StrategiesPage() {
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    pageSize: 8,
+    totalItems: 0,
+  });
+
   const pageSize = 8;
 
-  // 필터링 및 정렬된 전략 목록
-  const filteredAndSortedStrategies = useMemo(() => {
-    let result = [...mockStrategies];
+  // API 호출
+  useEffect(() => {
+    const fetchStrategies = async () => {
+      setIsLoading(true);
+      setError(null);
 
-    // 카테고리 필터
-    if (selectedCategory !== 'all') {
-      result = result.filter((strategy) => strategy.category === selectedCategory);
-    }
+      try {
+        const sortByMapping: Record<SortOption, 'subscribers' | 'cagr' | 'sharpe' | 'recent'> = {
+          popularity: 'subscribers',
+          return_high: 'cagr',
+          return_low: 'cagr',
+          latest: 'recent',
+          risk_low: 'subscribers', // 백엔드에 리스크 정렬이 없으므로 구독자순으로
+        };
 
-    // 리스크 레벨 필터
-    if (selectedRiskLevel !== 'all') {
-      result = result.filter((strategy) => strategy.riskLevel === selectedRiskLevel);
-    }
+        const response = await getStrategies({
+          category: selectedCategory,
+          sortBy: sortByMapping[selectedSort],
+          page: currentPage - 1, // 백엔드는 0부터 시작
+          size: pageSize,
+        });
 
-    // 정렬
-    result.sort((a, b) => {
-      switch (selectedSort) {
-        case 'popularity':
-          return b.subscribers - a.subscribers;
-        case 'return_high':
-          return (
-            parseFloat(b.totalReturn.replace(/[+%]/g, '')) -
-            parseFloat(a.totalReturn.replace(/[+%]/g, ''))
+        // 프론트엔드에서 리스크 레벨 필터링
+        let filteredStrategies = response.strategies;
+        if (selectedRiskLevel !== 'all') {
+          filteredStrategies = filteredStrategies.filter(
+            (strategy) => strategy.riskLevel === selectedRiskLevel,
           );
-        case 'return_low':
-          return (
-            parseFloat(a.totalReturn.replace(/[+%]/g, '')) -
-            parseFloat(b.totalReturn.replace(/[+%]/g, ''))
-          );
-        case 'latest':
-          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-        case 'risk_low':
+        }
+
+        // return_low 정렬은 프론트엔드에서 처리 (백엔드는 높은순만 지원)
+        if (selectedSort === 'return_low') {
+          filteredStrategies = [...filteredStrategies].reverse();
+        }
+
+        // 리스크 낮은순 정렬은 프론트엔드에서 처리
+        if (selectedSort === 'risk_low') {
           const riskOrder = { low: 1, medium: 2, high: 3 };
-          return riskOrder[a.riskLevel] - riskOrder[b.riskLevel];
-        default:
-          return 0;
+          filteredStrategies = [...filteredStrategies].sort(
+            (a, b) => riskOrder[a.riskLevel] - riskOrder[b.riskLevel],
+          );
+        }
+
+        setStrategies(filteredStrategies);
+        setPaginationInfo({
+          currentPage,
+          totalPages: response.totalPages,
+          pageSize,
+          totalItems: response.totalItems,
+        });
+      } catch (err) {
+        console.error('Failed to fetch strategies:', err);
+        setError('전략 목록을 불러오는데 실패했습니다. 나중에 다시 시도해주세요.');
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
 
-    return result;
-  }, [selectedCategory, selectedRiskLevel, selectedSort]);
-
-  // 페이지네이션 적용
-  const paginatedStrategies = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredAndSortedStrategies.slice(startIndex, endIndex);
-  }, [filteredAndSortedStrategies, currentPage]);
-
-  // 페이지네이션 정보
-  const paginationInfo: PaginationInfo = {
-    currentPage,
-    totalPages: Math.ceil(filteredAndSortedStrategies.length / pageSize),
-    pageSize,
-    totalItems: filteredAndSortedStrategies.length,
-  };
+    fetchStrategies();
+  }, [selectedCategory, selectedRiskLevel, selectedSort, currentPage]);
 
   // 페이지 변경 핸들러
   const handlePageChange = (page: number) => {
@@ -99,6 +121,25 @@ export default function StrategiesPage() {
     setSelectedSort(sort);
     setCurrentPage(1);
   };
+
+  // 에러 상태
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <Card className="bg-slate-800/50 border-slate-700 p-8">
+          <div className="text-center">
+            <p className="text-xl text-red-400 mb-4">⚠️ {error}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              다시 시도
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -148,16 +189,21 @@ export default function StrategiesPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="pt-6 text-center">
-              <p className="text-3xl font-bold text-emerald-400">{mockStrategies.length}</p>
+              <p className="text-3xl font-bold text-emerald-400">
+                {isLoading ? '-' : paginationInfo.totalItems}
+              </p>
               <p className="text-sm text-slate-400 mt-1">전략 수</p>
             </CardContent>
           </Card>
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-cyan-400">
-                {Math.round(
-                  mockStrategies.reduce((sum, s) => sum + s.subscribers, 0) / mockStrategies.length,
-                ).toLocaleString()}
+                {isLoading
+                  ? '-'
+                  : Math.round(
+                      strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length ||
+                        0,
+                    ).toLocaleString()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 구독자</p>
             </CardContent>
@@ -165,9 +211,11 @@ export default function StrategiesPage() {
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-yellow-400">
-                {(
-                  mockStrategies.reduce((sum, s) => sum + s.rating, 0) / mockStrategies.length
-                ).toFixed(1)}
+                {isLoading
+                  ? '-'
+                  : (
+                      strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length || 0
+                    ).toFixed(1)}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 평점</p>
             </CardContent>
@@ -175,7 +223,7 @@ export default function StrategiesPage() {
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-purple-400">
-                {mockStrategies.filter((s) => s.isPremium).length}
+                {isLoading ? '-' : strategies.filter((s) => s.isPremium).length}
               </p>
               <p className="text-sm text-slate-400 mt-1">프리미엄 전략</p>
             </CardContent>
@@ -205,19 +253,25 @@ export default function StrategiesPage() {
             {/* 결과 수 표시 */}
             <div className="flex items-center justify-between mb-6">
               <p className="text-slate-400">
-                총 <span className="text-white font-semibold">{paginationInfo.totalItems}</span>개의
-                전략
+                총{' '}
+                <span className="text-white font-semibold">
+                  {isLoading ? '-' : paginationInfo.totalItems}
+                </span>
+                개의 전략
               </p>
               <Badge className="bg-slate-700/50 text-slate-300 border-slate-600">
-                {currentPage} / {paginationInfo.totalPages} 페이지
+                {isLoading ? '-' : currentPage} / {isLoading ? '-' : paginationInfo.totalPages}{' '}
+                페이지
               </Badge>
             </div>
 
             {/* 전략 목록 */}
-            <StrategyGrid strategies={paginatedStrategies} />
+            <StrategyGrid strategies={strategies} isLoading={isLoading} />
 
             {/* 페이지네이션 */}
-            <StrategyPagination pagination={paginationInfo} onPageChange={handlePageChange} />
+            {!isLoading && paginationInfo.totalPages > 1 && (
+              <StrategyPagination pagination={paginationInfo} onPageChange={handlePageChange} />
+            )}
           </div>
         </div>
       </main>
