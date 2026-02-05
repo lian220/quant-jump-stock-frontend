@@ -45,3 +45,33 @@ export interface StrategyListParams {
   page?: number;
   size?: number;
 }
+
+// 전략 상세 응답 타입
+export interface BackendStrategyDetail extends BackendStrategy {
+  // 전략 조건 (룰)
+  rules: StrategyRule[];
+  // 수익 곡선 데이터
+  equityCurve: EquityCurvePoint[];
+  // 월별 수익률
+  monthlyReturns: MonthlyReturn[];
+}
+
+export interface StrategyRule {
+  id: number;
+  name: string;
+  description: string;
+  type: 'ENTRY' | 'EXIT' | 'FILTER' | 'REBALANCE';
+  parameters: Record<string, string | number>;
+}
+
+export interface EquityCurvePoint {
+  date: string;
+  value: number;
+  benchmark?: number;
+}
+
+export interface MonthlyReturn {
+  year: number;
+  month: number;
+  return: number;
+}

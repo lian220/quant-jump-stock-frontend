@@ -72,3 +72,33 @@ export interface StrategyListResponse {
   strategies: Strategy[];
   pagination: PaginationInfo;
 }
+
+// 전략 상세 타입 (확장)
+export interface StrategyDetail extends Strategy {
+  // 전략 조건/룰
+  rules: StrategyRuleItem[];
+  // 수익 곡선 데이터
+  equityCurve: EquityCurveData[];
+  // 월별 수익률
+  monthlyReturns: MonthlyReturnData[];
+}
+
+export interface StrategyRuleItem {
+  id: number;
+  name: string;
+  description: string;
+  type: 'entry' | 'exit' | 'filter' | 'rebalance';
+  parameters: Record<string, string | number>;
+}
+
+export interface EquityCurveData {
+  date: string;
+  value: number;
+  benchmark?: number;
+}
+
+export interface MonthlyReturnData {
+  year: number;
+  month: number;
+  return: number;
+}
