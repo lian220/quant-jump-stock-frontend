@@ -171,9 +171,14 @@ function mapFrontendCategoryToBackend(category: string): string {
 
 /**
  * 전략 상세 조회
+ * 브라우저에서는 Next.js API Route 프록시를 통해 호출 (CORS 우회)
  */
 export async function getStrategyById(id: string): Promise<StrategyDetail> {
-  const url = `${API_URL}/api/v1/marketplace/strategies/${id}`;
+  // 브라우저에서는 프록시 API 사용, 서버에서는 직접 호출
+  const isBrowser = typeof window !== 'undefined';
+  const url = isBrowser
+    ? `/api/strategies/${id}`
+    : `${API_URL}/api/v1/marketplace/strategies/${id}`;
 
   const response = await fetch(url, {
     method: 'GET',
