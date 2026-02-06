@@ -1,10 +1,16 @@
 // 백엔드 API 응답 타입
 
+export interface BackendCategory {
+  id: number;
+  code: string;
+  name: string;
+}
+
 export interface BackendStrategy {
   id: number;
   name: string;
   description: string;
-  category: string;
+  category: BackendCategory;
   isPremium: boolean;
   subscriberCount: number;
   averageRating: number;
@@ -14,12 +20,14 @@ export interface BackendStrategy {
 }
 
 export interface BacktestResult {
-  totalReturn: string;
-  cagr: string;
-  sharpeRatio: string;
-  mdd: string;
-  winRate: string;
-  period: string;
+  totalReturn: number;
+  cagr: number;
+  sharpeRatio: number;
+  mdd: number;
+  winRate: number;
+  volatility: number;
+  startDate: string;
+  endDate: string;
 }
 
 export interface BackendPagination {
@@ -46,32 +54,76 @@ export interface StrategyListParams {
   size?: number;
 }
 
-// 전략 상세 응답 타입
-export interface BackendStrategyDetail extends BackendStrategy {
-  // 전략 조건 (룰)
-  rules: StrategyRule[];
-  // 수익 곡선 데이터
-  equityCurve: EquityCurvePoint[];
-  // 월별 수익률
-  monthlyReturns: MonthlyReturn[];
+// 전략 상세 응답 타입 (performanceMetrics 기반)
+export interface BackendPerformanceMetrics {
+  cagr: number;
+  mdd: number;
+  sharpeRatio: number;
+  sortinoRatio: number;
+  totalReturn: number;
+  volatility: number;
+  winRate: number;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  avgWin: number;
+  avgLoss: number;
+  benchmarkReturn: number | null;
+  alpha: number | null;
+  beta: number | null;
+  initialCapital: number;
+  finalValue: number;
+  startDate: string;
+  endDate: string;
 }
 
-export interface StrategyRule {
+export interface BackendStrategyRule {
   id: number;
   name: string;
   description: string;
-  type: 'ENTRY' | 'EXIT' | 'FILTER' | 'REBALANCE';
-  parameters: Record<string, string | number>;
+  type: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface BackendMonthlyReturn {
+  year: number;
+  month: number;
+  returnPct: number;
+}
+
+export interface BackendBacktestTrade {
+  tradeDate: string;
+  ticker: string;
+  side: string;
+  quantity: number;
+  price: number;
+  amount: number;
+  pnl: number | null;
+  pnlPercent: number | null;
+  holdingDays: number | null;
+  signalReason: string | null;
+}
+
+export interface BackendStrategyDetail {
+  id: number;
+  name: string;
+  description: string;
+  category: BackendCategory;
+  isPremium: boolean;
+  subscriberCount: number;
+  averageRating: number;
+  rebalanceFrequency: string;
+  performanceMetrics: BackendPerformanceMetrics | null;
+  equityCurve: EquityCurvePoint[];
+  currentHoldings: unknown[];
+  rules: BackendStrategyRule[];
+  monthlyReturns: BackendMonthlyReturn[];
+  trades: BackendBacktestTrade[];
+  createdAt: string;
 }
 
 export interface EquityCurvePoint {
   date: string;
   value: number;
   benchmark?: number;
-}
-
-export interface MonthlyReturn {
-  year: number;
-  month: number;
-  return: number;
 }

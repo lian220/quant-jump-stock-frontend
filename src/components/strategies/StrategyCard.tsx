@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getRiskColor, getRiskLabel, getCategoryLabel } from '@/lib/strategy-helpers';
 import type { Strategy } from '@/types/strategy';
 
 interface StrategyCardProps {
@@ -12,47 +13,6 @@ interface StrategyCardProps {
 }
 
 export function StrategyCard({ strategy }: StrategyCardProps) {
-  // 리스크 레벨에 따른 색상
-  const getRiskColor = (level: string) => {
-    switch (level) {
-      case 'low':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'medium':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'high':
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
-      default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
-    }
-  };
-
-  // 리스크 레벨 한글 변환
-  const getRiskLabel = (level: string) => {
-    switch (level) {
-      case 'low':
-        return '낮음';
-      case 'medium':
-        return '중간';
-      case 'high':
-        return '높음';
-      default:
-        return level;
-    }
-  };
-
-  // 카테고리 한글 변환
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      momentum: '모멘텀',
-      value: '밸류',
-      growth: '성장주',
-      dividend: '배당주',
-      factor: '팩터',
-      all: '전체',
-    };
-    return labels[category] || category;
-  };
-
   return (
     <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
       <CardHeader className="pb-3">

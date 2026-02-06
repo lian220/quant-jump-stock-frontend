@@ -3,21 +3,24 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import {
+  MetricCard,
+  InvestmentSummary,
+  EquityCurveChart,
+  TermTooltip,
+} from '@/components/strategies';
+import {
+  getRiskColor,
+  getRiskLabel,
+  getCategoryLabel,
+  getRuleTypeLabel,
+  getRuleTypeColor,
+} from '@/lib/strategy-helpers';
 import { getStrategyById, generateMockStrategyDetail } from '@/lib/api/strategies';
 import type { StrategyDetail } from '@/types/strategy';
 
@@ -52,73 +55,6 @@ export default function StrategyDetailPage() {
       fetchStrategy();
     }
   }, [id]);
-
-  // 리스크 레벨 색상
-  const getRiskColor = (level: string) => {
-    switch (level) {
-      case 'low':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'medium':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'high':
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
-      default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
-    }
-  };
-
-  // 리스크 레벨 한글
-  const getRiskLabel = (level: string) => {
-    switch (level) {
-      case 'low':
-        return '낮음';
-      case 'medium':
-        return '중간';
-      case 'high':
-        return '높음';
-      default:
-        return level;
-    }
-  };
-
-  // 카테고리 한글
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      momentum: '모멘텀',
-      value: '밸류',
-      growth: '성장주',
-      dividend: '배당주',
-      factor: '팩터',
-    };
-    return labels[category] || category;
-  };
-
-  // 룰 타입 한글
-  const getRuleTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      entry: '진입 조건',
-      exit: '청산 조건',
-      filter: '필터 조건',
-      rebalance: '리밸런싱',
-    };
-    return labels[type] || type;
-  };
-
-  // 룰 타입 색상
-  const getRuleTypeColor = (type: string) => {
-    switch (type) {
-      case 'entry':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'exit':
-        return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'filter':
-        return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
-      case 'rebalance':
-        return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-      default:
-        return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
-    }
-  };
 
   // 로딩 상태
   if (isLoading) {
@@ -210,9 +146,13 @@ export default function StrategyDetailPage() {
                   {getCategoryLabel(strategy.category)}
                 </Badge>
                 <Badge className={getRiskColor(strategy.riskLevel)}>
-                  리스크: {getRiskLabel(strategy.riskLevel)}
+                  <TermTooltip termKey="riskLevel">
+                    리스크: {getRiskLabel(strategy.riskLevel)}
+                  </TermTooltip>
                 </Badge>
-                <span className="text-slate-400 text-sm">백테스트: {strategy.backtestPeriod}</span>
+                <span className="text-slate-400 text-sm">
+                  <TermTooltip termKey="backtest">백테스트: {strategy.backtestPeriod}</TermTooltip>
+                </span>
               </div>
               <p className="text-slate-400 max-w-2xl">{strategy.description}</p>
             </div>
@@ -230,45 +170,56 @@ export default function StrategyDetailPage() {
 
         {/* 성과 지표 카드 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6 text-center">
-              <p className="text-2xl font-bold text-emerald-400">{strategy.totalReturn}</p>
-              <p className="text-xs text-slate-400 mt-1">누적 수익률</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6 text-center">
-              <p className="text-2xl font-bold text-cyan-400">{strategy.annualReturn}</p>
-              <p className="text-xs text-slate-400 mt-1">연환산 수익률 (CAGR)</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6 text-center">
-              <p className="text-2xl font-bold text-red-400">{strategy.maxDrawdown}</p>
-              <p className="text-xs text-slate-400 mt-1">최대 낙폭 (MDD)</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6 text-center">
-              <p className="text-2xl font-bold text-purple-400">{strategy.sharpeRatio}</p>
-              <p className="text-xs text-slate-400 mt-1">샤프 비율</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6 text-center">
-              <p className="text-2xl font-bold text-yellow-400">{strategy.winRate}</p>
-              <p className="text-xs text-slate-400 mt-1">승률</p>
-            </CardContent>
-          </Card>
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6 text-center">
-              <p className="text-2xl font-bold text-white">
-                {(strategy.minInvestment / 10000).toLocaleString()}만원
-              </p>
-              <p className="text-xs text-slate-400 mt-1">최소 투자금</p>
-            </CardContent>
-          </Card>
+          <MetricCard
+            value={strategy.totalReturn}
+            label="누적 수익률"
+            termKey="totalReturn"
+            metricKey="totalReturn"
+            valueColor="text-emerald-400"
+          />
+          <MetricCard
+            value={strategy.annualReturn}
+            label="연환산 수익률 (CAGR)"
+            termKey="cagr"
+            metricKey="cagr"
+            valueColor="text-cyan-400"
+          />
+          <MetricCard
+            value={strategy.maxDrawdown}
+            label="최대 낙폭 (MDD)"
+            termKey="mdd"
+            metricKey="mdd"
+            valueColor="text-red-400"
+          />
+          <MetricCard
+            value={strategy.sharpeRatio}
+            label="샤프 비율"
+            termKey="sharpeRatio"
+            metricKey="sharpeRatio"
+            valueColor="text-purple-400"
+          />
+          <MetricCard
+            value={strategy.winRate}
+            label="승률"
+            termKey="winRate"
+            metricKey="winRate"
+            valueColor="text-yellow-400"
+          />
+          <MetricCard
+            value={`${(strategy.minInvestment / 10000).toLocaleString()}만원`}
+            label="최소 투자금"
+            termKey="minInvestment"
+            valueColor="text-white"
+          />
         </div>
+
+        {/* 투자 시뮬레이션 */}
+        <InvestmentSummary
+          totalReturn={strategy.totalReturn}
+          annualReturn={strategy.annualReturn}
+          maxDrawdown={strategy.maxDrawdown}
+          backtestPeriod={strategy.backtestPeriod}
+        />
 
         {/* 탭 컨텐츠 */}
         <Tabs defaultValue="performance" className="space-y-6">
@@ -286,6 +237,12 @@ export default function StrategyDetailPage() {
               전략 조건
             </TabsTrigger>
             <TabsTrigger
+              value="trades"
+              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+            >
+              거래 내역
+            </TabsTrigger>
+            <TabsTrigger
               value="monthly"
               className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
             >
@@ -295,79 +252,7 @@ export default function StrategyDetailPage() {
 
           {/* 수익 곡선 탭 */}
           <TabsContent value="performance">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">수익 곡선</CardTitle>
-                <CardDescription className="text-slate-400">
-                  전략 vs 벤치마크(KOSPI) 누적 수익률 비교
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={strategy.equityCurve}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis
-                        dataKey="date"
-                        stroke="#94a3b8"
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                        tickFormatter={(value) => {
-                          const date = new Date(value);
-                          return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
-                        }}
-                      />
-                      <YAxis
-                        stroke="#94a3b8"
-                        tick={{ fill: '#94a3b8', fontSize: 12 }}
-                        tickFormatter={(value) => `${(value / 10000).toFixed(1)}만`}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1e293b',
-                          border: '1px solid #334155',
-                          borderRadius: '8px',
-                        }}
-                        labelStyle={{ color: '#94a3b8' }}
-                        formatter={(value, name) => {
-                          const numValue = typeof value === 'number' ? value : 0;
-                          return [
-                            `${numValue.toLocaleString()}원`,
-                            name === 'value' ? '전략' : '벤치마크',
-                          ];
-                        }}
-                        labelFormatter={(label) => {
-                          const date = new Date(label as string);
-                          return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
-                        }}
-                      />
-                      <Legend
-                        formatter={(value) => (value === 'value' ? '전략' : '벤치마크(KOSPI)')}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#34d399"
-                        strokeWidth={2}
-                        dot={false}
-                        activeDot={{ r: 4 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="benchmark"
-                        stroke="#94a3b8"
-                        strokeWidth={2}
-                        dot={false}
-                        activeDot={{ r: 4 }}
-                        strokeDasharray="5 5"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <EquityCurveChart data={strategy.equityCurve} />
           </TabsContent>
 
           {/* 전략 조건 탭 */}
@@ -417,6 +302,136 @@ export default function StrategyDetailPage() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* 거래 내역 탭 */}
+          <TabsContent value="trades">
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">거래 내역</CardTitle>
+                <CardDescription className="text-slate-400">
+                  백테스트 기간 동안의 매매 기록
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {strategy.trades.length === 0 ? (
+                  <p className="text-slate-500 text-center py-8">거래 내역이 없습니다.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-700">
+                          <th className="text-left text-slate-400 py-3 px-3">날짜</th>
+                          <th className="text-left text-slate-400 py-3 px-2">종목</th>
+                          <th className="text-center text-slate-400 py-3 px-2">매매</th>
+                          <th className="text-right text-slate-400 py-3 px-2">수량</th>
+                          <th className="text-right text-slate-400 py-3 px-2">가격</th>
+                          <th className="text-right text-slate-400 py-3 px-2">금액</th>
+                          <th className="text-right text-slate-400 py-3 px-2">손익</th>
+                          <th className="text-right text-slate-400 py-3 px-2">손익률</th>
+                          <th className="text-right text-slate-400 py-3 px-2">보유일</th>
+                          <th className="text-left text-slate-400 py-3 px-3">사유</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {strategy.trades.map((trade, idx) => {
+                          const isBuy = trade.side === 'BUY';
+                          const isProfit = trade.pnl !== null && trade.pnl > 0;
+                          const isLoss = trade.pnl !== null && trade.pnl < 0;
+                          return (
+                            <tr
+                              key={idx}
+                              className="border-t border-slate-700/50 hover:bg-slate-700/20"
+                            >
+                              <td className="text-slate-300 py-2.5 px-3 font-mono text-xs">
+                                {trade.tradeDate}
+                              </td>
+                              <td className="text-white py-2.5 px-2 font-medium">{trade.ticker}</td>
+                              <td className="text-center py-2.5 px-2">
+                                <span
+                                  className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                                    isBuy
+                                      ? 'bg-cyan-500/20 text-cyan-400'
+                                      : 'bg-orange-500/20 text-orange-400'
+                                  }`}
+                                >
+                                  {trade.side}
+                                </span>
+                              </td>
+                              <td className="text-slate-300 text-right py-2.5 px-2">
+                                {trade.quantity.toLocaleString()}
+                              </td>
+                              <td className="text-slate-300 text-right py-2.5 px-2 font-mono text-xs">
+                                $
+                                {trade.price.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </td>
+                              <td className="text-slate-300 text-right py-2.5 px-2 font-mono text-xs">
+                                $
+                                {trade.amount.toLocaleString(undefined, {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0,
+                                })}
+                              </td>
+                              <td className="text-right py-2.5 px-2 font-mono text-xs">
+                                {isBuy ? (
+                                  <span className="text-slate-600">-</span>
+                                ) : (
+                                  <span
+                                    className={
+                                      isProfit
+                                        ? 'text-emerald-400'
+                                        : isLoss
+                                          ? 'text-red-400'
+                                          : 'text-slate-300'
+                                    }
+                                  >
+                                    {trade.pnl !== null
+                                      ? `$${trade.pnl.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+                                      : '-'}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="text-right py-2.5 px-2 font-mono text-xs">
+                                {isBuy ? (
+                                  <span className="text-slate-600">-</span>
+                                ) : (
+                                  <span
+                                    className={
+                                      isProfit
+                                        ? 'text-emerald-400'
+                                        : isLoss
+                                          ? 'text-red-400'
+                                          : 'text-slate-300'
+                                    }
+                                  >
+                                    {trade.pnlPercent !== null
+                                      ? `${trade.pnlPercent > 0 ? '+' : ''}${trade.pnlPercent.toFixed(2)}%`
+                                      : '-'}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="text-slate-400 text-right py-2.5 px-2 text-xs">
+                                {isBuy
+                                  ? '-'
+                                  : trade.holdingDays !== null
+                                    ? `${trade.holdingDays}일`
+                                    : '-'}
+                              </td>
+                              <td className="text-slate-400 py-2.5 px-3 text-xs max-w-[200px] truncate">
+                                {trade.signalReason || '-'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

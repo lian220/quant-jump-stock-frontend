@@ -73,6 +73,20 @@ export interface StrategyListResponse {
   pagination: PaginationInfo;
 }
 
+// 거래 내역
+export interface BacktestTradeData {
+  tradeDate: string;
+  ticker: string;
+  side: 'BUY' | 'SELL';
+  quantity: number;
+  price: number;
+  amount: number;
+  pnl: number | null;
+  pnlPercent: number | null;
+  holdingDays: number | null;
+  signalReason: string | null;
+}
+
 // 전략 상세 타입 (확장)
 export interface StrategyDetail extends Strategy {
   // 전략 조건/룰
@@ -81,6 +95,8 @@ export interface StrategyDetail extends Strategy {
   equityCurve: EquityCurveData[];
   // 월별 수익률
   monthlyReturns: MonthlyReturnData[];
+  // 거래 내역
+  trades: BacktestTradeData[];
 }
 
 export interface StrategyRuleItem {
