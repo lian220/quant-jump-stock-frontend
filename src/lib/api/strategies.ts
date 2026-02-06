@@ -39,10 +39,6 @@ function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
     backtestPeriod = `${startYear}-${endYear}`;
   }
 
-  // category가 객체인 경우 code 추출
-  const categoryCode =
-    typeof backend.category === 'object' ? backend.category.code : backend.category;
-
   return {
     id: backend.id.toString(),
     name: backend.name,
