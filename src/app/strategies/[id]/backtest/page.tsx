@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,13 @@ export default function BacktestPage() {
   const [error, setError] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // 컴포넌트 unmount 시 진행 중인 폴링 취소
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   const handleSubmit = useCallback(
     async (data: BacktestRunRequest) => {
@@ -75,7 +82,7 @@ export default function BacktestPage() {
           await new Promise((resolve) => setTimeout(resolve, 1500));
           const mockResult = generateMockBacktestResult(
             strategyId,
-            data.strategyId,
+            `전략 ${strategyId}`,
             data.startDate,
             data.endDate,
             data.initialCapital,
