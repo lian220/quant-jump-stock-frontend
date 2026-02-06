@@ -7,10 +7,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
 
   try {
+    const authorization = request.headers.get('authorization');
     const response = await fetch(`${API_URL}/api/v1/backtest/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...(authorization && { Authorization: authorization }),
       },
     });
 

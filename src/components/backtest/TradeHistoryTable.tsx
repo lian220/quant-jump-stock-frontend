@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { BacktestTradeResponse } from '@/types/backtest';
@@ -13,6 +13,14 @@ const PAGE_SIZE = 10;
 
 export default function TradeHistoryTable({ trades }: TradeHistoryTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+
+  // trades가 변경되면 페이지 리셋
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(trades.length / PAGE_SIZE));
+    if (currentPage > maxPage) {
+      setCurrentPage(1);
+    }
+  }, [trades, currentPage]);
 
   const totalPages = Math.ceil(trades.length / PAGE_SIZE);
   const startIdx = (currentPage - 1) * PAGE_SIZE;

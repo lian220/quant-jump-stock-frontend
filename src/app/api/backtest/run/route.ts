@@ -4,13 +4,20 @@ import { NextRequest, NextResponse } from 'next/server';
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
 export async function POST(request: NextRequest) {
+  let body: unknown;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: '잘못된 요청 형식입니다.' }, { status: 400 });
+  }
 
+  try {
+    const authorization = request.headers.get('authorization');
     const response = await fetch(`${API_URL}/api/v1/backtest/run`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(authorization && { Authorization: authorization }),
       },
       body: JSON.stringify(body),
     });

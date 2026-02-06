@@ -303,7 +303,7 @@ export default function StrategyDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {strategy.equityCurve.length > 0 ? (
+                {(strategy.equityCurve?.length ?? 0) > 0 ? (
                   <div className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
@@ -384,9 +384,9 @@ export default function StrategyDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {strategy.rules.length > 0 ? (
+                {(strategy.rules?.length ?? 0) > 0 ? (
                   <div className="space-y-4">
-                    {strategy.rules.map((rule, index) => (
+                    {(strategy.rules ?? []).map((rule, index) => (
                       <div key={rule.id}>
                         {index > 0 && <Separator className="bg-slate-700 my-4" />}
                         <div className="flex items-start gap-4">
@@ -439,7 +439,7 @@ export default function StrategyDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {strategy.monthlyReturns.length > 0 ? (
+                {(strategy.monthlyReturns?.length ?? 0) > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -456,10 +456,12 @@ export default function StrategyDetailPage() {
                       <tbody>
                         {(() => {
                           const years = [
-                            ...new Set(strategy.monthlyReturns.map((r) => r.year)),
+                            ...new Set((strategy.monthlyReturns ?? []).map((r) => r.year)),
                           ].sort((a, b) => b - a);
                           return years.map((year) => {
-                            const yearData = strategy.monthlyReturns.filter((r) => r.year === year);
+                            const yearData = (strategy.monthlyReturns ?? []).filter(
+                              (r) => r.year === year,
+                            );
                             const yearTotal = yearData.reduce((sum, r) => sum + r.return, 0);
                             return (
                               <tr key={year} className="border-t border-slate-700">

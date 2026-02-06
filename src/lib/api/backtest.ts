@@ -14,6 +14,7 @@ export async function runBacktest(req: BacktestRunRequest): Promise<BacktestRunR
   const response = await fetch('/api/backtest/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(req),
   });
 
@@ -27,10 +28,15 @@ export async function runBacktest(req: BacktestRunRequest): Promise<BacktestRunR
 /**
  * 백테스트 결과 조회
  */
-export async function getBacktestResult(id: string): Promise<BacktestResultResponse> {
+export async function getBacktestResult(
+  id: string,
+  signal?: AbortSignal,
+): Promise<BacktestResultResponse> {
   const response = await fetch(`/api/backtest/${id}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    signal,
   });
 
   if (!response.ok) {
@@ -47,12 +53,17 @@ export async function getBacktestResult(id: string): Promise<BacktestResultRespo
 export async function pollBacktestResult(
   id: string,
   onProgress?: (status: string) => void,
+  signal?: AbortSignal,
 ): Promise<BacktestResultResponse> {
   const POLL_INTERVAL = 2000;
   const MAX_ATTEMPTS = 150; // 최대 5분
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const result = await getBacktestResult(id);
+    if (signal?.aborted) {
+      throw new DOMException('폴링이 취소되었습니다.', 'AbortError');
+    }
+
+    const result = await getBacktestResult(id, signal);
 
     if (onProgress) {
       onProgress(result.status);
@@ -62,7 +73,17 @@ export async function pollBacktestResult(
       return result;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL));
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, POLL_INTERVAL);
+      signal?.addEventListener(
+        'abort',
+        () => {
+          clearTimeout(timer);
+          reject(new DOMException('폴링이 취소되었습니다.', 'AbortError'));
+        },
+        { once: true },
+      );
+    });
   }
 
   throw new Error('백테스트 시간이 초과되었습니다.');

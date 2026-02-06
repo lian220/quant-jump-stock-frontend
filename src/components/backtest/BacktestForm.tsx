@@ -17,13 +17,18 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { BacktestRunRequest, BenchmarkType, RebalancePeriod } from '@/types/backtest';
 
-const backtestFormSchema = z.object({
-  startDate: z.string().min(1, '시작일을 입력하세요'),
-  endDate: z.string().min(1, '종료일을 입력하세요'),
-  initialCapital: z.number().min(1000000, '최소 100만원 이상 입력하세요'),
-  benchmark: z.string().min(1, '벤치마크를 선택하세요'),
-  rebalancePeriod: z.string().min(1, '리밸런싱 주기를 선택하세요'),
-});
+const backtestFormSchema = z
+  .object({
+    startDate: z.string().min(1, '시작일을 입력하세요'),
+    endDate: z.string().min(1, '종료일을 입력하세요'),
+    initialCapital: z.number().min(1000000, '최소 100만원 이상 입력하세요'),
+    benchmark: z.string().min(1, '벤치마크를 선택하세요'),
+    rebalancePeriod: z.string().min(1, '리밸런싱 주기를 선택하세요'),
+  })
+  .refine((data) => new Date(data.endDate) >= new Date(data.startDate), {
+    message: '종료일은 시작일 이후여야 합니다',
+    path: ['endDate'],
+  });
 
 type BacktestFormValues = z.infer<typeof backtestFormSchema>;
 

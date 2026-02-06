@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ export default function BacktestPage() {
   const [result, setResult] = useState<BacktestResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleSubmit = useCallback(
     async (data: BacktestRunRequest) => {
@@ -32,6 +33,11 @@ export default function BacktestPage() {
         setShowLoginPrompt(true);
         return;
       }
+
+      // 이전 폴링 취소
+      abortControllerRef.current?.abort();
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
 
       setShowLoginPrompt(false);
       setIsLoading(true);
@@ -45,32 +51,42 @@ export default function BacktestPage() {
         setStatus('RUNNING');
 
         // 폴링으로 결과 대기
-        const backtestResult = await pollBacktestResult(runResponse.backtestId, (s) => {
-          setStatus(s as BacktestStatus);
-        });
+        const backtestResult = await pollBacktestResult(
+          runResponse.backtestId,
+          (s) => {
+            setStatus(s as BacktestStatus);
+          },
+          abortController.signal,
+        );
 
         if (backtestResult.status === 'FAILED') {
           setError(backtestResult.errorMessage || '백테스트 실행에 실패했습니다.');
         } else {
           setResult(backtestResult);
         }
-      } catch {
-        // 백엔드 연결 실패 시 mock 데이터 사용
-        console.warn('백엔드 연결 실패, mock 데이터를 사용합니다.');
-        setStatus('RUNNING');
+      } catch (e) {
+        // AbortError는 무시
+        if (e instanceof DOMException && e.name === 'AbortError') return;
 
-        // mock 로딩 시뮬레이션
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        const mockResult = generateMockBacktestResult(
-          strategyId,
-          '모멘텀 듀얼 전략',
-          data.startDate,
-          data.endDate,
-          data.initialCapital,
-        );
-        setResult(mockResult);
-        setStatus('COMPLETED');
+        // 네트워크 오류(TypeError)만 mock fallback
+        if (e instanceof TypeError) {
+          console.warn('백엔드 연결 실패, mock 데이터를 사용합니다.');
+          setStatus('RUNNING');
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          const mockResult = generateMockBacktestResult(
+            strategyId,
+            data.strategyId,
+            data.startDate,
+            data.endDate,
+            data.initialCapital,
+          );
+          setResult(mockResult);
+          setStatus('COMPLETED');
+        } else {
+          // 그 외 에러 (4xx/5xx 등)는 에러 표시
+          setError(e instanceof Error ? e.message : '백테스트 실행에 실패했습니다.');
+          setStatus('FAILED');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -79,7 +95,7 @@ export default function BacktestPage() {
   );
 
   // 벤치마크 라벨
-  const benchmarkLabel = result?.equityCurve?.[0] ? 'KOSPI' : 'KOSPI';
+  const benchmarkLabel = result?.metrics ? (result.strategyName ?? 'KOSPI') : 'KOSPI';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
