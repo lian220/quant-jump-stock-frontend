@@ -10,10 +10,13 @@ export async function GET(request: NextRequest) {
   try {
     const url = `${API_URL}/api/v1/marketplace/strategies${queryString ? `?${queryString}` : ''}`;
 
+    const authorization = request.headers.get('authorization');
+
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...(authorization && { Authorization: authorization }),
       },
     });
 

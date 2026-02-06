@@ -9,46 +9,59 @@ import type { Strategy, StrategyDetail, EquityCurveData } from '@/types/strategy
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
 /**
+ * 숫자를 % 문자열로 포맷
+ */
+function formatPercent(value: number | undefined | null): string {
+  if (value === undefined || value === null) return 'N/A';
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toFixed(2)}%`;
+}
+
+/**
+ * 숫자를 소수점 2자리 문자열로 포맷
+ */
+function formatNumber(value: number | undefined | null): string {
+  if (value === undefined || value === null) return 'N/A';
+  return value.toFixed(2);
+}
+
+/**
  * 백엔드 Strategy를 프론트엔드 Strategy 타입으로 변환
  */
 function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
-  const backtestResult = backend.backtestResult;
+  const br = backend.backtestResult;
 
-  // category가 객체인 경우 code 추출
-  const categoryCode =
-    typeof backend.category === 'object' ? backend.category.code : backend.category;
+  // 기간 계산
+  let backtestPeriod = '2020-2024';
+  if (br?.startDate && br?.endDate) {
+    const startYear = br.startDate.substring(0, 4);
+    const endYear = br.endDate.substring(0, 4);
+    backtestPeriod = `${startYear}-${endYear}`;
+  }
 
   return {
     id: backend.id.toString(),
     name: backend.name,
     description: backend.description,
-    category: mapBackendCategoryToFrontend(categoryCode),
-    author: '퀀트점프', // 기본값
+    category: mapBackendCategoryToFrontend(backend.category.code),
+    author: '퀀트점프',
     authorAvatar: '',
 
-    // 성과 지표 (백테스트 결과가 있으면 사용, 없으면 기본값)
-    totalReturn: backtestResult
-      ? `${backtestResult.totalReturn >= 0 ? '+' : ''}${backtestResult.totalReturn.toFixed(1)}%`
-      : 'N/A',
-    annualReturn: backtestResult
-      ? `${backtestResult.cagr >= 0 ? '+' : ''}${backtestResult.cagr.toFixed(1)}%`
-      : 'N/A',
-    maxDrawdown: backtestResult ? `${backtestResult.mdd.toFixed(1)}%` : 'N/A',
-    winRate: backtestResult ? `${backtestResult.winRate.toFixed(0)}%` : 'N/A',
-    sharpeRatio: backtestResult ? backtestResult.sharpeRatio.toFixed(2) : 'N/A',
+    // 성과 지표 (숫자 → 포맷 문자열)
+    totalReturn: br ? formatPercent(br.totalReturn) : 'N/A',
+    annualReturn: br ? formatPercent(br.cagr) : 'N/A',
+    maxDrawdown: br ? formatPercent(br.mdd) : 'N/A',
+    winRate: br ? formatPercent(br.winRate) : 'N/A',
+    sharpeRatio: br ? formatNumber(br.sharpeRatio) : 'N/A',
 
-    // 리스크 레벨 계산 (MDD 기반)
-    riskLevel: calculateRiskLevel(backtestResult?.mdd),
+    riskLevel: calculateRiskLevel(br?.mdd),
 
-    minInvestment: 1000000, // 기본값
+    minInvestment: 1000000,
     subscribers: backend.subscriberCount,
     rating: backend.averageRating,
-    reviewCount: 0, // 백엔드에서 제공하지 않음
+    reviewCount: 0,
 
-    backtestPeriod:
-      backtestResult?.startDate && backtestResult?.endDate
-        ? `${backtestResult.startDate.slice(0, 7)} ~ ${backtestResult.endDate.slice(0, 7)}`
-        : 'N/A',
+    backtestPeriod,
     updatedAt: backend.createdAt,
     isPremium: backend.isPremium,
 
@@ -57,10 +70,10 @@ function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
 }
 
 /**
- * 백엔드 카테고리를 프론트엔드 카테고리로 매핑
+ * 백엔드 카테고리 코드를 프론트엔드 카테고리로 매핑
  */
 function mapBackendCategoryToFrontend(
-  category: string,
+  categoryCode: string,
 ): 'momentum' | 'value' | 'growth' | 'dividend' | 'factor' | 'all' {
   const mapping: Record<string, 'momentum' | 'value' | 'growth' | 'dividend' | 'factor'> = {
     MOMENTUM: 'momentum',
@@ -71,13 +84,13 @@ function mapBackendCategoryToFrontend(
     ML_PREDICTION: 'factor',
   };
 
-  return mapping[category] || 'factor';
+  return mapping[categoryCode] || 'factor';
 }
 
 /**
- * MDD 기반 리스크 레벨 계산
+ * MDD 기반 리스크 레벨 계산 (숫자 직접 사용)
  */
-function calculateRiskLevel(mdd: number | undefined): 'low' | 'medium' | 'high' {
+function calculateRiskLevel(mdd: number | undefined | null): 'low' | 'medium' | 'high' {
   if (mdd === undefined || mdd === null) return 'medium';
 
   const mddValue = Math.abs(mdd);
@@ -92,11 +105,8 @@ function calculateRiskLevel(mdd: number | undefined): 'low' | 'medium' | 'high' 
  */
 function generateTags(backend: BackendStrategy): string[] {
   const tags: string[] = [];
+  const categoryCode = backend.category.code;
 
-  const categoryCode =
-    typeof backend.category === 'object' ? backend.category.code : backend.category;
-
-  // 카테고리 기반 태그
   if (categoryCode === 'ML_PREDICTION') {
     tags.push('AI', '머신러닝');
   }
@@ -107,15 +117,13 @@ function generateTags(backend: BackendStrategy): string[] {
     tags.push('가치투자', '장기투자');
   }
 
-  // 리밸런싱 빈도
   tags.push(backend.rebalanceFrequency.toLowerCase());
 
-  // 프리미엄 여부
   if (backend.isPremium) {
     tags.push('프리미엄');
   }
 
-  return tags.slice(0, 3); // 최대 3개
+  return tags.slice(0, 3);
 }
 
 /**
@@ -178,8 +186,8 @@ function mapFrontendCategoryToBackend(category: string): string {
   const mapping: Record<string, string> = {
     momentum: 'MOMENTUM',
     value: 'VALUE',
-    growth: 'VALUE', // 성장주는 밸류로 매핑
-    dividend: 'VALUE', // 배당주는 밸류로 매핑
+    growth: 'VALUE',
+    dividend: 'VALUE',
     factor: 'QUANT_COMPOSITE',
   };
 
@@ -191,7 +199,6 @@ function mapFrontendCategoryToBackend(category: string): string {
  * 브라우저에서는 Next.js API Route 프록시를 통해 호출 (CORS 우회)
  */
 export async function getStrategyById(id: string): Promise<StrategyDetail> {
-  // 브라우저에서는 프록시 API 사용, 서버에서는 직접 호출
   const isBrowser = typeof window !== 'undefined';
   const url = isBrowser
     ? `/api/strategies/${id}`
@@ -223,28 +230,62 @@ export async function getStrategyById(id: string): Promise<StrategyDetail> {
 function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): StrategyDetail {
   const pm = backend.performanceMetrics;
 
-  // performanceMetrics → backtestResult 형식으로 변환하여 기존 매핑 재사용
-  const compatibleBackend = {
-    ...backend,
-    backtestResult: pm
-      ? {
-          totalReturn: pm.totalReturn,
-          cagr: pm.cagr,
-          sharpeRatio: pm.sharpeRatio,
-          mdd: pm.mdd,
-          winRate: pm.winRate,
-          volatility: pm.volatility,
-          startDate: pm.startDate,
-          endDate: pm.endDate,
-        }
-      : null,
-  } as BackendStrategy;
-
-  const baseStrategy = mapBackendStrategyToFrontend(compatibleBackend);
+  // 기간 계산
+  let backtestPeriod = '2020-2024';
+  if (pm?.startDate && pm?.endDate) {
+    const startYear = pm.startDate.substring(0, 4);
+    const endYear = pm.endDate.substring(0, 4);
+    backtestPeriod = `${startYear}-${endYear}`;
+  }
 
   return {
-    ...baseStrategy,
-    rules: [],
+    id: backend.id.toString(),
+    name: backend.name,
+    description: backend.description,
+    category: mapBackendCategoryToFrontend(backend.category.code),
+    author: '퀀트점프',
+    authorAvatar: '',
+
+    totalReturn: pm ? formatPercent(pm.totalReturn) : 'N/A',
+    annualReturn: pm ? formatPercent(pm.cagr) : 'N/A',
+    maxDrawdown: pm ? formatPercent(pm.mdd) : 'N/A',
+    winRate: pm ? formatPercent(pm.winRate) : 'N/A',
+    sharpeRatio: pm ? formatNumber(pm.sharpeRatio) : 'N/A',
+
+    riskLevel: calculateRiskLevel(pm?.mdd),
+
+    minInvestment: pm?.initialCapital ?? 1000000,
+    subscribers: backend.subscriberCount,
+    rating: backend.averageRating,
+    reviewCount: 0,
+
+    backtestPeriod,
+    updatedAt: backend.createdAt,
+    isPremium: backend.isPremium,
+
+    tags: generateTags({
+      ...backend,
+      backtestResult: pm
+        ? {
+            totalReturn: pm.totalReturn,
+            cagr: pm.cagr,
+            sharpeRatio: pm.sharpeRatio,
+            mdd: pm.mdd,
+            winRate: pm.winRate,
+            volatility: pm.volatility,
+            startDate: pm.startDate,
+            endDate: pm.endDate,
+          }
+        : null,
+    }),
+
+    rules: (backend.rules || []).map((r) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      type: r.type as 'entry' | 'exit' | 'filter' | 'rebalance',
+      parameters: r.parameters as Record<string, string | number>,
+    })),
     equityCurve: (backend.equityCurve || []).map(
       (point): EquityCurveData => ({
         date: point.date,
@@ -252,7 +293,23 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
         benchmark: point.benchmark,
       }),
     ),
-    monthlyReturns: [],
+    monthlyReturns: (backend.monthlyReturns || []).map((m) => ({
+      year: m.year,
+      month: m.month,
+      return: m.returnPct,
+    })),
+    trades: (backend.trades || []).map((t) => ({
+      tradeDate: t.tradeDate,
+      ticker: t.ticker,
+      side: t.side as 'BUY' | 'SELL',
+      quantity: t.quantity,
+      price: t.price,
+      amount: t.amount,
+      pnl: t.pnl,
+      pnlPercent: t.pnlPercent,
+      holdingDays: t.holdingDays,
+      signalReason: t.signalReason,
+    })),
   };
 }
 
@@ -269,12 +326,9 @@ export function generateMockStrategyDetail(id: string): StrategyDetail {
   const endDate = new Date('2024-12-31');
 
   for (let d = new Date(startDate); d <= endDate; d.setMonth(d.getMonth() + 1)) {
-    // 전략은 월평균 +1.5% ~ +3% 수익
     const strategyReturn = 1 + (Math.random() * 0.03 + 0.005);
-    // 벤치마크는 월평균 +0.5% ~ +1.5% 수익
     const benchmarkReturn = 1 + (Math.random() * 0.015 + 0.003);
 
-    // 가끔 하락
     if (Math.random() < 0.2) {
       strategyValue *= 1 - Math.random() * 0.08;
       benchmarkValue *= 1 - Math.random() * 0.1;
@@ -298,7 +352,7 @@ export function generateMockStrategyDetail(id: string): StrategyDetail {
       monthlyReturns.push({
         year,
         month,
-        return: Math.round((Math.random() * 20 - 5) * 10) / 10, // -5% ~ +15%
+        return: Math.round((Math.random() * 20 - 5) * 10) / 10,
       });
     }
   }
@@ -363,5 +417,6 @@ export function generateMockStrategyDetail(id: string): StrategyDetail {
 
     equityCurve,
     monthlyReturns,
+    trades: [],
   };
 }

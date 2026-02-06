@@ -2,3 +2,7 @@ export { StrategyCard } from './StrategyCard';
 export { StrategyFilter } from './StrategyFilter';
 export { StrategyGrid } from './StrategyGrid';
 export { StrategyPagination } from './StrategyPagination';
+export { MetricCard } from './MetricCard';
+export { InvestmentSummary } from './InvestmentSummary';
+export { EquityCurveChart } from './EquityCurveChart';
+export { TermTooltip } from './TermTooltip';

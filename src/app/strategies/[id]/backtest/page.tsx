@@ -24,6 +24,7 @@ export default function BacktestPage() {
   const [result, setResult] = useState<BacktestResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [selectedBenchmark, setSelectedBenchmark] = useState<string>('KOSPI');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // 컴포넌트 unmount 시 진행 중인 폴링 취소
@@ -47,6 +48,7 @@ export default function BacktestPage() {
       abortControllerRef.current = abortController;
 
       setShowLoginPrompt(false);
+      setSelectedBenchmark(data.benchmark);
       setIsLoading(true);
       setStatus('PENDING');
       setResult(null);
@@ -80,6 +82,7 @@ export default function BacktestPage() {
           console.warn('백엔드 연결 실패, mock 데이터를 사용합니다.');
           setStatus('RUNNING');
           await new Promise((resolve) => setTimeout(resolve, 1500));
+          if (abortController.signal.aborted) return;
           const mockResult = generateMockBacktestResult(
             strategyId,
             `전략 ${strategyId}`,
@@ -102,7 +105,7 @@ export default function BacktestPage() {
   );
 
   // 벤치마크 라벨
-  const benchmarkLabel = result?.metrics ? (result.strategyName ?? 'KOSPI') : 'KOSPI';
+  const benchmarkLabel = selectedBenchmark;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

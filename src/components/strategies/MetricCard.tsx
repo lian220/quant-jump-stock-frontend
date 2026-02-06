@@ -1,0 +1,53 @@
+'use client';
+
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { parseMetricValue, gradeMetric, type GradeResult } from '@/lib/strategy-metrics';
+import { TermTooltip } from './TermTooltip';
+
+interface MetricCardProps {
+  value: string;
+  label: string;
+  termKey?: string;
+  metricKey?: string;
+  valueColor?: string;
+  formatter?: (value: string) => string;
+}
+
+export function MetricCard({
+  value,
+  label,
+  termKey,
+  metricKey,
+  valueColor = 'text-white',
+  formatter,
+}: MetricCardProps) {
+  const displayValue = formatter ? formatter(value) : value;
+
+  let gradeResult: GradeResult | null = null;
+  if (metricKey) {
+    const numValue = parseMetricValue(value);
+    if (numValue !== null) {
+      gradeResult = gradeMetric(metricKey, numValue);
+    }
+  }
+
+  return (
+    <Card className="bg-slate-800/50 border-slate-700 relative">
+      {gradeResult && (
+        <div className="absolute top-3 right-3 flex flex-col items-center gap-1">
+          <div
+            className={`h-2 w-2 rounded-full ${gradeResult.color} shadow-[0_0_6px] ${gradeResult.glowColor}`}
+          />
+          <span className="text-[10px] text-slate-400">{gradeResult.label}</span>
+        </div>
+      )}
+      <CardContent className="pt-6 text-center">
+        <p className={`text-2xl font-bold ${valueColor}`}>{displayValue}</p>
+        <p className="text-xs text-slate-400 mt-1">
+          {termKey ? <TermTooltip termKey={termKey}>{label}</TermTooltip> : label}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
