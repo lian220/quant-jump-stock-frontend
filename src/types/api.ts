@@ -4,7 +4,7 @@ export interface BackendStrategy {
   id: number;
   name: string;
   description: string;
-  category: string;
+  category: string | { id: number; code: string; name: string };
   isPremium: boolean;
   subscriberCount: number;
   averageRating: number;
@@ -14,12 +14,37 @@ export interface BackendStrategy {
 }
 
 export interface BacktestResult {
-  totalReturn: string;
-  cagr: string;
-  sharpeRatio: string;
-  mdd: string;
-  winRate: string;
-  period: string;
+  totalReturn: number;
+  cagr: number;
+  sharpeRatio: number;
+  mdd: number;
+  winRate: number;
+  volatility?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+// 전략 상세 API의 performanceMetrics (backtestResult보다 상세)
+export interface PerformanceMetrics {
+  cagr: number;
+  mdd: number;
+  sharpeRatio: number;
+  sortinoRatio: number;
+  totalReturn: number;
+  volatility: number;
+  winRate: number;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  avgWin: number;
+  avgLoss: number;
+  benchmarkReturn: number | null;
+  alpha: number | null;
+  beta: number | null;
+  initialCapital: number;
+  finalValue: number;
+  startDate: string;
+  endDate: string;
 }
 
 export interface BackendPagination {
@@ -46,32 +71,24 @@ export interface StrategyListParams {
   size?: number;
 }
 
-// 전략 상세 응답 타입
-export interface BackendStrategyDetail extends BackendStrategy {
-  // 전략 조건 (룰)
-  rules: StrategyRule[];
-  // 수익 곡선 데이터
+// 전략 상세 응답 타입 (performanceMetrics 사용, backtestResult 없음)
+export interface BackendStrategyDetail extends Omit<BackendStrategy, 'backtestResult'> {
+  performanceMetrics: PerformanceMetrics | null;
   equityCurve: EquityCurvePoint[];
-  // 월별 수익률
-  monthlyReturns: MonthlyReturn[];
+  currentHoldings: CurrentHolding[];
 }
 
-export interface StrategyRule {
-  id: number;
-  name: string;
-  description: string;
-  type: 'ENTRY' | 'EXIT' | 'FILTER' | 'REBALANCE';
-  parameters: Record<string, string | number>;
+export interface CurrentHolding {
+  ticker: string;
+  quantity: number;
+  avgPrice: number;
+  currentPrice: number;
+  pnl: number;
+  pnlPercent: number;
 }
 
 export interface EquityCurvePoint {
   date: string;
   value: number;
   benchmark?: number;
-}
-
-export interface MonthlyReturn {
-  year: number;
-  month: number;
-  return: number;
 }

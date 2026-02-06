@@ -4,7 +4,7 @@ import type {
   BackendStrategy,
   BackendStrategyDetail,
 } from '@/types/api';
-import type { Strategy, StrategyDetail, StrategyRuleItem, EquityCurveData } from '@/types/strategy';
+import type { Strategy, StrategyDetail, EquityCurveData } from '@/types/strategy';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
@@ -14,20 +14,28 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
   const backtestResult = backend.backtestResult;
 
+  // category가 객체인 경우 code 추출
+  const categoryCode =
+    typeof backend.category === 'object' ? backend.category.code : backend.category;
+
   return {
     id: backend.id.toString(),
     name: backend.name,
     description: backend.description,
-    category: mapBackendCategoryToFrontend(backend.category),
+    category: mapBackendCategoryToFrontend(categoryCode),
     author: '퀀트점프', // 기본값
     authorAvatar: '',
 
     // 성과 지표 (백테스트 결과가 있으면 사용, 없으면 기본값)
-    totalReturn: backtestResult?.totalReturn || 'N/A',
-    annualReturn: backtestResult?.cagr || 'N/A',
-    maxDrawdown: backtestResult?.mdd || 'N/A',
-    winRate: backtestResult?.winRate || 'N/A',
-    sharpeRatio: backtestResult?.sharpeRatio || 'N/A',
+    totalReturn: backtestResult
+      ? `${backtestResult.totalReturn >= 0 ? '+' : ''}${backtestResult.totalReturn.toFixed(1)}%`
+      : 'N/A',
+    annualReturn: backtestResult
+      ? `${backtestResult.cagr >= 0 ? '+' : ''}${backtestResult.cagr.toFixed(1)}%`
+      : 'N/A',
+    maxDrawdown: backtestResult ? `${backtestResult.mdd.toFixed(1)}%` : 'N/A',
+    winRate: backtestResult ? `${backtestResult.winRate.toFixed(0)}%` : 'N/A',
+    sharpeRatio: backtestResult ? backtestResult.sharpeRatio.toFixed(2) : 'N/A',
 
     // 리스크 레벨 계산 (MDD 기반)
     riskLevel: calculateRiskLevel(backtestResult?.mdd),
@@ -37,7 +45,10 @@ function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
     rating: backend.averageRating,
     reviewCount: 0, // 백엔드에서 제공하지 않음
 
-    backtestPeriod: backtestResult?.period || '2020-2024',
+    backtestPeriod:
+      backtestResult?.startDate && backtestResult?.endDate
+        ? `${backtestResult.startDate.slice(0, 7)} ~ ${backtestResult.endDate.slice(0, 7)}`
+        : 'N/A',
     updatedAt: backend.createdAt,
     isPremium: backend.isPremium,
 
@@ -66,10 +77,10 @@ function mapBackendCategoryToFrontend(
 /**
  * MDD 기반 리스크 레벨 계산
  */
-function calculateRiskLevel(mdd: string | undefined): 'low' | 'medium' | 'high' {
-  if (!mdd || mdd === 'N/A') return 'medium';
+function calculateRiskLevel(mdd: number | undefined): 'low' | 'medium' | 'high' {
+  if (mdd === undefined || mdd === null) return 'medium';
 
-  const mddValue = Math.abs(parseFloat(mdd.replace('%', '')));
+  const mddValue = Math.abs(mdd);
 
   if (mddValue < 15) return 'low';
   if (mddValue < 25) return 'medium';
@@ -82,14 +93,17 @@ function calculateRiskLevel(mdd: string | undefined): 'low' | 'medium' | 'high' 
 function generateTags(backend: BackendStrategy): string[] {
   const tags: string[] = [];
 
+  const categoryCode =
+    typeof backend.category === 'object' ? backend.category.code : backend.category;
+
   // 카테고리 기반 태그
-  if (backend.category === 'ML_PREDICTION') {
+  if (categoryCode === 'ML_PREDICTION') {
     tags.push('AI', '머신러닝');
   }
-  if (backend.category === 'MOMENTUM') {
+  if (categoryCode === 'MOMENTUM') {
     tags.push('모멘텀', '추세추종');
   }
-  if (backend.category === 'VALUE') {
+  if (categoryCode === 'VALUE') {
     tags.push('가치투자', '장기투자');
   }
 
@@ -131,7 +145,10 @@ export async function getStrategies(
     queryParams.append('size', params.size.toString());
   }
 
-  const url = `${API_URL}/api/v1/marketplace/strategies?${queryParams.toString()}`;
+  // 브라우저에서는 프록시 API 사용, 서버에서는 직접 호출
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? `/api/strategies` : `${API_URL}/api/v1/marketplace/strategies`;
+  const url = `${baseUrl}?${queryParams.toString()}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -201,21 +218,33 @@ export async function getStrategyById(id: string): Promise<StrategyDetail> {
 
 /**
  * 백엔드 전략 상세를 프론트엔드 타입으로 변환
+ * 상세 API는 backtestResult 대신 performanceMetrics를 반환
  */
 function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): StrategyDetail {
-  const baseStrategy = mapBackendStrategyToFrontend(backend);
+  const pm = backend.performanceMetrics;
+
+  // performanceMetrics → backtestResult 형식으로 변환하여 기존 매핑 재사용
+  const compatibleBackend = {
+    ...backend,
+    backtestResult: pm
+      ? {
+          totalReturn: pm.totalReturn,
+          cagr: pm.cagr,
+          sharpeRatio: pm.sharpeRatio,
+          mdd: pm.mdd,
+          winRate: pm.winRate,
+          volatility: pm.volatility,
+          startDate: pm.startDate,
+          endDate: pm.endDate,
+        }
+      : null,
+  } as BackendStrategy;
+
+  const baseStrategy = mapBackendStrategyToFrontend(compatibleBackend);
 
   return {
     ...baseStrategy,
-    rules: (backend.rules || []).map(
-      (rule): StrategyRuleItem => ({
-        id: rule.id,
-        name: rule.name,
-        description: rule.description,
-        type: rule.type.toLowerCase() as 'entry' | 'exit' | 'filter' | 'rebalance',
-        parameters: rule.parameters,
-      }),
-    ),
+    rules: [],
     equityCurve: (backend.equityCurve || []).map(
       (point): EquityCurveData => ({
         date: point.date,
@@ -223,7 +252,7 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
         benchmark: point.benchmark,
       }),
     ),
-    monthlyReturns: backend.monthlyReturns || [],
+    monthlyReturns: [],
   };
 }
 
