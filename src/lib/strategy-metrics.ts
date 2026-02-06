@@ -14,8 +14,8 @@ export function parseMetricValue(value: string): number | null {
   if (!value || value === 'N/A') return null;
   const cleaned = value.replace(/[^0-9.\-]/g, '');
   const parsed = parseFloat(cleaned);
-  // 원본에 '-'가 있으면 음수로 처리
-  if (value.includes('-') && parsed > 0) return -parsed;
+  // 첫 번째 유의미 문자가 '-'이면 음수로 처리
+  if (/^\s*-/.test(value) && parsed > 0) return -parsed;
   return isNaN(parsed) ? null : parsed;
 }
 
@@ -127,13 +127,14 @@ export function calculateInvestmentOutcome(
 // 한국식 금액 포맷 (만원 단위)
 export function formatKoreanCurrency(amount: number): string {
   const absAmount = Math.abs(amount);
+  const sign = amount < 0 ? '-' : '';
   if (absAmount >= 100000000) {
     const eok = Math.floor(absAmount / 100000000);
     const man = Math.floor((absAmount % 100000000) / 10000);
-    return man > 0 ? `${eok}억 ${man.toLocaleString()}만` : `${eok}억`;
+    return man > 0 ? `${sign}${eok}억 ${man.toLocaleString()}만` : `${sign}${eok}억`;
   }
   if (absAmount >= 10000) {
-    return `${Math.floor(absAmount / 10000).toLocaleString()}만`;
+    return `${sign}${Math.floor(absAmount / 10000).toLocaleString()}만`;
   }
-  return absAmount.toLocaleString();
+  return `${sign}${absAmount.toLocaleString()}`;
 }
