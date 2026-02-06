@@ -39,6 +39,10 @@ function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
     backtestPeriod = `${startYear}-${endYear}`;
   }
 
+  // category가 객체인 경우 code 추출
+  const categoryCode =
+    typeof backend.category === 'object' ? backend.category.code : backend.category;
+
   return {
     id: backend.id.toString(),
     name: backend.name,
@@ -153,7 +157,10 @@ export async function getStrategies(
     queryParams.append('size', params.size.toString());
   }
 
-  const url = `${API_URL}/api/v1/marketplace/strategies?${queryParams.toString()}`;
+  // 브라우저에서는 프록시 API 사용, 서버에서는 직접 호출
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? `/api/strategies` : `${API_URL}/api/v1/marketplace/strategies`;
+  const url = `${baseUrl}?${queryParams.toString()}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -222,6 +229,7 @@ export async function getStrategyById(id: string): Promise<StrategyDetail> {
 
 /**
  * 백엔드 전략 상세를 프론트엔드 타입으로 변환
+ * 상세 API는 backtestResult 대신 performanceMetrics를 반환
  */
 function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): StrategyDetail {
   const pm = backend.performanceMetrics;

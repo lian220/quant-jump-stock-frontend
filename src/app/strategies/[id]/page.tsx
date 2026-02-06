@@ -265,43 +265,47 @@ export default function StrategyDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {strategy.rules.map((rule, index) => (
-                    <div key={rule.id}>
-                      {index > 0 && <Separator className="bg-slate-700 my-4" />}
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                          <Badge className={getRuleTypeColor(rule.type)}>
-                            {getRuleTypeLabel(rule.type)}
-                          </Badge>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-white font-medium mb-1">{rule.name}</h4>
-                          <p className="text-slate-400 text-sm mb-2">{rule.description}</p>
-                          {Object.keys(rule.parameters).length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                              {Object.entries(rule.parameters).map(([key, value]) => (
-                                <span
-                                  key={key}
-                                  className="text-xs bg-slate-700/50 text-slate-300 px-2 py-1 rounded"
-                                >
-                                  {key}: {value}
-                                  {typeof value === 'number' && key.includes('Period')
-                                    ? '개월'
-                                    : typeof value === 'number' && key.includes('Rate')
-                                      ? '%'
-                                      : typeof value === 'number' && key.includes('Loss')
+                {(strategy.rules?.length ?? 0) > 0 ? (
+                  <div className="space-y-4">
+                    {(strategy.rules ?? []).map((rule, index) => (
+                      <div key={rule.id}>
+                        {index > 0 && <Separator className="bg-slate-700 my-4" />}
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0">
+                            <Badge className={getRuleTypeColor(rule.type)}>
+                              {getRuleTypeLabel(rule.type)}
+                            </Badge>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-white font-medium mb-1">{rule.name}</h4>
+                            <p className="text-slate-400 text-sm mb-2">{rule.description}</p>
+                            {Object.keys(rule.parameters).length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {Object.entries(rule.parameters).map(([key, value]) => (
+                                  <span
+                                    key={key}
+                                    className="text-xs bg-slate-700/50 text-slate-300 px-2 py-1 rounded"
+                                  >
+                                    {key}: {value}
+                                    {typeof value === 'number' && key.includes('Period')
+                                      ? '개월'
+                                      : typeof value === 'number' && key.includes('Rate')
                                         ? '%'
-                                        : ''}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                                        : typeof value === 'number' && key.includes('Loss')
+                                          ? '%'
+                                          : ''}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-500 text-center py-8">등록된 전략 조건이 없습니다</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -446,75 +450,98 @@ export default function StrategyDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr>
-                        <th className="text-left text-slate-400 py-2 px-3">연도</th>
-                        {Array.from({ length: 12 }, (_, i) => (
-                          <th key={i} className="text-center text-slate-400 py-2 px-2">
-                            {i + 1}월
-                          </th>
-                        ))}
-                        <th className="text-center text-slate-400 py-2 px-3">연간</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(() => {
-                        const years = [...new Set(strategy.monthlyReturns.map((r) => r.year))].sort(
-                          (a, b) => b - a,
-                        );
-                        return years.map((year) => {
-                          const yearData = strategy.monthlyReturns.filter((r) => r.year === year);
-                          const yearTotal = yearData.reduce((sum, r) => sum + r.return, 0);
-                          return (
-                            <tr key={year} className="border-t border-slate-700">
-                              <td className="text-white font-medium py-2 px-3">{year}</td>
-                              {Array.from({ length: 12 }, (_, month) => {
-                                const monthData = yearData.find((r) => r.month === month + 1);
-                                const returnVal = monthData?.return;
-                                return (
-                                  <td key={month} className="text-center py-2 px-2">
-                                    {returnVal !== undefined ? (
-                                      <span
-                                        className={`inline-block w-12 py-1 rounded text-xs font-mono ${
-                                          returnVal > 5
-                                            ? 'bg-emerald-500/30 text-emerald-300'
-                                            : returnVal > 0
-                                              ? 'bg-emerald-500/20 text-emerald-400'
-                                              : returnVal > -5
-                                                ? 'bg-red-500/20 text-red-400'
-                                                : 'bg-red-500/30 text-red-300'
-                                        }`}
-                                      >
-                                        {returnVal > 0 ? '+' : ''}
-                                        {returnVal.toFixed(1)}%
-                                      </span>
-                                    ) : (
-                                      <span className="text-slate-600">-</span>
-                                    )}
-                                  </td>
-                                );
-                              })}
-                              <td className="text-center py-2 px-3">
-                                <span
-                                  className={`font-medium ${yearTotal > 0 ? 'text-emerald-400' : 'text-red-400'}`}
-                                >
-                                  {yearTotal > 0 ? '+' : ''}
-                                  {yearTotal.toFixed(1)}%
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        });
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
+                {(strategy.monthlyReturns?.length ?? 0) > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr>
+                          <th className="text-left text-slate-400 py-2 px-3">연도</th>
+                          {Array.from({ length: 12 }, (_, i) => (
+                            <th key={i} className="text-center text-slate-400 py-2 px-2">
+                              {i + 1}월
+                            </th>
+                          ))}
+                          <th className="text-center text-slate-400 py-2 px-3">연간</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const years = [
+                            ...new Set((strategy.monthlyReturns ?? []).map((r) => r.year)),
+                          ].sort((a, b) => b - a);
+                          return years.map((year) => {
+                            const yearData = (strategy.monthlyReturns ?? []).filter(
+                              (r) => r.year === year,
+                            );
+                            const yearTotal = yearData.reduce((sum, r) => sum + r.return, 0);
+                            return (
+                              <tr key={year} className="border-t border-slate-700">
+                                <td className="text-white font-medium py-2 px-3">{year}</td>
+                                {Array.from({ length: 12 }, (_, month) => {
+                                  const monthData = yearData.find((r) => r.month === month + 1);
+                                  const returnVal = monthData?.return;
+                                  return (
+                                    <td key={month} className="text-center py-2 px-2">
+                                      {returnVal !== undefined ? (
+                                        <span
+                                          className={`inline-block w-12 py-1 rounded text-xs font-mono ${
+                                            returnVal > 5
+                                              ? 'bg-emerald-500/30 text-emerald-300'
+                                              : returnVal > 0
+                                                ? 'bg-emerald-500/20 text-emerald-400'
+                                                : returnVal > -5
+                                                  ? 'bg-red-500/20 text-red-400'
+                                                  : 'bg-red-500/30 text-red-300'
+                                          }`}
+                                        >
+                                          {returnVal > 0 ? '+' : ''}
+                                          {returnVal.toFixed(1)}%
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-600">-</span>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                                <td className="text-center py-2 px-3">
+                                  <span
+                                    className={`font-medium ${yearTotal > 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                                  >
+                                    {yearTotal > 0 ? '+' : ''}
+                                    {yearTotal.toFixed(1)}%
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-slate-500 text-center py-8">월별 수익률 데이터가 없습니다</p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* 백테스트 실행 */}
+        <Card className="bg-slate-800/50 border-slate-700 mt-8">
+          <CardContent className="py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-white mb-1">백테스트 실행</h3>
+                <p className="text-slate-400 text-sm">
+                  이 전략의 과거 성과를 직접 시뮬레이션해 보세요
+                </p>
+              </div>
+              <Link href={`/strategies/${id}/backtest`}>
+                <Button className="bg-cyan-600 hover:bg-cyan-700 px-6">백테스트 실행 →</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 구독 CTA 섹션 */}
         <Card className="bg-gradient-to-r from-emerald-900/50 to-cyan-900/50 border-emerald-500/30 mt-8">
