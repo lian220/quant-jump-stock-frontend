@@ -43,6 +43,7 @@ next-env.d.ts
 
 # Local configuration files
 .claude/
+.serena/
 *.local.json
 settings.local.json
 .settings.local.json
