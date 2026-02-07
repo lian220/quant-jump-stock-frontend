@@ -15,31 +15,62 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://alphafoundry.co.kr'),
   title: {
-    default: '퀀트점프 - AI 기반 스마트 투자 플랫폼',
-    template: '%s | 퀀트점프',
+    default: 'Alpha Foundry - AI 기반 스마트 투자 플랫폼',
+    template: '%s | Alpha Foundry',
   },
   description:
     'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼.',
-  keywords: ['퀀트투자', '주식투자', 'AI투자', '알고리즘트레이딩', '백테스팅', '실시간시세'],
-  authors: [{ name: '퀀트점프' }],
-  creator: '퀀트점프',
-  publisher: '퀀트점프',
+  keywords: [
+    '퀀트투자',
+    '주식투자',
+    'AI투자',
+    '알고리즘트레이딩',
+    '백테스팅',
+    '실시간시세',
+    '주식분석',
+    '퀀트전략',
+    '모멘텀투자',
+    '자동매매',
+  ],
+  authors: [{ name: 'Alpha Foundry' }],
+  creator: 'Alpha Foundry',
+  publisher: 'Alpha Foundry',
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
-    siteName: '퀀트점프',
-    title: '퀀트점프 - AI 기반 스마트 투자 플랫폼',
-    description: 'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요.',
+    siteName: 'Alpha Foundry',
+    title: 'Alpha Foundry - AI 기반 스마트 투자 플랫폼',
+    description:
+      'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼.',
+    images: [{ url: '/logo.png', width: 512, height: 512, alt: 'Alpha Foundry 로고' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '퀀트점프 - AI 기반 스마트 투자 플랫폼',
+    title: 'Alpha Foundry - AI 기반 스마트 투자 플랫폼',
     description: 'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요.',
+    images: ['/logo.png'],
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: {
+      'naver-site-verification': process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION || '',
+    },
+  },
+  alternates: {
+    canonical: '/',
   },
 };
 

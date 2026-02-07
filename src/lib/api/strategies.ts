@@ -50,7 +50,7 @@ function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
     name: backend.name,
     description: backend.description,
     category: mapBackendCategoryToFrontend(backend.category.code),
-    author: '퀀트점프',
+    author: 'Alpha Foundry',
     authorAvatar: '',
 
     // 성과 지표 (숫자 → 포맷 문자열)
@@ -274,7 +274,7 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
     name: backend.name,
     description: backend.description,
     category: mapBackendCategoryToFrontend(backend.category.code),
-    author: '퀀트점프',
+    author: 'Alpha Foundry',
     authorAvatar: '',
 
     totalReturn: pm ? formatPercent(pm.totalReturn) : 'N/A',
@@ -448,7 +448,7 @@ export function generateMockStrategyDetail(id: string): StrategyDetail {
     description:
       '상대 모멘텀과 절대 모멘텀을 결합한 듀얼 모멘텀 전략입니다. 시장 상황에 따라 자동으로 주식과 채권 비중을 조절합니다.',
     category: 'momentum',
-    author: '퀀트점프',
+    author: 'Alpha Foundry',
     authorAvatar: '',
 
     totalReturn: '+156.3%',

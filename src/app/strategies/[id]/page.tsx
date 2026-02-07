@@ -138,7 +138,7 @@ export default function StrategyDetailPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <PageSEO
-        title={`${strategy.name} - 퀀트점프`}
+        title={`${strategy.name} - Alpha Foundry`}
         description={`${strategy.name} 전략 상세 - ${strategy.description}`}
       />
       {/* 헤더 */}
@@ -147,7 +147,7 @@ export default function StrategyDetailPage() {
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center space-x-2">
               <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                퀀트점프
+                Alpha Foundry
               </span>
               <Badge
                 variant="secondary"
@@ -725,8 +725,8 @@ export default function StrategyDetailPage() {
       <footer className="bg-slate-900 border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center text-slate-500">
-            <p className="mb-2">퀀트점프 - AI 기반 스마트 투자 플랫폼</p>
-            <p className="text-sm">© 2025 QuantJump. All rights reserved.</p>
+            <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
+            <p className="text-sm">© 2025 Alpha Foundry. All rights reserved.</p>
           </div>
         </div>
       </footer>
