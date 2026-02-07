@@ -2,16 +2,16 @@ import { SeoConfigProps } from '@/types/seo';
 
 // 사이트 기본 SEO 설정
 export const seoConfig: SeoConfigProps = {
-  defaultTitle: '퀀트점프 - AI 기반 스마트 투자 플랫폼',
-  titleTemplate: '%s | 퀀트점프',
+  defaultTitle: 'Alpha Foundry - AI 기반 스마트 투자 플랫폼',
+  titleTemplate: '%s | Alpha Foundry',
   defaultDescription:
     'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼.',
   defaultKeywords:
     '퀀트투자, 주식투자, AI투자, 알고리즘트레이딩, 백테스팅, 실시간시세, 주식분석, 퀀트전략, 모멘텀투자, 자동매매',
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://quantjump.co.kr',
-  siteName: '퀀트점프',
-  defaultImage: '/og-image.jpg',
-  twitterUsername: '@quantjump',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://alphafoundry.co.kr',
+  siteName: 'Alpha Foundry',
+  defaultImage: '/logo.png',
+  twitterUsername: '@alphafoundry',
   language: 'ko',
   locale: 'ko_KR',
 };
@@ -26,13 +26,13 @@ export const pageDefaults = {
   },
   auth: {
     title: '로그인 / 회원가입',
-    description: '퀀트점프에 가입하고 AI 기반 투자 분석 서비스를 무료로 시작하세요',
-    keywords: '퀀트점프 로그인, 회원가입, 주식투자 시작',
+    description: 'Alpha Foundry에 가입하고 AI 기반 투자 분석 서비스를 무료로 시작하세요',
+    keywords: 'Alpha Foundry 로그인, 회원가입, 주식투자 시작',
   },
   payment: {
     title: '프리미엄 플랜',
     description: '프리미엄 구독으로 고급 퀀트 전략과 실시간 매매 신호를 받아보세요',
-    keywords: '퀀트점프 프리미엄, 유료 구독, 투자 신호, VIP 서비스',
+    keywords: 'Alpha Foundry 프리미엄, 유료 구독, 투자 신호, VIP 서비스',
   },
 } as const;
 
@@ -54,7 +54,7 @@ export const structuredDataTemplates = {
     url: seoConfig.siteUrl,
     logo: `${seoConfig.siteUrl}/logo.png`,
     description: seoConfig.defaultDescription,
-    sameAs: ['https://github.com/quantjump', 'https://twitter.com/quantjump'],
+    sameAs: ['https://github.com/alphafoundry', 'https://twitter.com/alphafoundry'],
   },
 
   // 웹사이트 정보
@@ -88,7 +88,7 @@ export const structuredDataTemplates = {
     },
     author: {
       '@type': 'Organization',
-      name: '퀀트점프',
+      name: 'Alpha Foundry',
     },
   },
 };

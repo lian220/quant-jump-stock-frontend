@@ -12,6 +12,7 @@ export interface BackendStrategy {
   description: string;
   category: BackendCategory;
   isPremium: boolean;
+  stockSelectionType: string;
   subscriberCount: number;
   averageRating: number;
   rebalanceFrequency: string;
@@ -110,6 +111,7 @@ export interface BackendStrategyDetail {
   description: string;
   category: BackendCategory;
   isPremium: boolean;
+  stockSelectionType: string;
   subscriberCount: number;
   averageRating: number;
   rebalanceFrequency: string;
@@ -125,5 +127,43 @@ export interface BackendStrategyDetail {
 export interface EquityCurvePoint {
   date: string;
   value: number;
-  benchmark?: number;
+}
+
+// 전략 기본 종목 타입
+export interface DefaultStockResponse {
+  id: number;
+  strategyId: number;
+  stockId: number;
+  ticker: string;
+  stockName: string;
+  stockNameEn: string | null;
+  market: string;
+  targetWeight: number;
+  memo: string | null;
+  createdAt: string;
+}
+
+export interface DefaultStockListResponse {
+  stocks: DefaultStockResponse[];
+  totalWeight: number;
+}
+
+// 사용자 포트폴리오 타입
+export interface PortfolioStockResponse {
+  id: number;
+  portfolioId: number;
+  stockId: number;
+  ticker: string;
+  stockName: string;
+  stockNameEn: string | null;
+  market: string;
+  targetWeight: number;
+  isFromStrategy: boolean;
+  memo: string | null;
+  addedAt: string;
+}
+
+export interface PortfolioStockListResponse {
+  stocks: PortfolioStockResponse[];
+  totalWeight: number;
 }

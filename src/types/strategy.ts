@@ -1,10 +1,11 @@
-// 전략 카테고리
+// 전략 카테고리 (백엔드 V17 마이그레이션 기준)
 export type StrategyCategory =
+  | 'value' // 가치투자
   | 'momentum' // 모멘텀
-  | 'value' // 밸류
-  | 'growth' // 성장주
-  | 'dividend' // 배당주
-  | 'factor' // 팩터
+  | 'asset_allocation' // 자산배분
+  | 'quant_composite' // 퀀트 복합
+  | 'seasonal' // 시즌널
+  | 'ml_prediction' // AI 예측
   | 'all'; // 전체
 
 // 리스크 레벨
@@ -45,6 +46,7 @@ export interface Strategy {
   backtestPeriod: string; // 백테스트 기간 (예: "2020-2024")
   updatedAt: string; // 마지막 업데이트
   isPremium: boolean; // 프리미엄 전략 여부
+  stockSelectionType?: 'SCREENING' | 'PORTFOLIO'; // 종목선정 방식
 
   // 태그
   tags: string[];
@@ -110,11 +112,27 @@ export interface StrategyRuleItem {
 export interface EquityCurveData {
   date: string;
   value: number;
-  benchmark?: number;
 }
 
 export interface MonthlyReturnData {
   year: number;
   month: number;
   return: number;
+}
+
+// 벤치마크 시계열 타입
+export interface BenchmarkSeriesPoint {
+  date: string;
+  value: number;
+}
+
+export interface BenchmarkSeries {
+  ticker: string;
+  displayName: string;
+  type: string;
+  points: BenchmarkSeriesPoint[];
+}
+
+export interface BenchmarkResponse {
+  benchmarks: BenchmarkSeries[];
 }

@@ -24,11 +24,12 @@ export function StrategyFilter({
 }: StrategyFilterProps) {
   const categories: { value: StrategyCategory; label: string }[] = [
     { value: 'all', label: '전체' },
+    { value: 'value', label: '가치투자' },
     { value: 'momentum', label: '모멘텀' },
-    { value: 'value', label: '밸류' },
-    { value: 'growth', label: '성장주' },
-    { value: 'dividend', label: '배당주' },
-    { value: 'factor', label: '팩터' },
+    { value: 'asset_allocation', label: '자산배분' },
+    { value: 'quant_composite', label: '퀀트 복합' },
+    { value: 'seasonal', label: '시즌널' },
+    { value: 'ml_prediction', label: 'AI 예측' },
   ];
 
   const riskLevels: { value: RiskLevel | 'all'; label: string }[] = [

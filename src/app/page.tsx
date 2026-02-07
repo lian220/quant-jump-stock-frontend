@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageSEO } from '@/components/seo';
 import { pageDefaults } from '@/lib/seo/config';
 import { getStrategies } from '@/lib/api/strategies';
+import { getCategoryLabel } from '@/lib/strategy-helpers';
 import type { Strategy } from '@/types/strategy';
 
 export default function Home() {
@@ -207,9 +209,16 @@ export default function Home() {
             <div className="flex justify-between items-center py-4">
               <div className="flex items-center space-x-8">
                 <div className="flex items-center space-x-2">
-                  <Link href="/">
+                  <Link href="/" className="flex items-center space-x-2">
+                    <Image
+                      src="/main_logo.png"
+                      alt="Alpha Foundry Logo"
+                      width={36}
+                      height={36}
+                      className="rounded-lg"
+                    />
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
-                      퀀트점프
+                      Alpha Foundry
                     </h1>
                   </Link>
                   <Badge
@@ -226,6 +235,12 @@ export default function Home() {
                     className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
                   >
                     전략 마켓플레이스
+                  </Link>
+                  <Link
+                    href="/stocks"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
+                  >
+                    종목 탐색
                   </Link>
                   <Link
                     href="#features"
@@ -351,14 +366,15 @@ export default function Home() {
                         <div className="flex justify-between items-start mb-2">
                           <Badge
                             className={`
-                              ${strategy.category === 'momentum' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : ''}
                               ${strategy.category === 'value' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : ''}
-                              ${strategy.category === 'factor' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : ''}
+                              ${strategy.category === 'momentum' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : ''}
+                              ${strategy.category === 'asset_allocation' ? 'bg-green-500/20 text-green-400 border-green-500/30' : ''}
+                              ${strategy.category === 'quant_composite' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : ''}
+                              ${strategy.category === 'seasonal' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : ''}
+                              ${strategy.category === 'ml_prediction' ? 'bg-pink-500/20 text-pink-400 border-pink-500/30' : ''}
                             `}
                           >
-                            {strategy.category === 'momentum' && '모멘텀'}
-                            {strategy.category === 'value' && '가치'}
-                            {strategy.category === 'factor' && '팩터'}
+                            {getCategoryLabel(strategy.category)}
                           </Badge>
                           {strategy.isPremium && (
                             <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
@@ -423,7 +439,7 @@ export default function Home() {
           {/* 기능 섹션 */}
           <div className="mb-16">
             <h2 className="text-3xl font-bold text-center text-white mb-12">
-              퀀트점프의 핵심 기능
+              Alpha Foundry의 핵심 기능
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {features.map((feature, index) => (
@@ -780,8 +796,8 @@ export default function Home() {
         <footer className="bg-slate-900 border-t border-slate-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="text-center text-slate-500">
-              <p className="mb-2">퀀트점프 - AI 기반 스마트 투자 플랫폼</p>
-              <p className="text-sm">© 2025 QuantJump. All rights reserved.</p>
+              <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
+              <p className="text-sm">© 2025 Alpha Foundry. All rights reserved.</p>
               <p className="text-xs mt-2 text-slate-600">
                 투자에 대한 최종 결정은 본인에게 있으며, 투자 손실에 대한 책임은 투자자 본인에게
                 있습니다.

@@ -230,7 +230,7 @@ export const ArticleSEO: React.FC<ArticleSEOProps> = ({
         description,
         author: {
           '@type': 'Person',
-          name: author || '퀀트점프',
+          name: author || 'Alpha Foundry',
         },
         publisher: {
           '@type': 'Organization',

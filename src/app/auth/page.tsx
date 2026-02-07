@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { LoginForm, SignUpForm } from '@/components/auth';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -40,8 +41,15 @@ export default function AuthPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center mb-8">
+            <Image
+              src="/main_logo.png"
+              alt="Alpha Foundry Logo"
+              width={64}
+              height={64}
+              className="rounded-2xl mx-auto mb-4"
+            />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              퀀트점프
+              Alpha Foundry
             </h1>
             <p className="text-slate-400 mt-2">AI 기반 스마트 투자 플랫폼</p>
           </div>

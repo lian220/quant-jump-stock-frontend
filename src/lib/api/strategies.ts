@@ -3,8 +3,14 @@ import type {
   StrategyListParams,
   BackendStrategy,
   BackendStrategyDetail,
+  DefaultStockListResponse,
 } from '@/types/api';
-import type { Strategy, StrategyDetail, EquityCurveData } from '@/types/strategy';
+import type {
+  Strategy,
+  StrategyDetail,
+  EquityCurveData,
+  BenchmarkResponse,
+} from '@/types/strategy';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
@@ -44,7 +50,7 @@ function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
     name: backend.name,
     description: backend.description,
     category: mapBackendCategoryToFrontend(backend.category.code),
-    author: '퀀트점프',
+    author: 'Alpha Foundry',
     authorAvatar: '',
 
     // 성과 지표 (숫자 → 포맷 문자열)
@@ -64,27 +70,38 @@ function mapBackendStrategyToFrontend(backend: BackendStrategy): Strategy {
     backtestPeriod,
     updatedAt: backend.createdAt,
     isPremium: backend.isPremium,
+    stockSelectionType: backend.stockSelectionType as 'SCREENING' | 'PORTFOLIO',
 
     tags: generateTags(backend),
   };
 }
 
 /**
- * 백엔드 카테고리 코드를 프론트엔드 카테고리로 매핑
+ * 백엔드 카테고리 코드를 프론트엔드 카테고리로 매핑 (1:1)
  */
 function mapBackendCategoryToFrontend(
   categoryCode: string,
-): 'momentum' | 'value' | 'growth' | 'dividend' | 'factor' | 'all' {
-  const mapping: Record<string, 'momentum' | 'value' | 'growth' | 'dividend' | 'factor'> = {
-    MOMENTUM: 'momentum',
+):
+  | 'value'
+  | 'momentum'
+  | 'asset_allocation'
+  | 'quant_composite'
+  | 'seasonal'
+  | 'ml_prediction'
+  | 'all' {
+  const mapping: Record<
+    string,
+    'value' | 'momentum' | 'asset_allocation' | 'quant_composite' | 'seasonal' | 'ml_prediction'
+  > = {
     VALUE: 'value',
-    ASSET_ALLOCATION: 'factor',
-    QUANT_COMPOSITE: 'factor',
-    SEASONAL: 'momentum',
-    ML_PREDICTION: 'factor',
+    MOMENTUM: 'momentum',
+    ASSET_ALLOCATION: 'asset_allocation',
+    QUANT_COMPOSITE: 'quant_composite',
+    SEASONAL: 'seasonal',
+    ML_PREDICTION: 'ml_prediction',
   };
 
-  return mapping[categoryCode] || 'factor';
+  return mapping[categoryCode] || 'quant_composite';
 }
 
 /**
@@ -107,17 +124,30 @@ function generateTags(backend: BackendStrategy): string[] {
   const tags: string[] = [];
   const categoryCode = backend.category.code;
 
-  if (categoryCode === 'ML_PREDICTION') {
-    tags.push('AI', '머신러닝');
+  if (categoryCode === 'VALUE') {
+    tags.push('가치투자', '장기투자');
   }
   if (categoryCode === 'MOMENTUM') {
     tags.push('모멘텀', '추세추종');
   }
-  if (categoryCode === 'VALUE') {
-    tags.push('가치투자', '장기투자');
+  if (categoryCode === 'ASSET_ALLOCATION') {
+    tags.push('자산배분', '분산투자');
+  }
+  if (categoryCode === 'QUANT_COMPOSITE') {
+    tags.push('퀀트', '복합전략');
+  }
+  if (categoryCode === 'SEASONAL') {
+    tags.push('시즌널', '계절성');
+  }
+  if (categoryCode === 'ML_PREDICTION') {
+    tags.push('AI', '머신러닝');
   }
 
   tags.push(backend.rebalanceFrequency.toLowerCase());
+
+  if (backend.stockSelectionType === 'PORTFOLIO') {
+    tags.push('포트폴리오');
+  }
 
   if (backend.isPremium) {
     tags.push('프리미엄');
@@ -135,7 +165,7 @@ export async function getStrategies(
   const queryParams = new URLSearchParams();
 
   if (params.category && params.category !== 'all') {
-    queryParams.append('category', mapFrontendCategoryToBackend(params.category));
+    queryParams.append('categoryCode', mapFrontendCategoryToBackend(params.category));
   }
   if (params.minCagr !== undefined) {
     queryParams.append('minCagr', params.minCagr.toString());
@@ -180,15 +210,16 @@ export async function getStrategies(
 }
 
 /**
- * 프론트엔드 카테고리를 백엔드 카테고리로 매핑
+ * 프론트엔드 카테고리를 백엔드 카테고리로 매핑 (1:1)
  */
 function mapFrontendCategoryToBackend(category: string): string {
   const mapping: Record<string, string> = {
-    momentum: 'MOMENTUM',
     value: 'VALUE',
-    growth: 'VALUE',
-    dividend: 'VALUE',
-    factor: 'QUANT_COMPOSITE',
+    momentum: 'MOMENTUM',
+    asset_allocation: 'ASSET_ALLOCATION',
+    quant_composite: 'QUANT_COMPOSITE',
+    seasonal: 'SEASONAL',
+    ml_prediction: 'ML_PREDICTION',
   };
 
   return mapping[category] || category.toUpperCase();
@@ -243,7 +274,7 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
     name: backend.name,
     description: backend.description,
     category: mapBackendCategoryToFrontend(backend.category.code),
-    author: '퀀트점프',
+    author: 'Alpha Foundry',
     authorAvatar: '',
 
     totalReturn: pm ? formatPercent(pm.totalReturn) : 'N/A',
@@ -262,6 +293,7 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
     backtestPeriod,
     updatedAt: backend.createdAt,
     isPremium: backend.isPremium,
+    stockSelectionType: backend.stockSelectionType as 'SCREENING' | 'PORTFOLIO',
 
     tags: generateTags({
       ...backend,
@@ -290,7 +322,6 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
       (point): EquityCurveData => ({
         date: point.date,
         value: point.value,
-        benchmark: point.benchmark,
       }),
     ),
     monthlyReturns: (backend.monthlyReturns || []).map((m) => ({
@@ -314,33 +345,87 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
 }
 
 /**
+ * 전략 기본 종목(포트폴리오 구성) 조회
+ */
+export async function getStrategyDefaultStocks(
+  strategyId: string,
+): Promise<DefaultStockListResponse> {
+  const isBrowser = typeof window !== 'undefined';
+  const url = isBrowser
+    ? `/api/strategies/${strategyId}/default-stocks`
+    : `${API_URL}/api/v1/strategies/${strategyId}/default-stocks`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error(`기본 종목 조회 실패: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 벤치마크 시계열 조회
+ */
+export async function getBenchmarkSeries(params: {
+  tickers: string[];
+  startDate: string;
+  endDate: string;
+  initialCapital?: number;
+}): Promise<BenchmarkResponse> {
+  const queryParams = new URLSearchParams({
+    tickers: params.tickers.join(','),
+    startDate: params.startDate,
+    endDate: params.endDate,
+  });
+  if (params.initialCapital !== undefined) {
+    queryParams.append('initialCapital', params.initialCapital.toString());
+  }
+
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? `/api/benchmarks/series` : `${API_URL}/api/v1/benchmarks/series`;
+  const url = `${baseUrl}?${queryParams.toString()}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    console.error('벤치마크 데이터 조회 실패:', response.statusText);
+    return { benchmarks: [] };
+  }
+
+  return response.json();
+}
+
+/**
  * Mock 데이터 생성 (백엔드 API 미구현 시 사용)
  */
 export function generateMockStrategyDetail(id: string): StrategyDetail {
   // 수익 곡선 mock 데이터 생성 (2020-2024)
   const equityCurve: EquityCurveData[] = [];
   let strategyValue = 10000;
-  let benchmarkValue = 10000;
 
   const startDate = new Date('2020-01-01');
   const endDate = new Date('2024-12-31');
 
   for (let d = new Date(startDate); d <= endDate; d.setMonth(d.getMonth() + 1)) {
     const strategyReturn = 1 + (Math.random() * 0.03 + 0.005);
-    const benchmarkReturn = 1 + (Math.random() * 0.015 + 0.003);
 
     if (Math.random() < 0.2) {
       strategyValue *= 1 - Math.random() * 0.08;
-      benchmarkValue *= 1 - Math.random() * 0.1;
     } else {
       strategyValue *= strategyReturn;
-      benchmarkValue *= benchmarkReturn;
     }
 
     equityCurve.push({
       date: d.toISOString().split('T')[0],
       value: Math.round(strategyValue),
-      benchmark: Math.round(benchmarkValue),
     });
   }
 
@@ -363,7 +448,7 @@ export function generateMockStrategyDetail(id: string): StrategyDetail {
     description:
       '상대 모멘텀과 절대 모멘텀을 결합한 듀얼 모멘텀 전략입니다. 시장 상황에 따라 자동으로 주식과 채권 비중을 조절합니다.',
     category: 'momentum',
-    author: '퀀트점프',
+    author: 'Alpha Foundry',
     authorAvatar: '',
 
     totalReturn: '+156.3%',
