@@ -14,16 +14,21 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TermTooltip } from './TermTooltip';
-import type { EquityCurveData } from '@/types/strategy';
+import type { EquityCurveData, BenchmarkSeries } from '@/types/strategy';
 
 interface EquityCurveChartProps {
   data: EquityCurveData[];
+  benchmarks?: BenchmarkSeries[];
 }
+
+// 벤치마크별 색상 (최대 5개)
+const BENCHMARK_COLORS = ['#94a3b8', '#f59e0b', '#a78bfa', '#f87171', '#38bdf8'];
 
 interface TooltipPayloadItem {
   value: number;
   dataKey: string;
   color: string;
+  name?: string;
 }
 
 interface CustomTooltipProps {
@@ -37,25 +42,17 @@ function CustomChartTooltip({
   payload,
   label,
   initialValue,
-}: CustomTooltipProps & { initialValue: number }) {
+  benchmarks,
+}: CustomTooltipProps & { initialValue: number; benchmarks?: BenchmarkSeries[] }) {
   if (!active || !payload?.length) return null;
 
   const date = new Date(label as string);
   const dateStr = `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
 
   const strategyEntry = payload.find((p) => p.dataKey === 'value');
-  const benchmarkEntry = payload.find((p) => p.dataKey === 'benchmark');
-
   const strategyValue = strategyEntry?.value ?? 0;
-  const benchmarkValue = benchmarkEntry?.value ?? 0;
-
   const strategyReturn =
     initialValue > 0 ? ((strategyValue - initialValue) / initialValue) * 100 : 0;
-  const benchmarkReturn =
-    benchmarkValue > 0 && initialValue > 0
-      ? ((benchmarkValue - initialValue) / initialValue) * 100
-      : 0;
-  const excessReturn = strategyReturn - benchmarkReturn;
 
   return (
     <div className="bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 shadow-xl">
@@ -75,50 +72,98 @@ function CustomChartTooltip({
             </span>
           </div>
         </div>
-        {benchmarkValue > 0 && (
-          <>
-            <div className="flex items-center justify-between gap-6">
-              <span className="text-xs text-slate-400">벤치마크</span>
-              <div className="text-right">
-                <span className="text-sm font-medium text-slate-300">
-                  {Math.round(benchmarkValue).toLocaleString()}원
-                </span>
+        {benchmarks?.map((bm, idx) => {
+          const bmEntry = payload.find((p) => p.dataKey === `bm_${bm.ticker}`);
+          const bmValue = bmEntry?.value ?? 0;
+          if (bmValue <= 0) return null;
+          const bmReturn = initialValue > 0 ? ((bmValue - initialValue) / initialValue) * 100 : 0;
+          const excessReturn = strategyReturn - bmReturn;
+          return (
+            <React.Fragment key={bm.ticker}>
+              <div className="flex items-center justify-between gap-6">
                 <span
-                  className={`text-xs ml-2 ${benchmarkReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                  className="text-xs"
+                  style={{ color: BENCHMARK_COLORS[idx % BENCHMARK_COLORS.length] }}
                 >
-                  ({benchmarkReturn >= 0 ? '+' : ''}
-                  {benchmarkReturn.toFixed(1)}%)
+                  {bm.displayName}
+                </span>
+                <div className="text-right">
+                  <span className="text-sm font-medium text-slate-300">
+                    {Math.round(bmValue).toLocaleString()}원
+                  </span>
+                  <span
+                    className={`text-xs ml-2 ${bmReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                  >
+                    ({bmReturn >= 0 ? '+' : ''}
+                    {bmReturn.toFixed(1)}%)
+                  </span>
+                </div>
+              </div>
+              <div className="border-t border-slate-700 pt-1.5 flex items-center justify-between gap-6">
+                <span className="text-xs text-cyan-400">초과수익 vs {bm.displayName}</span>
+                <span
+                  className={`text-xs font-medium ${excessReturn >= 0 ? 'text-cyan-400' : 'text-red-400'}`}
+                >
+                  {excessReturn >= 0 ? '+' : ''}
+                  {excessReturn.toFixed(1)}%p
                 </span>
               </div>
-            </div>
-            <div className="border-t border-slate-700 pt-1.5 flex items-center justify-between gap-6">
-              <span className="text-xs text-cyan-400">초과수익</span>
-              <span
-                className={`text-xs font-medium ${excessReturn >= 0 ? 'text-cyan-400' : 'text-red-400'}`}
-              >
-                {excessReturn >= 0 ? '+' : ''}
-                {excessReturn.toFixed(1)}%p
-              </span>
-            </div>
-          </>
-        )}
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-export function EquityCurveChart({ data }: EquityCurveChartProps) {
+export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
   const initialValue = data?.[0]?.value ?? 0;
 
-  // Y축 도메인 계산 (데이터 범위에 맞게 5% 패딩)
-  const allValues = (data || []).flatMap((d) =>
-    [d.value, d.benchmark].filter((v): v is number => v != null && v > 0),
+  // 벤치마크 데이터를 equityCurve 데이터와 merge
+  const mergedData = React.useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    // 기본 equityCurve를 date-keyed map으로
+    const dataMap = new Map<string, Record<string, number>>();
+    for (const point of data) {
+      dataMap.set(point.date, { value: point.value });
+    }
+
+    // 각 벤치마크의 points를 merge
+    if (benchmarks) {
+      for (const bm of benchmarks) {
+        for (const pt of bm.points) {
+          const existing = dataMap.get(pt.date);
+          if (existing) {
+            existing[`bm_${bm.ticker}`] = pt.value;
+          }
+        }
+      }
+    }
+
+    return Array.from(dataMap.entries())
+      .map(([date, values]) => ({ date, ...values }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [data, benchmarks]);
+
+  // Y축 도메인 계산
+  const allValues = mergedData.flatMap((d) =>
+    Object.entries(d)
+      .filter(([key]) => key !== 'date')
+      .map(([, v]) => Number(v))
+      .filter((v) => !isNaN(v) && v > 0),
   );
   const dataMin = allValues.length > 0 ? Math.min(...allValues) : 0;
   const dataMax = allValues.length > 0 ? Math.max(...allValues) : 0;
   const padding = (dataMax - dataMin) * 0.1 || dataMax * 0.05;
   const yMin = Math.max(0, Math.floor((dataMin - padding) / 100000) * 100000);
   const yMax = Math.ceil((dataMax + padding) / 100000) * 100000;
+
+  // 벤치마크 이름 조합
+  const benchmarkNames = benchmarks?.map((bm) => bm.displayName).join(', ') || '';
+  const descriptionText = benchmarkNames
+    ? `전략 vs ${benchmarkNames} 누적 수익률 비교`
+    : '전략 누적 수익률';
 
   if (!data || data.length === 0) {
     return (
@@ -128,7 +173,7 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
             <TermTooltip termKey="equityCurve">수익 곡선</TermTooltip>
           </CardTitle>
           <CardDescription className="text-slate-400">
-            전략 vs <TermTooltip termKey="benchmark">벤치마크(KOSPI)</TermTooltip> 누적 수익률 비교
+            전략 vs <TermTooltip termKey="benchmark">벤치마크</TermTooltip> 누적 수익률 비교
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -149,14 +194,12 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
         <CardTitle className="text-white">
           <TermTooltip termKey="equityCurve">수익 곡선</TermTooltip>
         </CardTitle>
-        <CardDescription className="text-slate-400">
-          전략 vs <TermTooltip termKey="benchmark">벤치마크(KOSPI)</TermTooltip> 누적 수익률 비교
-        </CardDescription>
+        <CardDescription className="text-slate-400">{descriptionText}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <ComposedChart data={mergedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <defs>
                 <linearGradient id="strategyGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#34d399" stopOpacity={0.3} />
@@ -169,8 +212,8 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
                 stroke="#94a3b8"
                 tick={{ fill: '#94a3b8', fontSize: 12 }}
                 tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+                  const d = new Date(value);
+                  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
                 }}
               />
               <YAxis
@@ -180,10 +223,16 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
                 domain={[yMin, yMax]}
               />
               <Tooltip
-                content={<CustomChartTooltip initialValue={initialValue} />}
+                content={<CustomChartTooltip initialValue={initialValue} benchmarks={benchmarks} />}
                 cursor={{ stroke: '#475569', strokeDasharray: '3 3' }}
               />
-              <Legend formatter={(value) => (value === 'value' ? '전략' : '벤치마크(KOSPI)')} />
+              <Legend
+                formatter={(value) => {
+                  if (value === 'value') return '전략';
+                  const bm = benchmarks?.find((b) => `bm_${b.ticker}` === value);
+                  return bm?.displayName || value;
+                }}
+              />
               <Area
                 type="monotone"
                 dataKey="value"
@@ -204,20 +253,23 @@ export function EquityCurveChart({ data }: EquityCurveChartProps) {
                   fill: '#0f172a',
                 }}
               />
-              <Line
-                type="monotone"
-                dataKey="benchmark"
-                stroke="#94a3b8"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{
-                  r: 4,
-                  stroke: '#94a3b8',
-                  strokeWidth: 2,
-                  fill: '#0f172a',
-                }}
-                strokeDasharray="5 5"
-              />
+              {benchmarks?.map((bm, idx) => (
+                <Line
+                  key={bm.ticker}
+                  type="monotone"
+                  dataKey={`bm_${bm.ticker}`}
+                  stroke={BENCHMARK_COLORS[idx % BENCHMARK_COLORS.length]}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{
+                    r: 4,
+                    stroke: BENCHMARK_COLORS[idx % BENCHMARK_COLORS.length],
+                    strokeWidth: 2,
+                    fill: '#0f172a',
+                  }}
+                  strokeDasharray="5 5"
+                />
+              ))}
             </ComposedChart>
           </ResponsiveContainer>
         </div>

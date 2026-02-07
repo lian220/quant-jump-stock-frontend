@@ -31,11 +31,12 @@ export const getRiskLabel = (level: string) => {
 // 카테고리 한글
 export const getCategoryLabel = (category: string) => {
   const labels: Record<string, string> = {
+    value: '가치투자',
     momentum: '모멘텀',
-    value: '밸류',
-    growth: '성장주',
-    dividend: '배당주',
-    factor: '팩터',
+    asset_allocation: '자산배분',
+    quant_composite: '퀀트 복합',
+    seasonal: '시즌널',
+    ml_prediction: 'AI 예측',
     all: '전체',
   };
   return labels[category] || category;

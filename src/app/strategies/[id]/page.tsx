@@ -21,8 +21,14 @@ import {
   getRuleTypeLabel,
   getRuleTypeColor,
 } from '@/lib/strategy-helpers';
-import { getStrategyById, generateMockStrategyDetail } from '@/lib/api/strategies';
-import type { StrategyDetail } from '@/types/strategy';
+import {
+  getStrategyById,
+  generateMockStrategyDetail,
+  getStrategyDefaultStocks,
+  getBenchmarkSeries,
+} from '@/lib/api/strategies';
+import type { StrategyDetail, BenchmarkSeries } from '@/types/strategy';
+import type { DefaultStockResponse } from '@/types/api';
 
 export default function StrategyDetailPage() {
   const params = useParams();
@@ -30,6 +36,9 @@ export default function StrategyDetailPage() {
   const id = params.id as string;
 
   const [strategy, setStrategy] = useState<StrategyDetail | null>(null);
+  const [defaultStocks, setDefaultStocks] = useState<DefaultStockResponse[]>([]);
+  const [defaultStocksTotalWeight, setDefaultStocksTotalWeight] = useState(0);
+  const [benchmarks, setBenchmarks] = useState<BenchmarkSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +50,37 @@ export default function StrategyDetailPage() {
       try {
         const data = await getStrategyById(id);
         setStrategy(data);
+
+        // PORTFOLIO 타입이면 기본 종목도 조회
+        if (data.stockSelectionType === 'PORTFOLIO') {
+          try {
+            const stocksData = await getStrategyDefaultStocks(id);
+            setDefaultStocks(stocksData.stocks);
+            setDefaultStocksTotalWeight(stocksData.totalWeight);
+          } catch {
+            setDefaultStocks([]);
+          }
+        }
+
+        // equityCurve가 있으면 벤치마크 시계열 조회
+        if (data.equityCurve && data.equityCurve.length > 0) {
+          const dates = data.equityCurve.map((p) => p.date).sort();
+          const startDate = dates[0];
+          const endDate = dates[dates.length - 1];
+          const initialCapital = data.equityCurve[0]?.value ?? 10000000;
+
+          try {
+            const bmData = await getBenchmarkSeries({
+              tickers: ['SPY', 'QQQ'],
+              startDate,
+              endDate,
+              initialCapital,
+            });
+            setBenchmarks(bmData.benchmarks);
+          } catch {
+            setBenchmarks([]);
+          }
+        }
       } catch (err) {
         console.error('Failed to fetch strategy:', err);
         // 백엔드 API가 없으면 mock 데이터 사용
@@ -213,6 +253,82 @@ export default function StrategyDetailPage() {
           />
         </div>
 
+        {/* 포트폴리오 구성 (PORTFOLIO 타입일 때만) */}
+        {strategy.stockSelectionType === 'PORTFOLIO' && defaultStocks.length > 0 && (
+          <Card className="bg-slate-800/50 border-slate-700 mb-8">
+            <CardHeader>
+              <CardTitle className="text-white">포트폴리오 구성</CardTitle>
+              <CardDescription className="text-slate-400">
+                이 전략의 기본 포트폴리오 종목과 비중입니다
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700">
+                      <th className="text-left text-slate-400 py-3 px-3">종목명</th>
+                      <th className="text-left text-slate-400 py-3 px-2">티커</th>
+                      <th className="text-left text-slate-400 py-3 px-2">시장</th>
+                      <th className="text-right text-slate-400 py-3 px-3">비중</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {defaultStocks.map((stock) => (
+                      <tr
+                        key={stock.id}
+                        className="border-t border-slate-700/50 hover:bg-slate-700/20"
+                      >
+                        <td className="text-white py-2.5 px-3 font-medium">
+                          {stock.stockName}
+                          {stock.stockNameEn && (
+                            <span className="ml-1 text-xs text-slate-500">
+                              ({stock.stockNameEn})
+                            </span>
+                          )}
+                        </td>
+                        <td className="text-slate-300 py-2.5 px-2 font-mono text-xs">
+                          {stock.ticker}
+                        </td>
+                        <td className="py-2.5 px-2">
+                          <Badge className="bg-slate-700/50 text-slate-300 border-slate-600">
+                            {stock.market}
+                          </Badge>
+                        </td>
+                        <td className="text-right py-2.5 px-3">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="w-24 bg-slate-700/50 rounded-full h-2">
+                              <div
+                                className="bg-emerald-500 h-2 rounded-full"
+                                style={{ width: `${Math.min(stock.targetWeight, 100)}%` }}
+                              />
+                            </div>
+                            <span className="text-emerald-400 font-semibold min-w-[3rem] text-right">
+                              {stock.targetWeight}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="border-t border-slate-600">
+                      <td colSpan={3} className="text-white font-semibold py-2.5 px-3">
+                        합계
+                      </td>
+                      <td className="text-right py-2.5 px-3">
+                        <span
+                          className={`font-bold ${Math.abs(defaultStocksTotalWeight - 100) < 0.01 ? 'text-emerald-400' : 'text-orange-400'}`}
+                        >
+                          {defaultStocksTotalWeight}%
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 투자 시뮬레이션 */}
         <InvestmentSummary
           totalReturn={strategy.totalReturn}
@@ -252,7 +368,7 @@ export default function StrategyDetailPage() {
 
           {/* 수익 곡선 탭 */}
           <TabsContent value="performance">
-            <EquityCurveChart data={strategy.equityCurve} />
+            <EquityCurveChart data={strategy.equityCurve} benchmarks={benchmarks} />
           </TabsContent>
 
           {/* 전략 조건 탭 */}

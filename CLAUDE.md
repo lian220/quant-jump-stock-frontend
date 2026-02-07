@@ -226,6 +226,14 @@ test: 테스트 추가/수정
 chore: 빌드/설정 변경
 ```
 
+## 테스트 규칙
+
+상세: **[TESTING_RULES.md](./TESTING_RULES.md)** 참조
+
+- 개발 테스트: `pnpm dev` (핫 리로드) / 통합: `./start.sh --dev --build`
+- 테스트 전 플랜 작성, E2E 화면 테스트 필수 (Playwright MCP)
+- 테스트 완료 후 결과 보고
+
 ## Backoffice 차이점
 
 | 항목 | Frontend | Backoffice |

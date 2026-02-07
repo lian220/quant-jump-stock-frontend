@@ -21,7 +21,7 @@ interface EquityCurveChartProps {
 
 export default function EquityCurveChart({
   equityCurve,
-  benchmarkLabel = 'KOSPI',
+  benchmarkLabel = 'SPY',
 }: EquityCurveChartProps) {
   return (
     <Card className="bg-slate-800/50 border-slate-700">

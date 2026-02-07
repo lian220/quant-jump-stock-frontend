@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageSEO } from '@/components/seo';
 import { pageDefaults } from '@/lib/seo/config';
 import { getStrategies } from '@/lib/api/strategies';
+import { getCategoryLabel } from '@/lib/strategy-helpers';
 import type { Strategy } from '@/types/strategy';
 
 export default function Home() {
@@ -228,6 +229,12 @@ export default function Home() {
                     전략 마켓플레이스
                   </Link>
                   <Link
+                    href="/stocks"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
+                  >
+                    종목 탐색
+                  </Link>
+                  <Link
                     href="#features"
                     className="text-slate-300 hover:text-emerald-400 transition-colors"
                   >
@@ -351,14 +358,15 @@ export default function Home() {
                         <div className="flex justify-between items-start mb-2">
                           <Badge
                             className={`
-                              ${strategy.category === 'momentum' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : ''}
                               ${strategy.category === 'value' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : ''}
-                              ${strategy.category === 'factor' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : ''}
+                              ${strategy.category === 'momentum' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : ''}
+                              ${strategy.category === 'asset_allocation' ? 'bg-green-500/20 text-green-400 border-green-500/30' : ''}
+                              ${strategy.category === 'quant_composite' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : ''}
+                              ${strategy.category === 'seasonal' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : ''}
+                              ${strategy.category === 'ml_prediction' ? 'bg-pink-500/20 text-pink-400 border-pink-500/30' : ''}
                             `}
                           >
-                            {strategy.category === 'momentum' && '모멘텀'}
-                            {strategy.category === 'value' && '가치'}
-                            {strategy.category === 'factor' && '팩터'}
+                            {getCategoryLabel(strategy.category)}
                           </Badge>
                           {strategy.isPremium && (
                             <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">

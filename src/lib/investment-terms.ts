@@ -38,7 +38,7 @@ export const INVESTMENT_TERMS: Record<string, InvestmentTerm> = {
   benchmark: {
     label: '벤치마크',
     description:
-      '전략의 성과를 비교하기 위한 기준 지표입니다. 보통 KOSPI(한국 주식시장 지수)를 사용합니다.',
+      '전략의 성과를 비교하기 위한 기준 지표입니다. SPY(S&P 500 ETF), QQQ(나스닥 100 ETF) 등을 사용합니다.',
   },
   equityCurve: {
     label: '수익곡선',

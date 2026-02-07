@@ -7,13 +7,24 @@ import type {
   BacktestTradeResponse,
 } from '@/types/backtest';
 
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
+
 /**
  * 백테스트 실행 요청
  */
 export async function runBacktest(req: BacktestRunRequest): Promise<BacktestRunResponse> {
   const response = await fetch('/api/backtest/run', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     credentials: 'include',
     body: JSON.stringify(req),
   });
@@ -34,7 +45,7 @@ export async function getBacktestResult(
 ): Promise<BacktestResultResponse> {
   const response = await fetch(`/api/backtest/${id}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     credentials: 'include',
     signal,
   });
