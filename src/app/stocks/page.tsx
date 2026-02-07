@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { searchStocks, marketLabels, designationLabels } from '@/lib/api/stocks';
+import { PageSEO } from '@/components/seo';
 import type { StockSummary, Market, StockSearchResponse } from '@/lib/api/stocks';
 
 const marketOptions: { value: '' | Market; label: string }[] = [
@@ -88,15 +89,19 @@ export default function StocksPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <PageSEO
+        title="종목 탐색 - 퀀트점프"
+        description="국내외 주식과 암호화폐 종목을 검색하고 정보를 확인하세요."
+      />
       {/* 헤더 */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-8">
               <Link href="/" className="flex items-center space-x-2">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                   퀀트점프
-                </h1>
+                </span>
                 <Badge
                   variant="secondary"
                   className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"

@@ -68,10 +68,13 @@ export async function searchStocks(params: SearchStocksParams = {}): Promise<Sto
   searchParams.append('size', String(params.size ?? 20));
   searchParams.append('isActive', 'true');
 
-  const url = `${API_URL}/api/v1/stocks?${searchParams.toString()}`;
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? `/api/stocks` : `${API_URL}/api/v1/stocks`;
+  const url = `${baseUrl}?${searchParams.toString()}`;
 
   const response = await fetch(url, {
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -82,8 +85,12 @@ export async function searchStocks(params: SearchStocksParams = {}): Promise<Sto
 }
 
 export async function getStockDetail(id: number): Promise<StockDetailResponse> {
-  const response = await fetch(`${API_URL}/api/v1/stocks/${id}`, {
+  const isBrowser = typeof window !== 'undefined';
+  const url = isBrowser ? `/api/stocks/${id}` : `${API_URL}/api/v1/stocks/${id}`;
+
+  const response = await fetch(url, {
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
   });
 
   if (!response.ok) {

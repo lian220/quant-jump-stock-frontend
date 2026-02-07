@@ -27,6 +27,7 @@ import {
   getStrategyDefaultStocks,
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
+import { PageSEO } from '@/components/seo';
 import type { StrategyDetail, BenchmarkSeries } from '@/types/strategy';
 import type { DefaultStockResponse } from '@/types/api';
 
@@ -67,7 +68,8 @@ export default function StrategyDetailPage() {
           const dates = data.equityCurve.map((p) => p.date).sort();
           const startDate = dates[0];
           const endDate = dates[dates.length - 1];
-          const initialCapital = data.equityCurve[0]?.value ?? 10000000;
+          const startPoint = data.equityCurve.find((p) => p.date === startDate);
+          const initialCapital = startPoint?.value ?? 10000000;
 
           try {
             const bmData = await getBenchmarkSeries({
@@ -135,14 +137,18 @@ export default function StrategyDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <PageSEO
+        title={`${strategy.name} - 퀀트점프`}
+        description={`${strategy.name} 전략 상세 - ${strategy.description}`}
+      />
       {/* 헤더 */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                 퀀트점프
-              </h1>
+              </span>
               <Badge
                 variant="secondary"
                 className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"

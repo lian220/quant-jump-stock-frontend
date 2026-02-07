@@ -350,11 +350,15 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
 export async function getStrategyDefaultStocks(
   strategyId: string,
 ): Promise<DefaultStockListResponse> {
-  const url = `${API_URL}/api/v1/strategies/${strategyId}/default-stocks`;
+  const isBrowser = typeof window !== 'undefined';
+  const url = isBrowser
+    ? `/api/strategies/${strategyId}/default-stocks`
+    : `${API_URL}/api/v1/strategies/${strategyId}/default-stocks`;
 
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
   });
 
   if (!response.ok) {

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getStockDetail, marketLabels, designationLabels } from '@/lib/api/stocks';
+import { PageSEO } from '@/components/seo';
 import type { StockDetailResponse } from '@/lib/api/stocks';
 
 const designationColors: Record<string, string> = {
@@ -101,13 +102,15 @@ export default function StockDetailPage() {
           <div className="text-center">
             <p className="text-xl text-red-400 mb-4">⚠️ {error || '종목을 찾을 수 없습니다.'}</p>
             <div className="space-x-4">
-              <Button
-                onClick={fetchStock}
-                variant="outline"
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
-              >
-                다시 시도
-              </Button>
+              {!isNaN(id) && (
+                <Button
+                  onClick={fetchStock}
+                  variant="outline"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  다시 시도
+                </Button>
+              )}
               <Link href="/stocks">
                 <Button className="bg-emerald-600 hover:bg-emerald-700">종목 목록</Button>
               </Link>
@@ -120,15 +123,19 @@ export default function StockDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <PageSEO
+        title={`${stock.stockName} (${stock.ticker}) - 퀀트점프`}
+        description={`${stock.stockName} 종목 상세 정보 - ${marketLabels[stock.market]} 시장`}
+      />
       {/* 헤더 */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-8">
               <Link href="/" className="flex items-center space-x-2">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                   퀀트점프
-                </h1>
+                </span>
                 <Badge
                   variant="secondary"
                   className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
@@ -179,7 +186,7 @@ export default function StockDetailPage() {
         {/* Hero 섹션 */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <h2 className="text-3xl font-bold text-white">{stock.stockName}</h2>
+            <h1 className="text-3xl font-bold text-white">{stock.stockName}</h1>
             {stock.stockNameEn && (
               <span className="text-lg text-slate-400">{stock.stockNameEn}</span>
             )}

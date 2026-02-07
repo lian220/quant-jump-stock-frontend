@@ -2,29 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const tickers = searchParams.get('tickers');
-  const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate');
-  const initialCapital = searchParams.get('initialCapital');
-
-  if (!tickers || !startDate || !endDate) {
-    return NextResponse.json(
-      { error: 'tickers, startDate, endDate는 필수 파라미터입니다.' },
-      { status: 400 },
-    );
-  }
-
-  const params = new URLSearchParams({ tickers, startDate, endDate });
-  if (initialCapital) {
-    params.append('initialCapital', initialCapital);
-  }
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   const authorization = request.headers.get('authorization');
 
   try {
-    const response = await fetch(`${API_URL}/api/v1/benchmarks/series?${params.toString()}`, {
+    const response = await fetch(`${API_URL}/api/v1/stocks/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -36,7 +20,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.message || '벤치마크 데이터를 조회할 수 없습니다.' },
+        { error: errorData.message || '종목을 찾을 수 없습니다.' },
         { status: response.status },
       );
     }
@@ -44,7 +28,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Failed to fetch benchmark series from backend:', error);
+    console.error('Failed to fetch stock detail from backend:', error);
     const message =
       error instanceof DOMException && error.name === 'TimeoutError'
         ? '백엔드 서버 응답 시간이 초과되었습니다.'
