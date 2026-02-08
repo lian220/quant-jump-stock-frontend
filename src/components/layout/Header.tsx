@@ -8,6 +8,7 @@ import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { InstallButton } from '@/components/pwa/InstallButton';
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -97,15 +98,20 @@ export function Header() {
                 </Button>
               </div>
             ) : (
-              <Link href="/auth" className="hidden md:block">
-                <Button
-                  variant="outline"
-                  size="default"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  로그인
-                </Button>
-              </Link>
+              <>
+                <Link href="/auth" className="hidden md:block">
+                  <Button
+                    variant="outline"
+                    size="default"
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    로그인
+                  </Button>
+                </Link>
+                <div className="hidden md:block">
+                  <InstallButton />
+                </div>
+              </>
             )}
 
             {/* 모바일 메뉴 버튼 */}

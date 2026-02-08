@@ -162,51 +162,6 @@ export default function StrategyDetailPage() {
         title={`${strategy.name} - Alpha Foundry`}
         description={`${strategy.name} 전략 상세 - ${strategy.description}`}
       />
-      {/* 헤더 */}
-      <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                Alpha Foundry
-              </span>
-              <Badge
-                variant="secondary"
-                className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-              >
-                BETA
-              </Badge>
-            </Link>
-            <div className="flex items-center space-x-4">
-              <Link href="/strategies">
-                <Button
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  전략 목록
-                </Button>
-              </Link>
-              {user ? (
-                <>
-                  <span className="text-sm text-slate-400">{user.email}</span>
-                  <Button
-                    variant="outline"
-                    onClick={signOut}
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                  >
-                    로그아웃
-                  </Button>
-                </>
-              ) : (
-                <Link href="/auth">
-                  <Button className="bg-emerald-600 hover:bg-emerald-700">로그인</Button>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 전략 헤더 */}
