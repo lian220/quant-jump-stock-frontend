@@ -8,7 +8,6 @@ import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { InstallButton } from '@/components/pwa/InstallButton';
 
 export function Header() {
   const { user, signOut } = useAuth();
