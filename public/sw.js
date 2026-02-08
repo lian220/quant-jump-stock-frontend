@@ -4,13 +4,7 @@ const STATIC_CACHE = 'alphafoundry-static-v1';
 const DYNAMIC_CACHE = 'alphafoundry-dynamic-v1';
 
 // 캐시할 정적 자원
-const STATIC_ASSETS = [
-  '/',
-  '/offline',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/main_logo.png',
-];
+const STATIC_ASSETS = ['/', '/offline', '/icon-192.png', '/icon-512.png', '/main_logo.png'];
 
 // Service Worker 설치
 self.addEventListener('install', (event) => {
@@ -19,7 +13,7 @@ self.addEventListener('install', (event) => {
     caches.open(STATIC_CACHE).then((cache) => {
       console.log('[SW] Caching static assets');
       return cache.addAll(STATIC_ASSETS);
-    })
+    }),
   );
   self.skipWaiting();
 });
@@ -32,11 +26,18 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys
           .filter((key) => key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
-          .map((key) => caches.delete(key))
+          .map((key) => caches.delete(key)),
       );
-    })
+    }),
   );
   self.clients.claim();
+});
+
+// SKIP_WAITING 메시지 처리
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // 네트워크 요청 가로채기
@@ -52,14 +53,11 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          return new Response(
-            JSON.stringify({ error: '오프라인 상태입니다.' }),
-            {
-              status: 503,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          );
-        })
+          return new Response(JSON.stringify({ error: '오프라인 상태입니다.' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }),
     );
     return;
   }
@@ -86,7 +84,7 @@ self.addEventListener('fetch', (event) => {
           // 오프라인 페이지 반환
           return caches.match('/offline');
         });
-    })
+    }),
   );
 });
 
@@ -107,17 +105,13 @@ self.addEventListener('push', (event) => {
     vibrate: [200, 100, 200],
   };
 
-  event.waitUntil(
-    self.registration.showNotification('Alpha Foundry', options)
-  );
+  event.waitUntil(self.registration.showNotification('Alpha Foundry', options));
 });
 
 // 알림 클릭 처리
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow('/')
-  );
+  event.waitUntil(clients.openWindow('/'));
 });
 
 async function syncData() {

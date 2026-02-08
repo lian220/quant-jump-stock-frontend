@@ -4,6 +4,8 @@ import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { structuredDataTemplates } from '@/lib/seo/config';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
+import { InstallPrompt } from '@/components/pwa/InstallPrompt';
+import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -74,7 +76,7 @@ export const metadata: Metadata = {
       'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼.',
     images: [
       {
-        url: '/main_logo.png',
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://alphafoundry.co.kr'}/main_logo.png`,
         width: 512,
         height: 512,
         alt: 'Alpha Foundry 로고',
@@ -87,7 +89,7 @@ export const metadata: Metadata = {
     creator: '@alphafoundry',
     title: 'Alpha Foundry - AI 기반 스마트 투자 플랫폼',
     description: 'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요.',
-    images: ['/main_logo.png'],
+    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://alphafoundry.co.kr'}/main_logo.png`],
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
@@ -144,6 +146,8 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900`}>
         <ServiceWorkerRegister />
+        <InstallPrompt />
+        <UpdatePrompt />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

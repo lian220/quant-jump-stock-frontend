@@ -13,11 +13,14 @@ import { pageDefaults } from '@/lib/seo/config';
 import { getStrategies } from '@/lib/api/strategies';
 import { getCategoryLabel } from '@/lib/strategy-helpers';
 import type { Strategy } from '@/types/strategy';
+import { Menu, X } from 'lucide-react';
+import { InstallButton } from '@/components/pwa/InstallButton';
 
 export default function Home() {
   const { user, signOut } = useAuth();
   const [featuredStrategies, setFeaturedStrategies] = useState<Strategy[]>([]);
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 추천 전략 가져오기 (인기순 상위 3개)
   useEffect(() => {
@@ -203,32 +206,35 @@ export default function Home() {
       />
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        {/* 헤더 */}
-        <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
+        {/* 헤더 - Sticky */}
+        <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
+            <div className="flex justify-between items-center py-2.5">
               <div className="flex items-center space-x-8">
-                <div className="flex items-center space-x-2">
-                  <Link href="/" className="flex items-center space-x-2">
-                    <Image
-                      src="/main_logo.png"
-                      alt="Alpha Foundry Logo"
-                      width={36}
-                      height={36}
-                      className="rounded-lg"
-                    />
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
+                <div className="flex items-center space-x-2.5">
+                  <Link href="/" className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+                      <Image
+                        src="/main_logo.png"
+                        alt="Alpha Foundry Logo"
+                        width={48}
+                        height={48}
+                        className="object-cover"
+                        style={{ objectPosition: '50% 30%', transform: 'scale(1.2)' }}
+                      />
+                    </div>
+                    <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
                       Alpha Foundry
                     </h1>
                   </Link>
                   <Badge
                     variant="secondary"
-                    className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                    className="hidden sm:inline-flex bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
                   >
                     BETA
                   </Badge>
                 </div>
-                {/* 네비게이션 메뉴 */}
+                {/* 데스크톱 네비게이션 메뉴 */}
                 <nav className="hidden md:flex items-center space-x-6">
                   <Link
                     href="/strategies"
@@ -256,12 +262,13 @@ export default function Home() {
                   </Link>
                 </nav>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 {user ? (
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm text-slate-400">{user.email}</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-slate-400 hidden sm:inline">{user.email}</span>
                     <Button
                       variant="outline"
+                      size="sm"
                       onClick={signOut}
                       className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     >
@@ -269,22 +276,83 @@ export default function Home() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-x-2">
-                    <Link href="/auth">
-                      <Button
-                        variant="outline"
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                      >
-                        로그인
+                  <>
+                    {/* 데스크톱 버튼 */}
+                    <div className="hidden md:flex gap-2">
+                      <Link href="/auth">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                        >
+                          로그인
+                        </Button>
+                      </Link>
+                      <InstallButton />
+                    </div>
+                    {/* 모바일 버튼 */}
+                    <Link href="/auth" className="md:hidden">
+                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+                        시작하기
                       </Button>
                     </Link>
-                    <Link href="/auth">
-                      <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
-                    </Link>
-                  </div>
+                  </>
                 )}
+                {/* 모바일 햄버거 메뉴 버튼 */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 text-slate-300 hover:text-white transition-colors"
+                  aria-label="메뉴"
+                >
+                  {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
               </div>
             </div>
+
+            {/* 모바일 메뉴 드롭다운 */}
+            {mobileMenuOpen && (
+              <nav className="md:hidden py-4 border-t border-slate-700">
+                <div className="flex flex-col space-y-3">
+                  <Link
+                    href="/strategies"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium py-2 px-4 hover:bg-slate-800/50 rounded"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    전략 마켓플레이스
+                  </Link>
+                  <Link
+                    href="/stocks"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium py-2 px-4 hover:bg-slate-800/50 rounded"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    종목 탐색
+                  </Link>
+                  <Link
+                    href="#features"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors py-2 px-4 hover:bg-slate-800/50 rounded"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    기능
+                  </Link>
+                  <Link
+                    href="#pricing"
+                    className="text-slate-300 hover:text-emerald-400 transition-colors py-2 px-4 hover:bg-slate-800/50 rounded"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    요금제
+                  </Link>
+                  {!user && (
+                    <Link
+                      href="/auth"
+                      className="text-slate-300 hover:text-emerald-400 transition-colors font-medium py-2 px-4 hover:bg-slate-800/50 rounded"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      로그인
+                    </Link>
+                  )}
+                </div>
+              </nav>
+            )}
           </div>
         </header>
 
@@ -549,7 +617,9 @@ export default function Home() {
           <div className="mb-16">
             <h2 className="text-3xl font-bold text-center text-white mb-4">🔥 인기 종목 TOP 10</h2>
             <p className="text-center text-slate-400 mb-8">실시간 투자자 관심도 기반 인기 종목</p>
-            <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
+
+            {/* 데스크톱 테이블 뷰 */}
+            <Card className="hidden md:block bg-slate-800/50 border-slate-700 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-slate-700/50">
@@ -622,6 +692,65 @@ export default function Home() {
                 </table>
               </div>
             </Card>
+
+            {/* 모바일 카드 뷰 */}
+            <div className="md:hidden space-y-3">
+              {popularStocks.map((stock) => (
+                <Card
+                  key={stock.rank}
+                  className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <span
+                          className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
+                            stock.rank <= 3
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : 'bg-slate-600 text-slate-300'
+                          }`}
+                        >
+                          {stock.rank}
+                        </span>
+                        <div>
+                          <p className="font-semibold text-white text-base">{stock.name}</p>
+                          <p className="text-xs text-slate-500">{stock.code}</p>
+                        </div>
+                      </div>
+                      <Badge
+                        className={
+                          stock.signal === '매수'
+                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                            : 'bg-slate-600/50 text-slate-300 border-slate-500/30'
+                        }
+                      >
+                        {stock.signal}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-slate-400 text-xs mb-1">현재가</p>
+                        <p className="font-mono text-white font-medium">₩{stock.price}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-slate-400 text-xs mb-1">등락률</p>
+                        <p
+                          className={`font-mono font-medium ${
+                            stock.change.startsWith('+')
+                              ? 'text-red-400'
+                              : stock.change.startsWith('-')
+                                ? 'text-blue-400'
+                                : 'text-slate-400'
+                          }`}
+                        >
+                          {stock.change}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
 
           {/* AI 분석 예시 */}
