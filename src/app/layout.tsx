@@ -51,17 +51,27 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://alphafoundry.co.kr',
     siteName: 'Alpha Foundry',
     title: 'Alpha Foundry - AI 기반 스마트 투자 플랫폼',
     description:
       'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼.',
-    images: [{ url: '/logo.png', width: 512, height: 512, alt: 'Alpha Foundry 로고' }],
+    images: [
+      {
+        url: '/main_logo.png',
+        width: 512,
+        height: 512,
+        alt: 'Alpha Foundry 로고',
+      },
+    ],
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
+    site: '@alphafoundry',
+    creator: '@alphafoundry',
     title: 'Alpha Foundry - AI 기반 스마트 투자 플랫폼',
     description: 'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요.',
-    images: ['/logo.png'],
+    images: ['/main_logo.png'],
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
@@ -82,6 +92,26 @@ export default function RootLayout({
   return (
     <html lang="ko" className="dark">
       <head>
+        {/* 카카오톡 공유용 메타 태그 */}
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:url"
+          content={process.env.NEXT_PUBLIC_SITE_URL || 'https://alphafoundry.co.kr'}
+        />
+        <meta property="og:title" content="Alpha Foundry - AI 기반 스마트 투자 플랫폼" />
+        <meta
+          property="og:description"
+          content="AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼."
+        />
+        <meta
+          property="og:image"
+          content={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://alphafoundry.co.kr'}/main_logo.png`}
+        />
+        <meta property="og:image:width" content="512" />
+        <meta property="og:image:height" content="512" />
+        <meta property="og:locale" content="ko_KR" />
+        <meta property="og:site_name" content="Alpha Foundry" />
+
         {/* 전역 구조화된 데이터 */}
         <script
           type="application/ld+json"
