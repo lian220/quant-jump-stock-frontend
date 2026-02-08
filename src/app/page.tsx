@@ -1,26 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageSEO } from '@/components/seo';
 import { pageDefaults } from '@/lib/seo/config';
 import { getStrategies } from '@/lib/api/strategies';
 import { getCategoryLabel } from '@/lib/strategy-helpers';
 import type { Strategy } from '@/types/strategy';
-import { Menu, X } from 'lucide-react';
-import { InstallButton } from '@/components/pwa/InstallButton';
 
 export default function Home() {
-  const { user, signOut } = useAuth();
   const [featuredStrategies, setFeaturedStrategies] = useState<Strategy[]>([]);
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // 추천 전략 가져오기 (인기순 상위 3개)
   useEffect(() => {
@@ -206,156 +200,6 @@ export default function Home() {
       />
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        {/* 헤더 - Sticky */}
-        <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-2.5">
-              <div className="flex items-center space-x-8">
-                <div className="flex items-center space-x-2.5">
-                  <Link href="/" className="flex items-center space-x-2.5">
-                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
-                      <Image
-                        src="/main_logo.png"
-                        alt="Alpha Foundry Logo"
-                        width={48}
-                        height={48}
-                        className="object-cover"
-                        style={{ objectPosition: '50% 30%', transform: 'scale(1.2)' }}
-                      />
-                    </div>
-                    <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
-                      Alpha Foundry
-                    </h1>
-                  </Link>
-                  <Badge
-                    variant="secondary"
-                    className="hidden sm:inline-flex bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                  >
-                    BETA
-                  </Badge>
-                </div>
-                {/* 데스크톱 네비게이션 메뉴 */}
-                <nav className="hidden md:flex items-center space-x-6">
-                  <Link
-                    href="/strategies"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
-                  >
-                    전략 마켓플레이스
-                  </Link>
-                  <Link
-                    href="/stocks"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
-                  >
-                    종목 탐색
-                  </Link>
-                  <Link
-                    href="#features"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors"
-                  >
-                    기능
-                  </Link>
-                  <Link
-                    href="#pricing"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors"
-                  >
-                    요금제
-                  </Link>
-                </nav>
-              </div>
-              <div className="flex items-center space-x-2">
-                {user ? (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-slate-400 hidden sm:inline">{user.email}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={signOut}
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                    >
-                      로그아웃
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {/* 데스크톱 버튼 */}
-                    <div className="hidden md:flex gap-2">
-                      <Link href="/auth">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                        >
-                          로그인
-                        </Button>
-                      </Link>
-                      <InstallButton />
-                    </div>
-                    {/* 모바일 버튼 */}
-                    <Link href="/auth" className="md:hidden">
-                      <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
-                        시작하기
-                      </Button>
-                    </Link>
-                  </>
-                )}
-                {/* 모바일 햄버거 메뉴 버튼 */}
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="md:hidden p-2 text-slate-300 hover:text-white transition-colors"
-                  aria-label="메뉴"
-                >
-                  {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
-              </div>
-            </div>
-
-            {/* 모바일 메뉴 드롭다운 */}
-            {mobileMenuOpen && (
-              <nav className="md:hidden py-4 border-t border-slate-700">
-                <div className="flex flex-col space-y-3">
-                  <Link
-                    href="/strategies"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium py-2 px-4 hover:bg-slate-800/50 rounded"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    전략 마켓플레이스
-                  </Link>
-                  <Link
-                    href="/stocks"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium py-2 px-4 hover:bg-slate-800/50 rounded"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    종목 탐색
-                  </Link>
-                  <Link
-                    href="#features"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors py-2 px-4 hover:bg-slate-800/50 rounded"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    기능
-                  </Link>
-                  <Link
-                    href="#pricing"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors py-2 px-4 hover:bg-slate-800/50 rounded"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    요금제
-                  </Link>
-                  {!user && (
-                    <Link
-                      href="/auth"
-                      className="text-slate-300 hover:text-emerald-400 transition-colors font-medium py-2 px-4 hover:bg-slate-800/50 rounded"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      로그인
-                    </Link>
-                  )}
-                </div>
-              </nav>
-            )}
-          </div>
-        </header>
-
         {/* 메인 컨텐츠 */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* 히어로 섹션 */}
