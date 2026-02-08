@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +8,6 @@ import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { getStrategies } from '@/lib/api/strategies';
-import { useAuth } from '@/hooks/useAuth';
 import type {
   Strategy,
   StrategyCategory,
@@ -19,8 +17,6 @@ import type {
 } from '@/types/strategy';
 
 export default function StrategiesPage() {
-  const { user, signOut } = useAuth();
-
   // 데이터 상태
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(true);

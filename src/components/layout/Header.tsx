@@ -17,16 +17,22 @@ export function Header() {
 
   const isActive = (path: string) => pathname === path;
 
-  // 모바일 메뉴 열렸을 때 body 스크롤 막기
+  // 모바일 메뉴 열렸을 때 body 스크롤 및 텍스트 선택 막기
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.style.userSelect = 'none';
+      document.body.style.webkitUserSelect = 'none';
     } else {
       document.body.style.overflow = 'unset';
+      document.body.style.userSelect = 'auto';
+      document.body.style.webkitUserSelect = 'auto';
     }
 
     return () => {
       document.body.style.overflow = 'unset';
+      document.body.style.userSelect = 'auto';
+      document.body.style.webkitUserSelect = 'auto';
     };
   }, [mobileMenuOpen]);
 
@@ -94,14 +100,15 @@ export function Header() {
             >
               요금제
             </Link>
-            {/* 네비 옆 작은 설치 버튼 */}
-            <div className="pl-2 border-l border-slate-700">
-              <InstallButton compact />
-            </div>
           </nav>
 
           {/* 오른쪽: 사용자 정보/로그인 */}
           <div className="flex items-center justify-end space-x-2 sm:space-x-4">
+            {/* 데스크톱 앱 설치 버튼 */}
+            <div className="hidden md:block">
+              <InstallButton compact />
+            </div>
+
             {user ? (
               <div className="flex items-center space-x-2 sm:space-x-4">
                 <span className="text-sm text-slate-400 hidden lg:inline truncate max-w-[150px]">
@@ -111,7 +118,7 @@ export function Header() {
                   variant="outline"
                   size="sm"
                   onClick={signOut}
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700 hidden md:flex"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
                 >
                   로그아웃
                 </Button>
