@@ -52,3 +52,9 @@ jobs:
             NODE_ENV=production
             API_URL=${{ secrets.API_BASE_URL }}
             NEXT_PUBLIC_API_URL=${{ secrets.API_BASE_URL }}
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_TOSS_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_TOSS_CLIENT_KEY }}
+            TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }}
+            NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID }}

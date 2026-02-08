@@ -119,4 +119,41 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* 모바일 터치 최적화 */
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* 터치 타겟 최소 크기 (44x44px) */
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* 모바일 스크롤 최적화 */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 터치 디바이스에서 호버 효과 제거 */
+  @media (hover: none) and (pointer: coarse) {
+    button:hover,
+    a:hover {
+      @apply opacity-100;
+    }
+  }
+
+  /* Safe Area Inset 지원 (iOS Notch) */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
 }
