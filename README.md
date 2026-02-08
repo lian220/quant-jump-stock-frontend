@@ -1,4 +1,4 @@
-# 📈 퀀트점프 - AI 기반 스마트 투자 플랫폼
+# 📈 Alpha Foundry - AI 기반 스마트 투자 플랫폼
 
 데이터로 **스마트하게** 투자하세요
 
@@ -6,9 +6,10 @@
 
 ## 📋 개요
 
-퀀트점프는 감정이 아닌 데이터 기반의 체계적인 투자를 지원하는 AI 퀀트 투자 플랫폼입니다.
+Alpha Foundry는 감정이 아닌 데이터 기반의 체계적인 투자를 지원하는 AI 퀀트 투자 플랫폼입니다.
 
 ### ✨ 핵심 기능
+
 - 📊 **실시간 시세** - 국내외 주식 실시간 시세 및 차트
 - 🤖 **AI 퀀트 분석** - 머신러닝 기반 종목 분석 및 투자 신호
 - 📈 **백테스팅** - 과거 데이터 기반 전략 검증 시스템
@@ -19,6 +20,7 @@
 ## 🛠️ 기술 스택
 
 ### Frontend
+
 - **Next.js 15** (App Router)
 - **React 19**
 - **TypeScript**
@@ -26,11 +28,13 @@
 - **Shadcn/ui**
 
 ### Backend & 인증
+
 - **Supabase** (PostgreSQL + Auth)
 - **토스페이먼츠** API
 - **Row Level Security** (RLS)
 
 ### 도구 & 배포
+
 - **Vercel** 배포
 - **ESLint + Prettier** 코드 품질
 - **Husky + Commitlint** Git 훅
@@ -38,6 +42,7 @@
 ## 🚀 빠른 시작
 
 ### 1. 프로젝트 설정
+
 ```bash
 # 프로젝트 복제
 git clone https://github.com/lian220/quant-jump-stock-frontend.git
@@ -55,6 +60,7 @@ pnpm run dev
 ```
 
 ### 2. 브라우저에서 확인
+
 - 홈페이지: [http://localhost:3000](http://localhost:3000)
 - 인증 페이지: [http://localhost:3000/auth](http://localhost:3000/auth)
 - 구독 플랜: [http://localhost:3000/payment](http://localhost:3000/payment)
@@ -80,16 +86,17 @@ src/
 
 ## 💰 구독 플랜
 
-| 플랜 | 가격 | 기능 |
-|------|------|------|
-| 베이직 | ₩29,000/월 | 기본 퀀트 분석, 알림 |
-| 프로 | ₩79,000/월 | AI 분석, 백테스팅, 실시간 신호 |
-| 프리미엄 | ₩149,000/월 | 모든 기능 + 1:1 투자 상담 |
-| 연간 프리미엄 | ₩1,490,000/년 | 프리미엄 + 2개월 무료 |
+| 플랜          | 가격          | 기능                           |
+| ------------- | ------------- | ------------------------------ |
+| 베이직        | ₩29,000/월    | 기본 퀀트 분석, 알림           |
+| 프로          | ₩79,000/월    | AI 분석, 백테스팅, 실시간 신호 |
+| 프리미엄      | ₩149,000/월   | 모든 기능 + 1:1 투자 상담      |
+| 연간 프리미엄 | ₩1,490,000/년 | 프리미엄 + 2개월 무료          |
 
 ## 🎯 개발 가이드
 
 ### 커밋 규칙
+
 ```bash
 # 형식: feat|fix|docs|style|refactor|test|chore: 작업 내용
 git commit -m "feat: AI 종목 분석 기능 구현"
@@ -97,6 +104,7 @@ git commit -m "fix: 실시간 시세 연동 오류 수정"
 ```
 
 ### 코드 스타일
+
 - ✅ **TypeScript 필수**
 - ✅ **ESLint + Prettier** 자동 적용
 - ✅ **컴포넌트 재사용성** 고려
@@ -105,11 +113,13 @@ git commit -m "fix: 실시간 시세 연동 오류 수정"
 ## 🌐 배포
 
 ### Vercel 배포
+
 1. Vercel 계정 연결
 2. 환경 변수 설정
 3. 자동 배포 활성화
 
 ### 필수 환경 변수
+
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -120,7 +130,7 @@ NEXT_PUBLIC_TOSS_CLIENT_KEY=your_toss_client_key
 TOSS_SECRET_KEY=your_toss_secret_key
 
 # SEO
-NEXT_PUBLIC_SITE_URL=https://quantjump.co.kr
+NEXT_PUBLIC_SITE_URL=https://alphafoundry.co.kr
 ```
 
 ## ⚠️ 투자 유의사항
@@ -131,14 +141,14 @@ NEXT_PUBLIC_SITE_URL=https://quantjump.co.kr
 
 ## 🤝 라이선스
 
-MIT License © 2025 QuantJump
+MIT License © 2025 Alpha Foundry
 
 ---
 
 <div align="center">
 
-**퀀트점프** - AI 기반 스마트 투자 플랫폼
+**Alpha Foundry** - AI 기반 스마트 투자 플랫폼
 
-📧 support@quantjump.co.kr
+📧 support@alphafoundry.co.kr
 
 </div>
