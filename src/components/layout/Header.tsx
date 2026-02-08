@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InstallButton } from '@/components/pwa/InstallButton';
+import { cn } from '@/lib/utils';
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -36,6 +37,11 @@ export function Header() {
     };
   }, [mobileMenuOpen]);
 
+  // pathname 변경 시 모바일 메뉴 자동 닫기
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   return (
     <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,9 +56,9 @@ export function Header() {
                 height={36}
                 className="rounded-lg"
               />
-              <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
+              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
                 Alpha Foundry
-              </h1>
+              </span>
             </Link>
             <Badge
               variant="secondary"
@@ -66,37 +72,33 @@ export function Header() {
           <nav className="hidden md:flex items-center justify-center space-x-6">
             <Link
               href="/strategies"
-              className={`inline-flex items-center transition-colors font-medium ${
+              className={cn(
+                'inline-flex items-center transition-colors font-medium',
                 isActive('/strategies')
                   ? 'text-emerald-400'
-                  : 'text-slate-300 hover:text-emerald-400'
-              }`}
+                  : 'text-slate-300 hover:text-emerald-400',
+              )}
             >
               전략 마켓플레이스
             </Link>
             <Link
               href="/stocks"
-              className={`inline-flex items-center transition-colors font-medium ${
-                isActive('/stocks') ? 'text-emerald-400' : 'text-slate-300 hover:text-emerald-400'
-              }`}
+              className={cn(
+                'inline-flex items-center transition-colors font-medium',
+                isActive('/stocks') ? 'text-emerald-400' : 'text-slate-300 hover:text-emerald-400',
+              )}
             >
               종목 탐색
             </Link>
             <Link
               href="/#features"
-              className={`inline-flex items-center transition-colors font-medium ${
-                isActive('/#features')
-                  ? 'text-emerald-400'
-                  : 'text-slate-300 hover:text-emerald-400'
-              }`}
+              className="inline-flex items-center transition-colors font-medium text-slate-300 hover:text-emerald-400"
             >
               기능
             </Link>
             <Link
               href="/#pricing"
-              className={`inline-flex items-center transition-colors font-medium ${
-                isActive('/#pricing') ? 'text-emerald-400' : 'text-slate-300 hover:text-emerald-400'
-              }`}
+              className="inline-flex items-center transition-colors font-medium text-slate-300 hover:text-emerald-400"
             >
               요금제
             </Link>
@@ -142,6 +144,7 @@ export function Header() {
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 text-slate-300 hover:text-emerald-400 rounded-lg transition-colors"
                 aria-label="메뉴"
+                aria-expanded={mobileMenuOpen}
               >
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
@@ -156,22 +159,24 @@ export function Header() {
               <Link
                 href="/strategies"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-semibold transition-all py-3 px-4 rounded-lg ${
+                className={cn(
+                  'text-base font-semibold transition-all py-3 px-4 rounded-lg',
                   isActive('/strategies')
                     ? 'text-emerald-400 bg-emerald-500/10'
-                    : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800'
-                }`}
+                    : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800',
+                )}
               >
                 전략 마켓플레이스
               </Link>
               <Link
                 href="/stocks"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`text-base font-semibold transition-all py-3 px-4 rounded-lg ${
+                className={cn(
+                  'text-base font-semibold transition-all py-3 px-4 rounded-lg',
                   isActive('/stocks')
                     ? 'text-emerald-400 bg-emerald-500/10'
-                    : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800'
-                }`}
+                    : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800',
+                )}
               >
                 종목 탐색
               </Link>
