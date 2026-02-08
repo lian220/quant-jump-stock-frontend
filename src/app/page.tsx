@@ -14,6 +14,7 @@ import { getStrategies } from '@/lib/api/strategies';
 import { getCategoryLabel } from '@/lib/strategy-helpers';
 import type { Strategy } from '@/types/strategy';
 import { Menu, X } from 'lucide-react';
+import { InstallButton } from '@/components/pwa/InstallButton';
 
 export default function Home() {
   const { user, signOut } = useAuth();
@@ -208,21 +209,21 @@ export default function Home() {
         {/* 헤더 - Sticky */}
         <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-3">
+            <div className="flex justify-between items-center py-2.5">
               <div className="flex items-center space-x-8">
-                <div className="flex items-center space-x-3">
-                  <Link href="/" className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                <div className="flex items-center space-x-2.5">
+                  <Link href="/" className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
                         src="/main_logo.png"
                         alt="Alpha Foundry Logo"
-                        width={56}
-                        height={56}
+                        width={48}
+                        height={48}
                         className="object-cover"
                         style={{ objectPosition: '50% 30%', transform: 'scale(1.2)' }}
                       />
                     </div>
-                    <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
+                    <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
                       Alpha Foundry
                     </h1>
                   </Link>
@@ -261,12 +262,13 @@ export default function Home() {
                   </Link>
                 </nav>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 {user ? (
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
                     <span className="text-sm text-slate-400 hidden sm:inline">{user.email}</span>
                     <Button
                       variant="outline"
+                      size="sm"
                       onClick={signOut}
                       className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     >
@@ -276,18 +278,17 @@ export default function Home() {
                 ) : (
                   <>
                     {/* 데스크톱 버튼 */}
-                    <div className="hidden md:flex gap-3">
+                    <div className="hidden md:flex gap-2">
                       <Link href="/auth">
                         <Button
                           variant="outline"
+                          size="sm"
                           className="border-slate-600 text-slate-300 hover:bg-slate-700"
                         >
                           로그인
                         </Button>
                       </Link>
-                      <Link href="/auth">
-                        <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
-                      </Link>
+                      <InstallButton />
                     </div>
                     {/* 모바일 버튼 */}
                     <Link href="/auth" className="md:hidden">
