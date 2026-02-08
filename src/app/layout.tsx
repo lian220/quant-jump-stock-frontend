@@ -6,6 +6,7 @@ import { structuredDataTemplates } from '@/lib/seo/config';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
+import { Header } from '@/components/layout/Header';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -148,7 +149,10 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <InstallPrompt />
         <UpdatePrompt />
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <Header />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
