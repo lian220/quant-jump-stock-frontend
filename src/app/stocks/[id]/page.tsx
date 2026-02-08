@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getStockDetail, marketLabels, designationLabels } from '@/lib/api/stocks';
 import { PageSEO } from '@/components/seo';
-import { useAuth } from '@/hooks/useAuth';
 import type { StockDetailResponse } from '@/lib/api/stocks';
 
 const designationColors: Record<string, string> = {
@@ -50,7 +49,6 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 }
 
 export default function StockDetailPage() {
-  const { user, signOut } = useAuth();
   const params = useParams();
   const router = useRouter();
   const id = Number(params.id);
@@ -129,66 +127,6 @@ export default function StockDetailPage() {
         title={`${stock.stockName} (${stock.ticker}) - Alpha Foundry`}
         description={`${stock.stockName} 종목 상세 정보 - ${marketLabels[stock.market]} 시장`}
       />
-      {/* 헤더 */}
-      <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-8">
-              <Link href="/" className="flex items-center space-x-2">
-                <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                  Alpha Foundry
-                </span>
-                <Badge
-                  variant="secondary"
-                  className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                >
-                  BETA
-                </Badge>
-              </Link>
-              <nav className="hidden md:flex items-center space-x-6">
-                <Link
-                  href="/strategies"
-                  className="text-slate-300 hover:text-emerald-400 transition-colors"
-                >
-                  전략 마켓플레이스
-                </Link>
-                <Link href="/stocks" className="text-emerald-400 font-medium">
-                  종목 탐색
-                </Link>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <span className="text-sm text-slate-400">{user.email}</span>
-                  <Button
-                    variant="outline"
-                    onClick={signOut}
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                  >
-                    로그아웃
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link href="/auth">
-                    <Button
-                      variant="outline"
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                    >
-                      로그인
-                    </Button>
-                  </Link>
-                  <Link href="/auth">
-                    <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 뒤로가기 */}

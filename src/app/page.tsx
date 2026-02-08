@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageSEO } from '@/components/seo';
 import { pageDefaults } from '@/lib/seo/config';
@@ -15,7 +13,6 @@ import { getCategoryLabel } from '@/lib/strategy-helpers';
 import type { Strategy } from '@/types/strategy';
 
 export default function Home() {
-  const { user, signOut } = useAuth();
   const [featuredStrategies, setFeaturedStrategies] = useState<Strategy[]>([]);
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
 
@@ -203,91 +200,6 @@ export default function Home() {
       />
 
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        {/* 헤더 */}
-        <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-8">
-                <div className="flex items-center space-x-2">
-                  <Link href="/" className="flex items-center space-x-2">
-                    <Image
-                      src="/main_logo.png"
-                      alt="Alpha Foundry Logo"
-                      width={36}
-                      height={36}
-                      className="rounded-lg"
-                    />
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
-                      Alpha Foundry
-                    </h1>
-                  </Link>
-                  <Badge
-                    variant="secondary"
-                    className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                  >
-                    BETA
-                  </Badge>
-                </div>
-                {/* 네비게이션 메뉴 */}
-                <nav className="hidden md:flex items-center space-x-6">
-                  <Link
-                    href="/strategies"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
-                  >
-                    전략 마켓플레이스
-                  </Link>
-                  <Link
-                    href="/stocks"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
-                  >
-                    종목 탐색
-                  </Link>
-                  <Link
-                    href="#features"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors"
-                  >
-                    기능
-                  </Link>
-                  <Link
-                    href="#pricing"
-                    className="text-slate-300 hover:text-emerald-400 transition-colors"
-                  >
-                    요금제
-                  </Link>
-                </nav>
-              </div>
-              <div className="flex items-center space-x-4">
-                {user ? (
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm text-slate-400">{user.email}</span>
-                    <Button
-                      variant="outline"
-                      onClick={signOut}
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                    >
-                      로그아웃
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-x-2">
-                    <Link href="/auth">
-                      <Button
-                        variant="outline"
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                      >
-                        로그인
-                      </Button>
-                    </Link>
-                    <Link href="/auth">
-                      <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
-
         {/* 메인 컨텐츠 */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* 히어로 섹션 */}
@@ -549,7 +461,9 @@ export default function Home() {
           <div className="mb-16">
             <h2 className="text-3xl font-bold text-center text-white mb-4">🔥 인기 종목 TOP 10</h2>
             <p className="text-center text-slate-400 mb-8">실시간 투자자 관심도 기반 인기 종목</p>
-            <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
+
+            {/* 데스크톱 테이블 뷰 */}
+            <Card className="hidden md:block bg-slate-800/50 border-slate-700 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-slate-700/50">
@@ -622,6 +536,65 @@ export default function Home() {
                 </table>
               </div>
             </Card>
+
+            {/* 모바일 카드 뷰 */}
+            <div className="md:hidden space-y-3">
+              {popularStocks.map((stock) => (
+                <Card
+                  key={stock.rank}
+                  className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors"
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <span
+                          className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
+                            stock.rank <= 3
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : 'bg-slate-600 text-slate-300'
+                          }`}
+                        >
+                          {stock.rank}
+                        </span>
+                        <div>
+                          <p className="font-semibold text-white text-base">{stock.name}</p>
+                          <p className="text-xs text-slate-500">{stock.code}</p>
+                        </div>
+                      </div>
+                      <Badge
+                        className={
+                          stock.signal === '매수'
+                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                            : 'bg-slate-600/50 text-slate-300 border-slate-500/30'
+                        }
+                      >
+                        {stock.signal}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-slate-400 text-xs mb-1">현재가</p>
+                        <p className="font-mono text-white font-medium">₩{stock.price}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-slate-400 text-xs mb-1">등락률</p>
+                        <p
+                          className={`font-mono font-medium ${
+                            stock.change.startsWith('+')
+                              ? 'text-red-400'
+                              : stock.change.startsWith('-')
+                                ? 'text-blue-400'
+                                : 'text-slate-400'
+                          }`}
+                        >
+                          {stock.change}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
 
           {/* AI 분석 예시 */}

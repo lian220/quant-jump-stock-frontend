@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +8,6 @@ import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { getStrategies } from '@/lib/api/strategies';
-import { useAuth } from '@/hooks/useAuth';
 import type {
   Strategy,
   StrategyCategory,
@@ -19,8 +17,6 @@ import type {
 } from '@/types/strategy';
 
 export default function StrategiesPage() {
-  const { user, signOut } = useAuth();
-
   // 데이터 상태
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -146,53 +142,6 @@ export default function StrategiesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* 헤더 */}
-      <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                Alpha Foundry
-              </h1>
-              <Badge
-                variant="secondary"
-                className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-              >
-                BETA
-              </Badge>
-            </Link>
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <span className="text-sm text-slate-400">{user.email}</span>
-                  <Button
-                    variant="outline"
-                    onClick={signOut}
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                  >
-                    로그아웃
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link href="/auth">
-                    <Button
-                      variant="outline"
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                    >
-                      로그인
-                    </Button>
-                  </Link>
-                  <Link href="/auth">
-                    <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* 페이지 헤더 */}
