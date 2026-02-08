@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -59,18 +60,22 @@ export function InstallButton({ compact = false, className = '' }: InstallButton
     }
 
     // 설치 프롬프트 표시
-    await deferredPrompt.prompt();
+    try {
+      await deferredPrompt.prompt();
 
-    // 사용자 선택 결과 확인
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`[PWA] 수동 설치 프롬프트 결과: ${outcome}`);
+      // 사용자 선택 결과 확인
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`[PWA] 수동 설치 프롬프트 결과: ${outcome}`);
 
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+      }
+    } catch (error) {
+      console.error('[PWA] 설치 프롬프트 오류:', error);
+    } finally {
+      // 상태 초기화
+      setDeferredPrompt(null);
     }
-
-    // 상태 초기화
-    setDeferredPrompt(null);
   };
 
   // 이미 설치된 경우에만 버튼 숨김
@@ -83,7 +88,11 @@ export function InstallButton({ compact = false, className = '' }: InstallButton
       onClick={handleInstallClick}
       variant="outline"
       size={compact ? 'icon' : 'sm'}
-      className={`border-emerald-600/50 text-emerald-400 hover:bg-emerald-600/10 ${compact ? 'h-9 w-9' : 'gap-2'} ${className}`}
+      className={cn(
+        'border-emerald-600/50 text-emerald-400 hover:bg-emerald-600/10',
+        compact ? 'h-9 w-9' : 'gap-2',
+        className,
+      )}
       title={compact ? '앱 설치' : undefined}
     >
       <Download className="h-4 w-4" />

@@ -28,12 +28,10 @@ import {
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
 import { PageSEO } from '@/components/seo';
-import { useAuth } from '@/hooks/useAuth';
 import type { StrategyDetail, BenchmarkSeries } from '@/types/strategy';
 import type { DefaultStockResponse } from '@/types/api';
 
 export default function StrategyDetailPage() {
-  const { user, signOut } = useAuth();
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;

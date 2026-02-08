@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { searchStocks, marketLabels, designationLabels } from '@/lib/api/stocks';
 import { PageSEO } from '@/components/seo';
-import { useAuth } from '@/hooks/useAuth';
 import type { StockSummary, Market, StockSearchResponse } from '@/lib/api/stocks';
 
 const marketOptions: { value: '' | Market; label: string }[] = [
@@ -27,7 +26,6 @@ const designationColors: Record<string, string> = {
 };
 
 export default function StocksPage() {
-  const { user, signOut } = useAuth();
   const [stocks, setStocks] = useState<StockSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

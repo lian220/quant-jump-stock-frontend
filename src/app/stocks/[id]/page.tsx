@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getStockDetail, marketLabels, designationLabels } from '@/lib/api/stocks';
 import { PageSEO } from '@/components/seo';
-import { useAuth } from '@/hooks/useAuth';
 import type { StockDetailResponse } from '@/lib/api/stocks';
 
 const designationColors: Record<string, string> = {
@@ -50,7 +49,6 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 }
 
 export default function StockDetailPage() {
-  const { user, signOut } = useAuth();
   const params = useParams();
   const router = useRouter();
   const id = Number(params.id);
