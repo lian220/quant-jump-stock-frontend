@@ -36,7 +36,7 @@
     "zod": "^4.0.5"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
+    "@commitlint/cli": "^20.4.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.58.1",
