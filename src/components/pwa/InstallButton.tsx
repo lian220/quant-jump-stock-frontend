@@ -9,7 +9,12 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-export function InstallButton() {
+interface InstallButtonProps {
+  compact?: boolean; // 아이콘만 표시 (네비바용)
+  className?: string;
+}
+
+export function InstallButton({ compact = false, className = '' }: InstallButtonProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
@@ -63,10 +68,12 @@ export function InstallButton() {
     <Button
       onClick={handleInstallClick}
       variant="outline"
-      size="sm"
-      className="gap-2 border-emerald-600/50 text-emerald-400 hover:bg-emerald-600/10"
+      size={compact ? 'icon' : 'sm'}
+      className={`border-emerald-600/50 text-emerald-400 hover:bg-emerald-600/10 ${compact ? 'h-9 w-9' : 'gap-2'} ${className}`}
+      title={compact ? '앱 설치' : undefined}
     >
-      <Download className="h-4 w-4" />앱 설치
+      <Download className="h-4 w-4" />
+      {!compact && '앱 설치'}
     </Button>
   );
 }
