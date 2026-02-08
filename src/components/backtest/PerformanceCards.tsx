@@ -9,35 +9,40 @@ interface PerformanceCardsProps {
 }
 
 export default function PerformanceCards({ metrics }: PerformanceCardsProps) {
+  const fmt = (v: number | null | undefined, digits = 2) => (v != null ? v.toFixed(digits) : '-');
+
   const cards = [
     {
       label: '연환산 수익률 (CAGR)',
-      value: `${metrics.cagr > 0 ? '+' : ''}${metrics.cagr.toFixed(2)}%`,
-      color: metrics.cagr >= 0 ? 'text-emerald-400' : 'text-red-400',
+      value: metrics.cagr != null ? `${metrics.cagr > 0 ? '+' : ''}${fmt(metrics.cagr)}%` : '-',
+      color: (metrics.cagr ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400',
     },
     {
       label: '최대 낙폭 (MDD)',
-      value: `${metrics.mdd.toFixed(2)}%`,
+      value: metrics.mdd != null ? `${fmt(metrics.mdd)}%` : '-',
       color: 'text-red-400',
     },
     {
       label: '샤프 비율',
-      value: metrics.sharpeRatio.toFixed(2),
+      value: fmt(metrics.sharpeRatio),
       color: 'text-cyan-400',
     },
     {
       label: '승률',
-      value: `${metrics.winRate.toFixed(1)}%`,
+      value: metrics.winRate != null ? `${fmt(metrics.winRate, 1)}%` : '-',
       color: 'text-purple-400',
     },
     {
       label: '총 수익률',
-      value: `${metrics.totalReturn > 0 ? '+' : ''}${metrics.totalReturn.toFixed(2)}%`,
-      color: metrics.totalReturn >= 0 ? 'text-emerald-400' : 'text-red-400',
+      value:
+        metrics.totalReturn != null
+          ? `${metrics.totalReturn > 0 ? '+' : ''}${fmt(metrics.totalReturn)}%`
+          : '-',
+      color: (metrics.totalReturn ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400',
     },
     {
       label: '총 거래수',
-      value: `${metrics.totalTrades}회`,
+      value: metrics.totalTrades != null ? `${metrics.totalTrades}회` : '-',
       color: 'text-yellow-400',
     },
   ];

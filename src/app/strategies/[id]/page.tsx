@@ -28,10 +28,12 @@ import {
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
 import { PageSEO } from '@/components/seo';
+import { useAuth } from '@/hooks/useAuth';
 import type { StrategyDetail, BenchmarkSeries } from '@/types/strategy';
 import type { DefaultStockResponse } from '@/types/api';
 
 export default function StrategyDetailPage() {
+  const { user, signOut } = useAuth();
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -63,8 +65,9 @@ export default function StrategyDetailPage() {
           }
         }
 
-        // equityCurve가 있으면 벤치마크 시계열 조회
+        // 벤치마크 시계열 조회
         if (data.equityCurve && data.equityCurve.length > 0) {
+          // equityCurve가 있으면 해당 기간으로 조회
           const dates = data.equityCurve.map((p) => p.date).sort();
           const startDate = dates[0];
           const endDate = dates[dates.length - 1];
@@ -77,6 +80,24 @@ export default function StrategyDetailPage() {
               startDate,
               endDate,
               initialCapital,
+            });
+            setBenchmarks(bmData.benchmarks);
+          } catch {
+            setBenchmarks([]);
+          }
+        } else {
+          // equityCurve가 없으면 최근 1년 기간으로 벤치마크만 조회
+          const endDate = new Date().toISOString().split('T')[0];
+          const startDateObj = new Date();
+          startDateObj.setFullYear(startDateObj.getFullYear() - 1);
+          const startDate = startDateObj.toISOString().split('T')[0];
+
+          try {
+            const bmData = await getBenchmarkSeries({
+              tickers: ['SPY', 'QQQ'],
+              startDate,
+              endDate,
+              initialCapital: 10000000,
             });
             setBenchmarks(bmData.benchmarks);
           } catch {
@@ -165,9 +186,22 @@ export default function StrategyDetailPage() {
                   전략 목록
                 </Button>
               </Link>
-              <Link href="/auth">
-                <Button className="bg-emerald-600 hover:bg-emerald-700">로그인</Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-sm text-slate-400">{user.email}</span>
+                  <Button
+                    variant="outline"
+                    onClick={signOut}
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <Link href="/auth">
+                  <Button className="bg-emerald-600 hover:bg-emerald-700">로그인</Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

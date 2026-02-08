@@ -62,6 +62,8 @@ export default function EquityCurveChart({
                 }}
                 labelStyle={{ color: '#94a3b8' }}
                 formatter={(value, name) => {
+                  if (value == null)
+                    return ['-', name === 'value' ? '전략' : `벤치마크(${benchmarkLabel})`];
                   const numValue = typeof value === 'number' ? value : 0;
                   return [
                     `${numValue.toLocaleString()}원`,

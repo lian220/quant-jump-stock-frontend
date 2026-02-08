@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { searchStocks, marketLabels, designationLabels } from '@/lib/api/stocks';
 import { PageSEO } from '@/components/seo';
+import { useAuth } from '@/hooks/useAuth';
 import type { StockSummary, Market, StockSearchResponse } from '@/lib/api/stocks';
 
 const marketOptions: { value: '' | Market; label: string }[] = [
@@ -26,6 +27,7 @@ const designationColors: Record<string, string> = {
 };
 
 export default function StocksPage() {
+  const { user, signOut } = useAuth();
   const [stocks, setStocks] = useState<StockSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,17 +124,32 @@ export default function StocksPage() {
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/auth">
-                <Button
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  로그인
-                </Button>
-              </Link>
-              <Link href="/auth">
-                <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-sm text-slate-400">{user.email}</span>
+                  <Button
+                    variant="outline"
+                    onClick={signOut}
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth">
+                    <Button
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      로그인
+                    </Button>
+                  </Link>
+                  <Link href="/auth">
+                    <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

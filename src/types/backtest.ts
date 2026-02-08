@@ -5,7 +5,7 @@ export type BacktestStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
 export type RebalancePeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
 
 // 벤치마크 종류
-export type BenchmarkType = 'KOSPI' | 'KOSDAQ' | 'SPX';
+export type BenchmarkType = 'SPY' | 'QQQ';
 
 // 백테스트 실행 요청
 export interface BacktestRunRequest {
@@ -21,27 +21,48 @@ export interface BacktestRunRequest {
 export interface BacktestRunResponse {
   backtestId: string;
   status: BacktestStatus;
-  estimatedTime: number; // 예상 소요 시간(초)
+  estimatedTime: number;
   message: string;
 }
 
-// 백테스트 성과 지표
+// 백테스트 성과 지표 (백엔드 응답에서 null 가능)
 export interface BacktestMetrics {
-  cagr: number; // 연환산 수익률 (%)
-  mdd: number; // 최대 낙폭 (%)
-  sharpeRatio: number;
-  winRate: number; // 승률 (%)
-  totalReturn: number; // 총 수익률 (%)
-  totalTrades: number;
-  profitFactor: number;
-  avgReturn: number; // 평균 수익률 (%)
+  cagr: number | null;
+  mdd: number | null;
+  sharpeRatio: number | null;
+  sortinoRatio: number | null;
+  winRate: number | null;
+  totalReturn: number | null;
+  volatility: number | null;
+  totalTrades: number | null;
+  winningTrades: number | null;
+  losingTrades: number | null;
+  avgWin: number | null;
+  avgLoss: number | null;
+  benchmarkReturn: number | null;
+  alpha: number | null;
+  beta: number | null;
+  totalCommission: number | null;
+  totalSlippage: number | null;
+  totalTax: number | null;
+  netProfitAfterCosts: number | null;
+  profitFactor: number | null;
+  expectancy: number | null;
+  kellyPercentage: number | null;
+  totalTradesStoppedOut: number | null;
+  totalTradesTakenProfit: number | null;
+  avgHoldingPeriod: number | null;
+  bestTrade: number | null;
+  worstTrade: number | null;
+  maxConsecutiveWins: number | null;
+  maxConsecutiveLosses: number | null;
 }
 
 // 수익 곡선 데이터 포인트
 export interface BacktestEquityPoint {
   date: string;
   value: number;
-  benchmark: number;
+  benchmark: number | null;
 }
 
 // 거래 내역
@@ -49,17 +70,17 @@ export interface BacktestTradeResponse {
   tradeDate: string;
   ticker: string;
   side: 'BUY' | 'SELL';
-  quantity: number;
-  price: number;
-  amount: number;
-  pnl: number;
-  pnlPercent: number;
+  quantity: number | null;
+  price: number | null;
+  amount: number | null;
+  pnl: number | null;
+  pnlPercent: number | null;
 }
 
 // 백테스트 결과 응답 (폴링 결과)
 export interface BacktestResultResponse {
   id: string;
-  strategyId: string;
+  strategyId: string | number;
   strategyName: string;
   status: BacktestStatus;
   metrics: BacktestMetrics | null;
@@ -67,4 +88,6 @@ export interface BacktestResultResponse {
   benchmarkCurve: BacktestEquityPoint[];
   trades: BacktestTradeResponse[];
   errorMessage?: string;
+  createdAt?: string;
+  completedAt?: string;
 }

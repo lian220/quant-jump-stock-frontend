@@ -69,37 +69,37 @@ export default function TradeHistoryTable({ trades }: TradeHistoryTableProps) {
                     </span>
                   </td>
                   <td className="text-slate-300 text-right py-2 px-3">
-                    {trade.quantity.toLocaleString()}
+                    {trade.quantity != null ? trade.quantity.toLocaleString() : '-'}
                   </td>
                   <td className="text-slate-300 text-right py-2 px-3">
-                    {trade.price.toLocaleString()}원
+                    {trade.price != null ? `${trade.price.toLocaleString()}원` : '-'}
                   </td>
                   <td className="text-slate-300 text-right py-2 px-3">
-                    {trade.amount.toLocaleString()}원
+                    {trade.amount != null ? `${trade.amount.toLocaleString()}원` : '-'}
                   </td>
                   <td
                     className={`text-right py-2 px-3 font-medium ${
-                      trade.pnl > 0
+                      (trade.pnl ?? 0) > 0
                         ? 'text-emerald-400'
-                        : trade.pnl < 0
+                        : (trade.pnl ?? 0) < 0
                           ? 'text-red-400'
                           : 'text-slate-400'
                     }`}
                   >
-                    {trade.pnl !== 0
+                    {trade.pnl != null && trade.pnl !== 0
                       ? `${trade.pnl > 0 ? '+' : ''}${trade.pnl.toLocaleString()}원`
                       : '-'}
                   </td>
                   <td
                     className={`text-right py-2 px-3 font-medium ${
-                      trade.pnlPercent > 0
+                      (trade.pnlPercent ?? 0) > 0
                         ? 'text-emerald-400'
-                        : trade.pnlPercent < 0
+                        : (trade.pnlPercent ?? 0) < 0
                           ? 'text-red-400'
                           : 'text-slate-400'
                     }`}
                   >
-                    {trade.pnlPercent !== 0
+                    {trade.pnlPercent != null && trade.pnlPercent !== 0
                       ? `${trade.pnlPercent > 0 ? '+' : ''}${trade.pnlPercent.toFixed(1)}%`
                       : '-'}
                   </td>

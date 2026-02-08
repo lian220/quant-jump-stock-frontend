@@ -39,9 +39,8 @@ interface BacktestFormProps {
 }
 
 const benchmarkOptions: { value: BenchmarkType; label: string }[] = [
-  { value: 'KOSPI', label: 'KOSPI' },
-  { value: 'KOSDAQ', label: 'KOSDAQ' },
-  { value: 'SPX', label: 'S&P 500' },
+  { value: 'SPY', label: 'S&P 500 (SPY)' },
+  { value: 'QQQ', label: 'NASDAQ 100 (QQQ)' },
 ];
 
 const rebalanceOptions: { value: RebalancePeriod; label: string }[] = [
@@ -64,7 +63,7 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
       startDate: '2020-01-01',
       endDate: '2024-12-31',
       initialCapital: 10000000,
-      benchmark: 'KOSPI',
+      benchmark: 'SPY',
       rebalancePeriod: 'MONTHLY',
     },
   });

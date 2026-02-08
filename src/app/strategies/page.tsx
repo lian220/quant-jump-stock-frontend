@@ -9,6 +9,7 @@ import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { getStrategies } from '@/lib/api/strategies';
+import { useAuth } from '@/hooks/useAuth';
 import type {
   Strategy,
   StrategyCategory,
@@ -18,6 +19,8 @@ import type {
 } from '@/types/strategy';
 
 export default function StrategiesPage() {
+  const { user, signOut } = useAuth();
+
   // 데이터 상태
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,17 +162,32 @@ export default function StrategiesPage() {
               </Badge>
             </Link>
             <div className="flex items-center space-x-4">
-              <Link href="/auth">
-                <Button
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  로그인
-                </Button>
-              </Link>
-              <Link href="/auth">
-                <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-sm text-slate-400">{user.email}</span>
+                  <Button
+                    variant="outline"
+                    onClick={signOut}
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth">
+                    <Button
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      로그인
+                    </Button>
+                  </Link>
+                  <Link href="/auth">
+                    <Button className="bg-emerald-600 hover:bg-emerald-700">무료 시작</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

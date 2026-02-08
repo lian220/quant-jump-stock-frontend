@@ -119,8 +119,26 @@ function CustomChartTooltip({
 export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
   const initialValue = data?.[0]?.value ?? 0;
 
+  // equityCurve 없이 벤치마크만 있는 경우
+  const benchmarkOnly = (!data || data.length === 0) && benchmarks && benchmarks.length > 0;
+
   // 벤치마크 데이터를 equityCurve 데이터와 merge
   const mergedData = React.useMemo(() => {
+    if (benchmarkOnly && benchmarks) {
+      // equityCurve 없이 벤치마크만 표시
+      const dataMap = new Map<string, Record<string, number>>();
+      for (const bm of benchmarks) {
+        for (const pt of bm.points) {
+          const existing = dataMap.get(pt.date) ?? {};
+          existing[`bm_${bm.ticker}`] = pt.value;
+          dataMap.set(pt.date, existing);
+        }
+      }
+      return Array.from(dataMap.entries())
+        .map(([date, values]) => ({ date, ...values }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+
     if (!data || data.length === 0) return [];
 
     // 기본 equityCurve를 date-keyed map으로
@@ -144,7 +162,7 @@ export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
     return Array.from(dataMap.entries())
       .map(([date, values]) => ({ date, ...values }))
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [data, benchmarks]);
+  }, [data, benchmarks, benchmarkOnly]);
 
   // Y축 도메인 계산
   const allValues = mergedData.flatMap((d) =>
@@ -161,11 +179,13 @@ export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
 
   // 벤치마크 이름 조합
   const benchmarkNames = benchmarks?.map((bm) => bm.displayName).join(', ') || '';
-  const descriptionText = benchmarkNames
-    ? `전략 vs ${benchmarkNames} 누적 수익률 비교`
-    : '전략 누적 수익률';
+  const descriptionText = benchmarkOnly
+    ? `${benchmarkNames} 최근 1년 수익률 (백테스트 실행 후 전략과 비교됩니다)`
+    : benchmarkNames
+      ? `전략 vs ${benchmarkNames} 누적 수익률 비교`
+      : '전략 누적 수익률';
 
-  if (!data || data.length === 0) {
+  if ((!data || data.length === 0) && !benchmarkOnly) {
     return (
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader>
@@ -233,26 +253,30 @@ export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
                   return bm?.displayName || value;
                 }}
               />
-              <Area
-                type="monotone"
-                dataKey="value"
-                fill="url(#strategyGradient)"
-                stroke="none"
-                legendType="none"
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#34d399"
-                strokeWidth={2}
-                dot={false}
-                activeDot={{
-                  r: 6,
-                  stroke: '#34d399',
-                  strokeWidth: 2,
-                  fill: '#0f172a',
-                }}
-              />
+              {!benchmarkOnly && (
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  fill="url(#strategyGradient)"
+                  stroke="none"
+                  legendType="none"
+                />
+              )}
+              {!benchmarkOnly && (
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#34d399"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{
+                    r: 6,
+                    stroke: '#34d399',
+                    strokeWidth: 2,
+                    fill: '#0f172a',
+                  }}
+                />
+              )}
               {benchmarks?.map((bm, idx) => (
                 <Line
                   key={bm.ticker}

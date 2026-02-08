@@ -16,7 +16,7 @@ import type { BacktestRunRequest, BacktestResultResponse, BacktestStatus } from 
 export default function BacktestPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const strategyId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +24,7 @@ export default function BacktestPage() {
   const [result, setResult] = useState<BacktestResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [selectedBenchmark, setSelectedBenchmark] = useState<string>('KOSPI');
+  const [selectedBenchmark, setSelectedBenchmark] = useState<string>('SPY');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // 컴포넌트 unmount 시 진행 중인 폴링 취소
@@ -77,8 +77,11 @@ export default function BacktestPage() {
         // AbortError는 무시
         if (e instanceof DOMException && e.name === 'AbortError') return;
 
-        // 네트워크 오류(TypeError)만 mock fallback
-        if (e instanceof TypeError) {
+        // 네트워크 오류 또는 백엔드 미연결(503)일 때 mock fallback
+        const isBackendDown =
+          e instanceof TypeError ||
+          (e instanceof Error && (e as Error & { status?: number }).status === 503);
+        if (isBackendDown) {
           console.warn('백엔드 연결 실패, mock 데이터를 사용합니다.');
           setStatus('RUNNING');
           await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -133,9 +136,22 @@ export default function BacktestPage() {
                   전략 목록
                 </Button>
               </Link>
-              <Link href="/auth">
-                <Button className="bg-emerald-600 hover:bg-emerald-700">로그인</Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-sm text-slate-400">{user.email}</span>
+                  <Button
+                    variant="outline"
+                    onClick={signOut}
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <Link href="/auth">
+                  <Button className="bg-emerald-600 hover:bg-emerald-700">로그인</Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
