@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from 'sonner';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -20,41 +20,49 @@ export const LoginForm = ({ onSuccess, onSwitchToSignUp }: LoginFormProps) => {
     userId: '',
     password: '',
   });
-  const [error, setError] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     if (!formData.userId || !formData.password) {
-      setError('아이디와 비밀번호를 입력해주세요');
+      toast.error('아이디와 비밀번호를 입력해주세요');
       return;
     }
 
     const result = await signIn(formData.userId, formData.password);
 
     if (result.error) {
-      setError(result.error);
+      toast.error(result.error, {
+        duration: 5000,
+      });
     } else {
-      onSuccess?.();
+      toast.success('로그인 성공! 잠시 후 이동합니다...', {
+        duration: 2000,
+      });
+      // 2초 후 페이지 이동
+      setTimeout(() => {
+        onSuccess?.();
+      }, 2000);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setError('');
     const result = await signInWithGoogle();
 
     if (result.error) {
-      setError(result.error);
+      toast.error(result.error, {
+        duration: 5000,
+      });
     }
   };
 
   const handleNaverSignIn = async () => {
-    setError('');
     const result = await signInWithNaver();
 
     if (result.error) {
-      setError(result.error);
+      toast.error(result.error, {
+        duration: 5000,
+      });
     }
   };
 
@@ -75,12 +83,6 @@ export const LoginForm = ({ onSuccess, onSwitchToSignUp }: LoginFormProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="userId" className="text-slate-300">

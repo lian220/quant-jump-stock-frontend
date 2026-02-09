@@ -8,6 +8,7 @@ import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
 import { Header } from '@/components/layout/Header';
 import { CopyProtection } from '@/components/CopyProtection';
+import { Toaster } from 'sonner';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -154,6 +155,7 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <InstallPrompt />
         <UpdatePrompt />
+        <Toaster position="top-center" richColors />
         <AuthProvider>
           <Header />
           {children}

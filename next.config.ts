@@ -1,26 +1,8 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
-// API URL은 환경 변수 NEXT_PUBLIC_API_URL에서 주입됩니다
+// Next.js API Routes를 사용하므로 rewrite 설정 제거
 const nextConfig: NextConfig = {
   output: 'standalone',
-  async rewrites() {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'https://api.alphafoundry.app';
-
-    return {
-      beforeFiles: [],
-      afterFiles: [],
-      fallback: [
-        {
-          source: '/api/:path*',
-          destination: `${apiBaseUrl}/api/:path*`,
-        },
-        {
-          source: '/data-api/:path*',
-          destination: `${apiBaseUrl}/data-api/:path*`,
-        },
-      ],
-    };
-  },
 };
 
 export default nextConfig;

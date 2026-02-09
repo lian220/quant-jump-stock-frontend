@@ -2,11 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthContextType, AuthUser, LoginResponse, SignUpResponse } from '@/types/auth';
+import { clientApi as api } from '@/lib/api-client';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// 백엔드 API URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -53,22 +51,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await api.get<LoginResponse>('/api/auth/me');
 
-        if (response.ok) {
-          const data: LoginResponse = await response.json();
-          if (data.success && data.user) {
-            setUser(data.user);
-          } else {
-            setToken(null);
-            setUser(null);
-          }
+        if (response.data.success && response.data.user) {
+          setUser(response.data.user);
         } else {
           setToken(null);
           setUser(null);
@@ -89,19 +75,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId, password }),
+      const response = await api.post<LoginResponse>('/api/auth/login', {
+        userId,
+        password,
       });
 
-      const data: LoginResponse = await response.json();
-
-      if (!response.ok) {
-        return { error: data.message || data.error || '로그인에 실패했습니다' };
-      }
+      const data = response.data;
 
       if (data.success && data.token && data.user) {
         setToken(data.token);
@@ -109,10 +88,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return {};
       }
 
-      return { error: data.message || data.error || '로그인에 실패했습니다' };
-    } catch (error) {
+      return { error: data.message || '로그인에 실패했습니다' };
+    } catch (error: unknown) {
       console.error('로그인 오류:', error);
-      return { error: '서버 연결에 실패했습니다' };
+      const errorMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      return {
+        error: errorMessage || '서버 연결에 실패했습니다',
+      };
     } finally {
       setLoading(false);
     }
@@ -122,28 +107,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId, email, password, name }),
+      const response = await api.post<SignUpResponse>('/api/auth/signup', {
+        userId,
+        email,
+        password,
+        name,
       });
 
-      const data: SignUpResponse = await response.json();
-
-      if (!response.ok) {
-        return { error: data.message || data.error || '회원가입에 실패했습니다' };
-      }
+      const data = response.data;
 
       if (data.success) {
         return {};
       }
 
-      return { error: data.message || data.error || '회원가입에 실패했습니다' };
-    } catch (error) {
+      return { error: data.message || '회원가입에 실패했습니다' };
+    } catch (error: unknown) {
       console.error('회원가입 오류:', error);
-      return { error: '서버 연결에 실패했습니다' };
+      const errorMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      return {
+        error: errorMessage || '서버 연결에 실패했습니다',
+      };
     } finally {
       setLoading(false);
     }
@@ -155,13 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const token = getToken();
 
       if (token) {
-        await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        await api.post('/api/auth/logout');
       }
     } catch (error) {
       console.error('로그아웃 오류:', error);
@@ -174,35 +154,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const resetPassword = async (email: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: data.message || '비밀번호 재설정에 실패했습니다' };
-      }
-
+      await api.post('/api/auth/reset-password', { email });
       return {};
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('비밀번호 재설정 오류:', error);
-      return { error: '서버 연결에 실패했습니다' };
+      const errorMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      return {
+        error: errorMessage || '서버 연결에 실패했습니다',
+      };
     }
   };
 
   const signInWithGoogle = async () => {
     try {
-      // 현재 URL을 콜백 URL로 저장
+      // OAuth는 Backend 직접 리다이렉트
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
       const callbackUrl = `${window.location.origin}/auth/callback`;
       localStorage.setItem('auth_callback_url', window.location.href);
 
-      // 백엔드 OAuth 엔드포인트로 리다이렉트
-      window.location.href = `${API_BASE_URL}/api/v1/auth/google?redirect_uri=${encodeURIComponent(callbackUrl)}`;
+      window.location.href = `${backendUrl}/api/v1/auth/google?redirect_uri=${encodeURIComponent(callbackUrl)}`;
       return {};
     } catch (error) {
       console.error('Google 로그인 오류:', error);
@@ -212,12 +185,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signInWithNaver = async () => {
     try {
-      // 현재 URL을 콜백 URL로 저장
+      // Client-side OAuth: 네이버로 직접 리다이렉트
+      const clientId = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID;
+      if (!clientId) {
+        console.error('NEXT_PUBLIC_NAVER_CLIENT_ID가 설정되지 않았습니다');
+        return { error: '네이버 로그인 설정 오류' };
+      }
+
       const callbackUrl = `${window.location.origin}/auth/callback`;
+      const state = encodeURIComponent(callbackUrl);
       localStorage.setItem('auth_callback_url', window.location.href);
 
-      // 백엔드 OAuth 엔드포인트로 리다이렉트
-      window.location.href = `${API_BASE_URL}/api/v1/auth/naver?redirect_uri=${encodeURIComponent(callbackUrl)}`;
+      const naverAuthUrl =
+        `https://nid.naver.com/oauth2.0/authorize?` +
+        `response_type=code&` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(callbackUrl)}&` +
+        `state=${state}`;
+
+      window.location.href = naverAuthUrl;
       return {};
     } catch (error) {
       console.error('네이버 로그인 오류:', error);
@@ -225,9 +211,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // OAuth 콜백 처리 (URL에서 토큰 추출)
+  // OAuth 콜백 처리
   useEffect(() => {
-    const handleOAuthCallback = () => {
+    const handleOAuthCallback = async () => {
       if (typeof window === 'undefined') return;
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -236,32 +222,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) {
         console.error('OAuth 오류:', error);
-        // URL 파라미터 제거
         window.history.replaceState({}, document.title, window.location.pathname);
         return;
       }
 
       if (token) {
         setToken(token);
-        // 사용자 정보 가져오기
-        fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        })
-          .then((response) => response.json())
-          .then((data: LoginResponse) => {
-            if (data.success && data.user) {
-              setUser(data.user);
-            }
-          })
-          .catch((err) => {
-            console.error('사용자 정보 조회 오류:', err);
-          });
 
-        // URL 파라미터 제거
+        try {
+          const response = await api.get<LoginResponse>('/api/auth/me');
+
+          if (response.data.success && response.data.user) {
+            setUser(response.data.user);
+          }
+        } catch (err) {
+          console.error('사용자 정보 조회 오류:', err);
+        }
+
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     };

@@ -10,10 +10,18 @@ function CallbackHandler() {
   const [message, setMessage] = useState('로그인 처리 중...');
 
   useEffect(() => {
+    const code = searchParams.get('code');
     const token = searchParams.get('token');
     const error = searchParams.get('error');
 
-    console.log('Callback received - token:', token ? 'exists' : 'none', 'error:', error);
+    console.log(
+      'Callback received - code:',
+      code ? 'exists' : 'none',
+      'token:',
+      token ? 'exists' : 'none',
+      'error:',
+      error,
+    );
 
     if (error) {
       setStatus('error');
@@ -22,12 +30,50 @@ function CallbackHandler() {
       return;
     }
 
+    // OAuth code를 받은 경우 (Client-side OAuth)
+    if (code) {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
+      console.log('Exchanging code for token with:', apiUrl);
+
+      fetch(`${apiUrl}/api/v1/auth/naver/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      })
+        .then((res) => {
+          console.log('Token exchange response status:', res.status);
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          console.log('Token exchange data:', data);
+          if (data.success && data.token && data.user) {
+            localStorage.setItem('auth_token', data.token);
+            setStatus('success');
+            setMessage(`환영합니다, ${data.user.name || data.user.email || data.user.userId}님!`);
+            setTimeout(() => router.push('/'), 1500);
+          } else {
+            throw new Error(data.message || '로그인 처리 실패');
+          }
+        })
+        .catch((err) => {
+          console.error('OAuth code exchange error:', err);
+          setStatus('error');
+          setMessage(`로그인 처리 중 오류: ${err.message}`);
+          setTimeout(() => router.push('/auth'), 3000);
+        });
+      return;
+    }
+
+    // 토큰을 직접 받은 경우 (Server-side OAuth - 하위 호환성)
     if (token) {
-      // 토큰을 localStorage에 저장
       localStorage.setItem('auth_token', token);
       console.log('Token saved to localStorage');
 
-      // 사용자 정보 가져오기
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
       console.log('Fetching user info from:', apiUrl);
 
@@ -46,7 +92,6 @@ function CallbackHandler() {
           if (data.success && data.user) {
             setStatus('success');
             setMessage(`환영합니다, ${data.user.name || data.user.email || data.user.userId}님!`);
-            // 메인 페이지로 리다이렉트
             setTimeout(() => router.push('/'), 1500);
           } else {
             throw new Error('사용자 정보를 가져올 수 없습니다');
@@ -59,11 +104,13 @@ function CallbackHandler() {
           localStorage.removeItem('auth_token');
           setTimeout(() => router.push('/auth'), 3000);
         });
-    } else {
-      setStatus('error');
-      setMessage('토큰이 없습니다');
-      setTimeout(() => router.push('/auth'), 3000);
+      return;
     }
+
+    // code도 token도 없는 경우
+    setStatus('error');
+    setMessage('인증 정보가 없습니다');
+    setTimeout(() => router.push('/auth'), 3000);
   }, [searchParams, router]);
 
   return (

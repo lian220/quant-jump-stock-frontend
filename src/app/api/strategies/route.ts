@@ -32,6 +32,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error('Failed to fetch strategies from backend:', error);
-    return NextResponse.json({ error: '백엔드 서버에 연결할 수 없습니다.' }, { status: 503 });
+    return NextResponse.json(
+      {
+        error: '백엔드 서버에 연결할 수 없습니다.',
+        debug: {
+          API_URL: process.env.API_URL || 'not set',
+          NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'not set',
+          attemptedUrl: `${API_URL}/api/v1/marketplace/strategies`,
+        },
+      },
+      { status: 503 },
+    );
   }
 }
