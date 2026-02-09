@@ -7,6 +7,7 @@ import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
 import { Header } from '@/components/layout/Header';
+import { CopyProtection } from '@/components/CopyProtection';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -146,7 +147,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900 select-none`}
+      >
+        <CopyProtection />
         <ServiceWorkerRegister />
         <InstallPrompt />
         <UpdatePrompt />
