@@ -1,5 +1,13 @@
 // 결제 요청 데이터 타입
 export interface PaymentData {
+  method:
+    | 'CARD'
+    | 'TRANSFER'
+    | 'VIRTUAL_ACCOUNT'
+    | 'MOBILE_PHONE'
+    | 'CULTURE_GIFT_CERTIFICATE'
+    | 'BOOK_GIFT_CERTIFICATE'
+    | 'GAME_GIFT_CERTIFICATE';
   amount: number;
   orderId: string;
   orderName: string;

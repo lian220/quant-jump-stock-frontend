@@ -42,15 +42,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ secrets.API_BASE_URL }}
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
-            NEXT_PUBLIC_TOSS_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_TOSS_CLIENT_KEY }}
             NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID }}
-            NEXT_PUBLIC_NAVER_CLIENT_ID=${{ secrets.NEXT_PUBLIC_NAVER_CLIENT_ID }}
-            NEXT_PUBLIC_NAVER_PAY_CLIENT_ID=${{ secrets.NEXT_PUBLIC_NAVER_PAY_CLIENT_ID }}
-            NEXT_PUBLIC_NAVER_PAY_MERCHANT_ID=${{ secrets.NEXT_PUBLIC_NAVER_PAY_MERCHANT_ID }}
-            NEXT_PUBLIC_NAVER_PAY_CHAIN_ID=${{ secrets.NEXT_PUBLIC_NAVER_PAY_CHAIN_ID }}
-            NEXT_PUBLIC_NAVER_PAY_MODE=${{ secrets.NEXT_PUBLIC_NAVER_PAY_MODE }}
+            NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+            NEXT_PUBLIC_NAVER_SITE_VERIFICATION=${{ secrets.NEXT_PUBLIC_NAVER_SITE_VERIFICATION }}
 
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
@@ -61,10 +57,8 @@ jobs:
           flags: "--allow-unauthenticated --memory=512Mi --cpu=1 --min-instances=0 --max-instances=2 --port=3000"
           env_vars: |
             NODE_ENV=production
-            API_URL=${{ secrets.API_BASE_URL }}
-            NEXT_PUBLIC_API_URL=${{ secrets.API_BASE_URL }}
-            NEXT_PUBLIC_TOSS_CLIENT_KEY=${{ secrets.NEXT_PUBLIC_TOSS_CLIENT_KEY }}
-            TOSS_SECRET_KEY=${{ secrets.TOSS_SECRET_KEY }}
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_SITE_URL=${{ secrets.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_ADSENSE_CLIENT_ID }}
-            NEXT_PUBLIC_NAVER_CLIENT_ID=${{ secrets.NEXT_PUBLIC_NAVER_CLIENT_ID }}
+            NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+            NEXT_PUBLIC_NAVER_SITE_VERIFICATION=${{ secrets.NEXT_PUBLIC_NAVER_SITE_VERIFICATION }}
