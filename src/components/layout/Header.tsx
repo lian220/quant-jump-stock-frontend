@@ -112,7 +112,7 @@ export function Header() {
             </div>
 
             {user ? (
-              <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="hidden md:flex items-center space-x-4">
                 <span className="text-sm text-slate-400 hidden lg:inline truncate max-w-[150px]">
                   {user.email}
                 </span>

@@ -4,7 +4,6 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import BacktestForm from '@/components/backtest/BacktestForm';
 import PerformanceCards from '@/components/backtest/PerformanceCards';
 import EquityCurveChart from '@/components/backtest/EquityCurveChart';
@@ -16,7 +15,7 @@ import type { BacktestRunRequest, BacktestResultResponse, BacktestStatus } from 
 export default function BacktestPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const strategyId = params.id as string;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -111,53 +110,7 @@ export default function BacktestPage() {
   const benchmarkLabel = selectedBenchmark;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* 헤더 */}
-      <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <Link href="/" className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                Alpha Foundry
-              </h1>
-              <Badge
-                variant="secondary"
-                className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-              >
-                BETA
-              </Badge>
-            </Link>
-            <div className="flex items-center space-x-4">
-              <Link href="/strategies">
-                <Button
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  전략 목록
-                </Button>
-              </Link>
-              {user ? (
-                <>
-                  <span className="text-sm text-slate-400">{user.email}</span>
-                  <Button
-                    variant="outline"
-                    onClick={signOut}
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                  >
-                    로그아웃
-                  </Button>
-                </>
-              ) : (
-                <Link href="/auth">
-                  <Button className="bg-emerald-600 hover:bg-emerald-700">로그인</Button>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* 메인 컨텐츠 */}
+    <div className="min-h-screen">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 페이지 헤더 */}
         <div className="mb-8">
@@ -171,7 +124,7 @@ export default function BacktestPage() {
               ← 전략 상세
             </Button>
           </div>
-          <h2 className="text-3xl font-bold text-white">백테스트 실행</h2>
+          <h1 className="text-3xl font-bold text-white">백테스트 실행</h1>
           <p className="text-slate-400 mt-1">전략의 과거 성과를 시뮬레이션하고 분석합니다</p>
         </div>
 
@@ -227,16 +180,6 @@ export default function BacktestPage() {
           </div>
         )}
       </main>
-
-      {/* 푸터 */}
-      <footer className="bg-slate-900 border-t border-slate-800 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-slate-500">
-            <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
-            <p className="text-sm">© 2025 Alpha Foundry. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
