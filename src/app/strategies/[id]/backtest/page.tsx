@@ -124,7 +124,7 @@ export default function BacktestPage() {
               ← 전략 상세
             </Button>
           </div>
-          <h2 className="text-3xl font-bold text-white">백테스트 실행</h2>
+          <h1 className="text-3xl font-bold text-white">백테스트 실행</h1>
           <p className="text-slate-400 mt-1">전략의 과거 성과를 시뮬레이션하고 분석합니다</p>
         </div>
 

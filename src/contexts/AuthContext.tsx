@@ -5,6 +5,7 @@ import { AuthContextType, AuthUser, LoginResponse, SignUpResponse } from '@/type
 import { clientApi as api } from '@/lib/api-client';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -170,9 +171,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signInWithGoogle = async () => {
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
       localStorage.setItem('auth_callback_url', window.location.href);
-      window.location.href = `${backendUrl}/api/v1/auth/oauth2/authorize/google`;
+      window.location.href = `${BACKEND_URL}/api/v1/auth/oauth2/authorize/google`;
       return {};
     } catch (error) {
       console.error('Google 로그인 오류:', error);
@@ -182,9 +182,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signInWithNaver = async () => {
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
       localStorage.setItem('auth_callback_url', window.location.href);
-      window.location.href = `${backendUrl}/api/v1/auth/oauth2/authorize/naver`;
+      window.location.href = `${BACKEND_URL}/api/v1/auth/oauth2/authorize/naver`;
       return {};
     } catch (error) {
       console.error('네이버 로그인 오류:', error);

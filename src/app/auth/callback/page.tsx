@@ -33,7 +33,10 @@ export default function AuthCallbackPage() {
           'Content-Type': 'application/json',
         },
       })
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
         .then((data) => {
           if (data.success && data.user) {
             setStatus('success');
@@ -44,7 +47,7 @@ export default function AuthCallbackPage() {
           }
         })
         .catch((err) => {
-          console.error('Auth callback error:', err);
+          console.error('인증 콜백 오류:', err);
           setStatus('error');
           setMessage('로그인 처리 중 오류가 발생했습니다');
           localStorage.removeItem('auth_token');
