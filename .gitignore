@@ -41,6 +41,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Sub-projects (separate repos)
+quant-jump-stock-backend/
+quant-jump-stock-frontend/
+quant-jump-stock-backoffice/
+
 # Local configuration files
 .claude/
 .serena/
@@ -48,3 +53,9 @@ next-env.d.ts
 settings.local.json
 .settings.local.json
 .playwright-mcp/
+
+# Credentials
+.credentials/
+
+# Runtime logs
+.logs/
