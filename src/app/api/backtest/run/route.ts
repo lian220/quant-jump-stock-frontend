@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { MAX_BACKTEST_DAYS } from '@/constants/backtest';
 
 // 서버 사이드: API_URL 우선 (Docker 내부 네트워크), 없으면 로컬 기본값
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
-
-// 백테스트 기간 최대 1년(365일) 제한
-const MAX_BACKTEST_DAYS = 365;
 
 // 백테스트 기간 검증
 function validateBacktestPeriod(
@@ -45,8 +43,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '잘못된 요청 형식입니다.' }, { status: 400 });
   }
 
+  // 런타임 타입 검증
+  if (typeof body.startDate !== 'string' || !body.startDate) {
+    return NextResponse.json({ error: 'startDate는 문자열이어야 합니다.' }, { status: 400 });
+  }
+  if (typeof body.endDate !== 'string' || !body.endDate) {
+    return NextResponse.json({ error: 'endDate는 문자열이어야 합니다.' }, { status: 400 });
+  }
+
   // 서버사이드 기간 검증
-  const periodValidation = validateBacktestPeriod(body.startDate as string, body.endDate as string);
+  const periodValidation = validateBacktestPeriod(body.startDate, body.endDate);
   if (!periodValidation.valid) {
     return NextResponse.json({ error: periodValidation.error }, { status: 400 });
   }

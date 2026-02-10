@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,9 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { BacktestRunRequest, BenchmarkType, RebalancePeriod } from '@/types/backtest';
-
-// 백테스트 기간 최대 1년(365일) 제한
-const MAX_BACKTEST_DAYS = 365;
+import { MAX_BACKTEST_DAYS } from '@/constants/backtest';
 
 const backtestFormSchema = z
   .object({
@@ -73,34 +71,51 @@ const periodPresets = [
   { label: '1년', months: 12 },
 ] as const;
 
-// 오늘 기준 N개월 전 날짜를 yyyy-MM-dd로 반환
+// 오늘 기준 N개월 전 날짜를 yyyy-MM-dd로 반환 (월 롤오버 방지)
 function getDateMonthsAgo(months: number): string {
-  const date = new Date();
-  date.setMonth(date.getMonth() - months);
-  return date.toISOString().split('T')[0];
+  const today = new Date();
+  const targetYear = today.getFullYear();
+  const targetMonth = today.getMonth() - months;
+  const day = today.getDate();
+
+  // 월 경계를 넘는 경우 연도 조정
+  const adjustedYear = targetYear + Math.floor(targetMonth / 12);
+  const adjustedMonth = ((targetMonth % 12) + 12) % 12;
+
+  // 타겟 월의 마지막 날짜
+  const lastDayOfTargetMonth = new Date(adjustedYear, adjustedMonth + 1, 0).getDate();
+  // 현재 일자가 타겟 월에 없으면 마지막 날로 클램핑
+  const clampedDay = Math.min(day, lastDayOfTargetMonth);
+
+  const result = new Date(adjustedYear, adjustedMonth, clampedDay);
+  return result.toISOString().split('T')[0];
 }
 
 function getTodayString(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-// 기본값: 최근 1년
-const defaultStartDate = getDateMonthsAgo(12);
-const defaultEndDate = getTodayString();
-
 export default function BacktestForm({ strategyId, onSubmit, isLoading }: BacktestFormProps) {
+  // SSR 하이드레이션 불일치 방지: 컴포넌트 내부에서 날짜 계산
+  const defaultDates = useMemo(
+    () => ({
+      startDate: getDateMonthsAgo(12),
+      endDate: getTodayString(),
+    }),
+    [],
+  );
+
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    trigger,
     formState: { errors },
   } = useForm<BacktestFormValues>({
     resolver: zodResolver(backtestFormSchema),
     defaultValues: {
-      startDate: defaultStartDate,
-      endDate: defaultEndDate,
+      startDate: defaultDates.startDate,
+      endDate: defaultDates.endDate,
       initialCapital: 10000000,
       benchmark: 'SPY',
       rebalancePeriod: 'MONTHLY',
@@ -117,10 +132,8 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
       const startDate = getDateMonthsAgo(months);
       setValue('startDate', startDate, { shouldValidate: true });
       setValue('endDate', endDate, { shouldValidate: true });
-      // endDate refine 검증 재실행
-      trigger('endDate');
     },
-    [setValue, trigger],
+    [setValue],
   );
 
   const handleFormSubmit = (data: BacktestFormValues) => {
