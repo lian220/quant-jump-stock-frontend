@@ -23,6 +23,17 @@ export default function EquityCurveChart({
   equityCurve,
   benchmarkLabel = 'SPY',
 }: EquityCurveChartProps) {
+  if (!equityCurve || equityCurve.length === 0) {
+    return (
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white">수익 곡선</CardTitle>
+          <CardDescription className="text-slate-400">수익 곡선 데이터가 없습니다</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-slate-800/50 border-slate-700">
       <CardHeader>

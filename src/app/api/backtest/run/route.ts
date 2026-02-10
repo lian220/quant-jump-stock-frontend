@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const authorization = request.headers.get('authorization');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
     const response = await fetch(`${API_URL}/api/v1/backtest/run`, {
       method: 'POST',
       headers: {
@@ -20,7 +22,9 @@ export async function POST(request: NextRequest) {
         ...(authorization && { Authorization: authorization }),
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

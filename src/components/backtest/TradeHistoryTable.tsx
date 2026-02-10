@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { BacktestTradeResponse } from '@/types/backtest';
@@ -12,26 +12,27 @@ interface TradeHistoryTableProps {
 const PAGE_SIZE = 10;
 
 export default function TradeHistoryTable({ trades }: TradeHistoryTableProps) {
+  const safeTrades = useMemo(() => trades ?? [], [trades]);
   const [currentPage, setCurrentPage] = useState(1);
 
   // trades가 변경되면 페이지 리셋
   useEffect(() => {
-    const maxPage = Math.max(1, Math.ceil(trades.length / PAGE_SIZE));
+    const maxPage = Math.max(1, Math.ceil(safeTrades.length / PAGE_SIZE));
     if (currentPage > maxPage) {
       setCurrentPage(1);
     }
-  }, [trades, currentPage]);
+  }, [safeTrades, currentPage]);
 
-  const totalPages = Math.ceil(trades.length / PAGE_SIZE);
+  const totalPages = Math.ceil(safeTrades.length / PAGE_SIZE);
   const startIdx = (currentPage - 1) * PAGE_SIZE;
-  const paginatedTrades = trades.slice(startIdx, startIdx + PAGE_SIZE);
+  const paginatedTrades = safeTrades.slice(startIdx, startIdx + PAGE_SIZE);
 
   return (
     <Card className="bg-slate-800/50 border-slate-700">
       <CardHeader>
         <CardTitle className="text-white">거래 내역</CardTitle>
         <CardDescription className="text-slate-400">
-          총 {trades.length}건의 거래 내역
+          총 {safeTrades.length}건의 거래 내역
         </CardDescription>
       </CardHeader>
       <CardContent>

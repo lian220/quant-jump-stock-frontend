@@ -76,10 +76,11 @@ export default function BacktestPage() {
         // AbortError는 무시
         if (e instanceof DOMException && e.name === 'AbortError') return;
 
-        // 네트워크 오류 또는 백엔드 미연결(503)일 때 mock fallback
+        // 네트워크 오류 또는 백엔드 오류(500/503)일 때 mock fallback
+        const errorStatus = (e as Error & { status?: number }).status;
         const isBackendDown =
           e instanceof TypeError ||
-          (e instanceof Error && (e as Error & { status?: number }).status === 503);
+          (e instanceof Error && (errorStatus === 503 || errorStatus === 500));
         if (isBackendDown) {
           console.warn('백엔드 연결 실패, mock 데이터를 사용합니다.');
           setStatus('RUNNING');
