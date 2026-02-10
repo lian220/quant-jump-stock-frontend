@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +17,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { BacktestRunRequest, BenchmarkType, RebalancePeriod } from '@/types/backtest';
 
+// 백테스트 기간 최대 1년(365일) 제한
+const MAX_BACKTEST_DAYS = 365;
+
 const backtestFormSchema = z
   .object({
     startDate: z.string().min(1, '시작일을 입력하세요'),
@@ -28,7 +31,19 @@ const backtestFormSchema = z
   .refine((data) => new Date(data.endDate) >= new Date(data.startDate), {
     message: '종료일은 시작일 이후여야 합니다',
     path: ['endDate'],
-  });
+  })
+  .refine(
+    (data) => {
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
+      const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays <= MAX_BACKTEST_DAYS;
+    },
+    {
+      message: `백테스트 기간은 최대 1년(${MAX_BACKTEST_DAYS}일)까지 가능합니다`,
+      path: ['endDate'],
+    },
+  );
 
 type BacktestFormValues = z.infer<typeof backtestFormSchema>;
 
@@ -50,18 +65,42 @@ const rebalanceOptions: { value: RebalancePeriod; label: string }[] = [
   { value: 'QUARTERLY', label: '분기별' },
 ];
 
+// 빠른 기간 선택 옵션
+const periodPresets = [
+  { label: '1개월', months: 1 },
+  { label: '3개월', months: 3 },
+  { label: '6개월', months: 6 },
+  { label: '1년', months: 12 },
+] as const;
+
+// 오늘 기준 N개월 전 날짜를 yyyy-MM-dd로 반환
+function getDateMonthsAgo(months: number): string {
+  const date = new Date();
+  date.setMonth(date.getMonth() - months);
+  return date.toISOString().split('T')[0];
+}
+
+function getTodayString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+// 기본값: 최근 1년
+const defaultStartDate = getDateMonthsAgo(12);
+const defaultEndDate = getTodayString();
+
 export default function BacktestForm({ strategyId, onSubmit, isLoading }: BacktestFormProps) {
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<BacktestFormValues>({
     resolver: zodResolver(backtestFormSchema),
     defaultValues: {
-      startDate: '2020-01-01',
-      endDate: '2024-12-31',
+      startDate: defaultStartDate,
+      endDate: defaultEndDate,
       initialCapital: 10000000,
       benchmark: 'SPY',
       rebalancePeriod: 'MONTHLY',
@@ -70,6 +109,19 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
 
   const benchmarkValue = watch('benchmark');
   const rebalanceValue = watch('rebalancePeriod');
+
+  // 빠른 기간 선택 핸들러
+  const handlePeriodPreset = useCallback(
+    (months: number) => {
+      const endDate = getTodayString();
+      const startDate = getDateMonthsAgo(months);
+      setValue('startDate', startDate, { shouldValidate: true });
+      setValue('endDate', endDate, { shouldValidate: true });
+      // endDate refine 검증 재실행
+      trigger('endDate');
+    },
+    [setValue, trigger],
+  );
 
   const handleFormSubmit = (data: BacktestFormValues) => {
     onSubmit({
@@ -87,11 +139,30 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
       <CardHeader>
         <CardTitle className="text-white">백테스트 설정</CardTitle>
         <CardDescription className="text-slate-400">
-          백테스트 조건을 설정하고 실행하세요
+          백테스트 조건을 설정하고 실행하세요 (최대 1년)
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          {/* 빠른 기간 선택 */}
+          <div className="space-y-2">
+            <Label className="text-slate-300">빠른 기간 선택</Label>
+            <div className="flex flex-wrap gap-2">
+              {periodPresets.map((preset) => (
+                <Button
+                  key={preset.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePeriodPreset(preset.months)}
+                  className="border-slate-600 text-slate-300 hover:bg-emerald-600/20 hover:text-emerald-400 hover:border-emerald-500/50"
+                >
+                  최근 {preset.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* 시작일 */}
             <div className="space-y-2">
