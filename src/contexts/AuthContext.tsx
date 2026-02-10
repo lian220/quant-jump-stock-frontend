@@ -170,12 +170,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signInWithGoogle = async () => {
     try {
-      // OAuth는 Backend 직접 리다이렉트
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
-      const callbackUrl = `${window.location.origin}/auth/callback`;
       localStorage.setItem('auth_callback_url', window.location.href);
-
-      window.location.href = `${backendUrl}/api/v1/auth/google?redirect_uri=${encodeURIComponent(callbackUrl)}`;
+      window.location.href = `${backendUrl}/api/v1/auth/oauth2/authorize/google`;
       return {};
     } catch (error) {
       console.error('Google 로그인 오류:', error);
@@ -185,25 +182,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signInWithNaver = async () => {
     try {
-      // Client-side OAuth: 네이버로 직접 리다이렉트
-      const clientId = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID;
-      if (!clientId) {
-        console.error('NEXT_PUBLIC_NAVER_CLIENT_ID가 설정되지 않았습니다');
-        return { error: '네이버 로그인 설정 오류' };
-      }
-
-      const callbackUrl = `${window.location.origin}/auth/callback`;
-      const state = encodeURIComponent(callbackUrl);
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
       localStorage.setItem('auth_callback_url', window.location.href);
-
-      const naverAuthUrl =
-        `https://nid.naver.com/oauth2.0/authorize?` +
-        `response_type=code&` +
-        `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(callbackUrl)}&` +
-        `state=${state}`;
-
-      window.location.href = naverAuthUrl;
+      window.location.href = `${backendUrl}/api/v1/auth/oauth2/authorize/naver`;
       return {};
     } catch (error) {
       console.error('네이버 로그인 오류:', error);
@@ -211,10 +192,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // OAuth 콜백 처리
+  // OAuth 콜백 처리 (/auth/callback 페이지에서는 callback 페이지가 직접 처리)
   useEffect(() => {
     const handleOAuthCallback = async () => {
       if (typeof window === 'undefined') return;
+
+      // /auth/callback 페이지에서는 callback 페이지가 직접 처리하므로 중복 방지
+      if (window.location.pathname === '/auth/callback') return;
 
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
