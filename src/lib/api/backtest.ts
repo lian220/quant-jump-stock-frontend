@@ -172,7 +172,7 @@ export function generateMockBacktestResult(
     const tradeDate = new Date(start);
     tradeDate.setDate(
       tradeDate.getDate() +
-      Math.floor(Math.random() * ((end.getTime() - start.getTime()) / 86400000)),
+        Math.floor(Math.random() * ((end.getTime() - start.getTime()) / 86400000)),
     );
     const ticker = tickers[Math.floor(Math.random() * tickers.length)];
     const side = Math.random() > 0.5 ? 'BUY' : 'SELL';
