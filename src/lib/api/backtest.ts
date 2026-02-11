@@ -72,8 +72,8 @@ export async function pollBacktestResult(
   onProgress?: (status: string) => void,
   signal?: AbortSignal,
 ): Promise<BacktestResultResponse> {
-  const POLL_INTERVAL = 2000;
-  const MAX_ATTEMPTS = 150; // 최대 5분
+  const POLL_INTERVAL = 5000; // 2초 → 5초로 변경하여 서버 부하 감소
+  const MAX_ATTEMPTS = 60; // 최대 5분 (5초 * 60 = 300초)
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     if (signal?.aborted) {
@@ -172,7 +172,7 @@ export function generateMockBacktestResult(
     const tradeDate = new Date(start);
     tradeDate.setDate(
       tradeDate.getDate() +
-        Math.floor(Math.random() * ((end.getTime() - start.getTime()) / 86400000)),
+      Math.floor(Math.random() * ((end.getTime() - start.getTime()) / 86400000)),
     );
     const ticker = tickers[Math.floor(Math.random() * tickers.length)];
     const side = Math.random() > 0.5 ? 'BUY' : 'SELL';

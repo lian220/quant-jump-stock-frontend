@@ -183,6 +183,7 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
               <Input
                 type="date"
                 {...register('startDate')}
+                max={getTodayString()}
                 className="bg-slate-900/50 border-slate-600 text-white"
               />
               {errors.startDate && (
@@ -196,6 +197,7 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
               <Input
                 type="date"
                 {...register('endDate')}
+                max={getTodayString()}
                 className="bg-slate-900/50 border-slate-600 text-white"
               />
               {errors.endDate && <p className="text-red-400 text-xs">{errors.endDate.message}</p>}
