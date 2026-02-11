@@ -11,9 +11,6 @@ on:
 env:
   REGION: asia-northeast3
   AR_REPO: asia-northeast3-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/qjs-docker
-  # 앱 설정 (공개값 - secrets 불필요)
-  NEXT_PUBLIC_API_URL: https://api.alphafoundry.app
-  NEXT_PUBLIC_SITE_URL: https://alphafoundry.app
 
 jobs:
   deploy:
@@ -29,6 +26,18 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get secrets from Secret Manager
+        run: |
+          gcloud secrets versions access latest --secret=qjs-frontend-env > .env.prod
+
+      - name: Load environment variables
+        run: |
+          set -a
+          source .env.prod
+          set +a
+          echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL" >> $GITHUB_ENV
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
