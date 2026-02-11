@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { BacktestRunRequest, BenchmarkType, RebalancePeriod } from '@/types/backtest';
+import { MAX_BACKTEST_DAYS } from '@/constants/backtest';
 
 const backtestFormSchema = z
   .object({
@@ -28,7 +29,19 @@ const backtestFormSchema = z
   .refine((data) => new Date(data.endDate) >= new Date(data.startDate), {
     message: '종료일은 시작일 이후여야 합니다',
     path: ['endDate'],
-  });
+  })
+  .refine(
+    (data) => {
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
+      const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays <= MAX_BACKTEST_DAYS;
+    },
+    {
+      message: `백테스트 기간은 최대 1년(${MAX_BACKTEST_DAYS}일)까지 가능합니다`,
+      path: ['endDate'],
+    },
+  );
 
 type BacktestFormValues = z.infer<typeof backtestFormSchema>;
 
@@ -50,7 +63,48 @@ const rebalanceOptions: { value: RebalancePeriod; label: string }[] = [
   { value: 'QUARTERLY', label: '분기별' },
 ];
 
+// 빠른 기간 선택 옵션
+const periodPresets = [
+  { label: '1개월', months: 1 },
+  { label: '3개월', months: 3 },
+  { label: '6개월', months: 6 },
+  { label: '1년', months: 12 },
+] as const;
+
+// 오늘 기준 N개월 전 날짜를 yyyy-MM-dd로 반환 (월 롤오버 방지)
+function getDateMonthsAgo(months: number): string {
+  const today = new Date();
+  const targetYear = today.getFullYear();
+  const targetMonth = today.getMonth() - months;
+  const day = today.getDate();
+
+  // 월 경계를 넘는 경우 연도 조정
+  const adjustedYear = targetYear + Math.floor(targetMonth / 12);
+  const adjustedMonth = ((targetMonth % 12) + 12) % 12;
+
+  // 타겟 월의 마지막 날짜
+  const lastDayOfTargetMonth = new Date(adjustedYear, adjustedMonth + 1, 0).getDate();
+  // 현재 일자가 타겟 월에 없으면 마지막 날로 클램핑
+  const clampedDay = Math.min(day, lastDayOfTargetMonth);
+
+  const result = new Date(adjustedYear, adjustedMonth, clampedDay);
+  return result.toISOString().split('T')[0];
+}
+
+function getTodayString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export default function BacktestForm({ strategyId, onSubmit, isLoading }: BacktestFormProps) {
+  // SSR 하이드레이션 불일치 방지: 컴포넌트 내부에서 날짜 계산
+  const defaultDates = useMemo(
+    () => ({
+      startDate: getDateMonthsAgo(12),
+      endDate: getTodayString(),
+    }),
+    [],
+  );
+
   const {
     register,
     handleSubmit,
@@ -60,8 +114,8 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
   } = useForm<BacktestFormValues>({
     resolver: zodResolver(backtestFormSchema),
     defaultValues: {
-      startDate: '2020-01-01',
-      endDate: '2024-12-31',
+      startDate: defaultDates.startDate,
+      endDate: defaultDates.endDate,
       initialCapital: 10000000,
       benchmark: 'SPY',
       rebalancePeriod: 'MONTHLY',
@@ -70,6 +124,17 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
 
   const benchmarkValue = watch('benchmark');
   const rebalanceValue = watch('rebalancePeriod');
+
+  // 빠른 기간 선택 핸들러
+  const handlePeriodPreset = useCallback(
+    (months: number) => {
+      const endDate = getTodayString();
+      const startDate = getDateMonthsAgo(months);
+      setValue('startDate', startDate, { shouldValidate: true });
+      setValue('endDate', endDate, { shouldValidate: true });
+    },
+    [setValue],
+  );
 
   const handleFormSubmit = (data: BacktestFormValues) => {
     onSubmit({
@@ -87,11 +152,30 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
       <CardHeader>
         <CardTitle className="text-white">백테스트 설정</CardTitle>
         <CardDescription className="text-slate-400">
-          백테스트 조건을 설정하고 실행하세요
+          백테스트 조건을 설정하고 실행하세요 (최대 1년)
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          {/* 빠른 기간 선택 */}
+          <div className="space-y-2">
+            <Label className="text-slate-300">빠른 기간 선택</Label>
+            <div className="flex flex-wrap gap-2">
+              {periodPresets.map((preset) => (
+                <Button
+                  key={preset.label}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePeriodPreset(preset.months)}
+                  className="border-slate-600 text-slate-300 hover:bg-emerald-600/20 hover:text-emerald-400 hover:border-emerald-500/50"
+                >
+                  최근 {preset.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* 시작일 */}
             <div className="space-y-2">
