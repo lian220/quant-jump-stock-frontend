@@ -52,7 +52,7 @@ export const SignUpForm = ({ onSuccess, onSwitchToLogin }: SignUpFormProps) => {
       formData.email,
       formData.password,
       formData.name,
-      formData.phone,
+      formData.phone || undefined,
     );
 
     if (result.error) {
