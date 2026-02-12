@@ -9,6 +9,7 @@ import PerformanceCards from '@/components/backtest/PerformanceCards';
 import EquityCurveChart from '@/components/backtest/EquityCurveChart';
 import TradeHistoryTable from '@/components/backtest/TradeHistoryTable';
 import { runBacktest, pollBacktestResult, generateMockBacktestResult } from '@/lib/api/backtest';
+import { getStrategyById } from '@/lib/api/strategies';
 import { useAuth } from '@/hooks/useAuth';
 import type { BacktestRunRequest, BacktestResultResponse, BacktestStatus } from '@/types/backtest';
 
@@ -24,7 +25,15 @@ export default function BacktestPage() {
   const [error, setError] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [selectedBenchmark, setSelectedBenchmark] = useState<string>('SPY');
+  const [strategyName, setStrategyName] = useState<string>('');
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // 전략 이름 조회
+  useEffect(() => {
+    getStrategyById(strategyId)
+      .then((strategy) => setStrategyName(strategy.name))
+      .catch(() => setStrategyName(`전략 #${strategyId}`));
+  }, [strategyId]);
 
   // 컴포넌트 unmount 시 진행 중인 폴링 취소
   useEffect(() => {
@@ -125,7 +134,9 @@ export default function BacktestPage() {
               ← 전략 상세
             </Button>
           </div>
-          <h1 className="text-3xl font-bold text-white">백테스트 실행</h1>
+          <h1 className="text-3xl font-bold text-white">
+            {strategyName ? `${strategyName} - 백테스트` : '백테스트 실행'}
+          </h1>
           <p className="text-slate-400 mt-1">전략의 과거 성과를 시뮬레이션하고 분석합니다</p>
         </div>
 

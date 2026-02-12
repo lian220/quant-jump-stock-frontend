@@ -5,7 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { structuredDataTemplates } from '@/lib/seo/config';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
-import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
+
 import { Header } from '@/components/layout/Header';
 import { CopyProtection } from '@/components/CopyProtection';
 import { Toaster } from 'sonner';
@@ -134,7 +134,7 @@ export default function RootLayout({
         <CopyProtection />
         <ServiceWorkerRegister />
         <InstallPrompt />
-        <UpdatePrompt />
+
         <Toaster position="top-center" richColors />
         <AuthProvider>
           <Header />

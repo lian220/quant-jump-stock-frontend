@@ -60,10 +60,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setToken(null);
           setUser(null);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('세션 검증 오류:', error);
-        setToken(null);
-        setUser(null);
+        // 401(인증 만료)일 때만 토큰 삭제, 네트워크 에러 등은 기존 토큰 유지
+        const status =
+          error && typeof error === 'object' && 'response' in error
+            ? (error as { response?: { status?: number } }).response?.status
+            : undefined;
+        if (status === 401 || status === 403) {
+          setToken(null);
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }

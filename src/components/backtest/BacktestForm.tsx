@@ -88,6 +88,13 @@ function getDateMonthsAgo(months: number): string {
   const clampedDay = Math.min(day, lastDayOfTargetMonth);
 
   const result = new Date(adjustedYear, adjustedMonth, clampedDay);
+
+  // 윤년으로 인해 12개월이 366일이 될 수 있으므로 시작일 +1일 보정
+  const diffDays = (today.getTime() - result.getTime()) / (1000 * 60 * 60 * 24);
+  if (diffDays > MAX_BACKTEST_DAYS) {
+    result.setDate(result.getDate() + Math.ceil(diffDays - MAX_BACKTEST_DAYS));
+  }
+
   return result.toISOString().split('T')[0];
 }
 

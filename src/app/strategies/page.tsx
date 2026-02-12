@@ -121,25 +121,6 @@ export default function StrategiesPage() {
     setCurrentPage(1);
   };
 
-  // 에러 상태
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Card className="bg-slate-800/50 border-slate-700 p-8">
-          <div className="text-center">
-            <p className="text-xl text-red-400 mb-4">⚠️ {error}</p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              다시 시도
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* 메인 컨텐츠 */}
@@ -233,11 +214,27 @@ export default function StrategiesPage() {
             </div>
 
             {/* 전략 목록 */}
-            <StrategyGrid strategies={strategies} isLoading={isLoading} />
+            {error ? (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="pt-6 text-center py-12">
+                  <p className="text-red-400 mb-4">⚠️ {error}</p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    다시 시도
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <StrategyGrid strategies={strategies} isLoading={isLoading} />
 
-            {/* 페이지네이션 */}
-            {!isLoading && paginationInfo.totalPages > 1 && (
-              <StrategyPagination pagination={paginationInfo} onPageChange={handlePageChange} />
+                {/* 페이지네이션 */}
+                {!isLoading && paginationInfo.totalPages > 1 && (
+                  <StrategyPagination pagination={paginationInfo} onPageChange={handlePageChange} />
+                )}
+              </>
             )}
           </div>
         </div>

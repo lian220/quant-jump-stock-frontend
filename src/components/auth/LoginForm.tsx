@@ -15,7 +15,7 @@ interface LoginFormProps {
 }
 
 export const LoginForm = ({ onSuccess, onSwitchToSignUp }: LoginFormProps) => {
-  const { signIn, signInWithGoogle, signInWithNaver, loading } = useAuth();
+  const { signIn, /* signInWithGoogle, */ signInWithNaver, loading } = useAuth();
   const [formData, setFormData] = useState<AuthFormData>({
     userId: '',
     password: '',
@@ -46,15 +46,15 @@ export const LoginForm = ({ onSuccess, onSwitchToSignUp }: LoginFormProps) => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    const result = await signInWithGoogle();
-
-    if (result.error) {
-      toast.error(result.error, {
-        duration: 5000,
-      });
-    }
-  };
+  // const handleGoogleSignIn = async () => {
+  //   const result = await signInWithGoogle();
+  //
+  //   if (result.error) {
+  //     toast.error(result.error, {
+  //       duration: 5000,
+  //     });
+  //   }
+  // };
 
   const handleNaverSignIn = async () => {
     const result = await signInWithNaver();
@@ -137,7 +137,7 @@ export const LoginForm = ({ onSuccess, onSwitchToSignUp }: LoginFormProps) => {
         </div>
 
         <div className="space-y-2">
-          <Button
+          {/* <Button
             type="button"
             variant="outline"
             onClick={handleGoogleSignIn}
@@ -163,7 +163,7 @@ export const LoginForm = ({ onSuccess, onSwitchToSignUp }: LoginFormProps) => {
               />
             </svg>
             Google로 로그인
-          </Button>
+          </Button> */}
 
           <Button
             type="button"

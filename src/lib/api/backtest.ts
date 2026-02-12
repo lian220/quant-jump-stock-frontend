@@ -53,9 +53,13 @@ export async function getBacktestResult(
     signal,
   });
 
+  // 500 응답이라도 FAILED 상태의 백테스트 결과일 수 있으므로 body 파싱 시도
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const error = new Error(errorData.error || '백테스트 결과 조회에 실패했습니다.');
+    const data = await response.json().catch(() => ({}));
+    if (data.status === 'FAILED') {
+      return data as BacktestResultResponse;
+    }
+    const error = new Error(data.error || '백테스트 결과 조회에 실패했습니다.');
     (error as Error & { status?: number }).status = response.status;
     throw error;
   }
