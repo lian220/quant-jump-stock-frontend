@@ -111,7 +111,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signUp = async (userId: string, email: string, password: string, name?: string) => {
+  const signUp = async (
+    userId: string,
+    email: string,
+    password: string,
+    name?: string,
+    phone?: string,
+  ) => {
     try {
       setLoading(true);
 
@@ -120,6 +126,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email,
         password,
         name,
+        phone,
       });
 
       const data = response.data;

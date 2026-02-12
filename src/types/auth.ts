@@ -1,16 +1,11 @@
-// 애플리케이션에서 사용하는 사용자 타입
+// 애플리케이션에서 사용하는 사용자 타입 (백엔드 UserInfo 응답과 매칭)
 export interface AuthUser {
-  id: string;
+  userId: string;
+  name?: string;
   email: string;
-  user_metadata?: {
-    full_name?: string;
-    avatar_url?: string;
-    provider?: string;
-  };
-  app_metadata?: {
-    provider?: string;
-    providers?: string[];
-  };
+  phone?: string;
+  role: string;
+  status: string;
 }
 
 // 인증 컨텍스트 타입
@@ -23,6 +18,7 @@ export interface AuthContextType {
     email: string,
     password: string,
     name?: string,
+    phone?: string,
   ) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error?: string }>;
@@ -37,6 +33,7 @@ export interface AuthFormData {
   password: string;
   confirmPassword?: string;
   name?: string;
+  phone?: string;
 }
 
 // 인증 에러 타입
