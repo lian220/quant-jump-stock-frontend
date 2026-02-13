@@ -29,7 +29,7 @@ export default function RecommendationsPage() {
     const fetchRecommendations = async () => {
       try {
         const response = await getBuySignals({ minConfidence: 0.1 });
-        setRecommendations(response.data);
+        setRecommendations(response.data ?? []);
       } catch (error) {
         console.error('Failed to fetch recommendations:', error);
         setRecommendationsError('종목 분석 데이터를 불러오는데 실패했습니다.');

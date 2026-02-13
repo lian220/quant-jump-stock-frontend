@@ -339,7 +339,10 @@ export default function Home() {
                                   <div className="flex justify-between text-sm">
                                     <span className="text-slate-400">현재가</span>
                                     <span className="text-white font-mono">
-                                      ${stock.currentPrice ? stock.currentPrice.toFixed(2) : '-'}
+                                      $
+                                      {stock.currentPrice != null
+                                        ? stock.currentPrice.toFixed(2)
+                                        : '-'}
                                     </span>
                                   </div>
                                   {stock.targetPrice != null && (

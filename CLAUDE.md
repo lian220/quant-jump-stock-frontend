@@ -324,7 +324,7 @@ COMPOSITE_SCORE_GRADE_THRESHOLDS.FUTURE = {
 - 현재/통합 모드 전환 (CURRENT ↔ FUTURE)
 - 변경 이력 추적
 
-자세한 내용: [TODO.md - 7. 종목 추천 점수 기준 관리 시스템](../../../docs/TODO.md#7-종목-추천-점수-기준-관리-시스템)
+<!-- TODO: Admin 페이지 개발 시 상세 문서 추가 예정 -->
 
 ### 사용 예시
 
