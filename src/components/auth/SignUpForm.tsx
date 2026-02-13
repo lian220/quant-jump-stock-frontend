@@ -22,6 +22,7 @@ export const SignUpForm = ({ onSuccess, onSwitchToLogin }: SignUpFormProps) => {
     password: '',
     confirmPassword: '',
     name: '',
+    phone: '',
   });
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
@@ -46,7 +47,13 @@ export const SignUpForm = ({ onSuccess, onSwitchToLogin }: SignUpFormProps) => {
       return;
     }
 
-    const result = await signUp(formData.userId, formData.email, formData.password, formData.name);
+    const result = await signUp(
+      formData.userId,
+      formData.email,
+      formData.password,
+      formData.name,
+      formData.phone || undefined,
+    );
 
     if (result.error) {
       setError(result.error);
@@ -149,6 +156,22 @@ export const SignUpForm = ({ onSuccess, onSwitchToLogin }: SignUpFormProps) => {
               value={formData.name}
               onChange={handleInputChange}
               placeholder="이름을 입력하세요 (선택)"
+              disabled={loading}
+              className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-slate-300">
+              휴대전화번호
+            </Label>
+            <Input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              placeholder="010-1234-5678 (선택)"
               disabled={loading}
               className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500"
             />

@@ -113,9 +113,12 @@ export function Header() {
 
             {user ? (
               <div className="hidden md:flex items-center space-x-4">
-                <span className="text-sm text-slate-400 hidden lg:inline truncate max-w-[150px]">
+                <Link
+                  href="/mypage"
+                  className="text-sm text-slate-400 hidden lg:inline truncate max-w-[150px] hover:text-emerald-400 transition-colors"
+                >
                   {user.email}
-                </span>
+                </Link>
                 <Button
                   variant="outline"
                   size="sm"
@@ -201,6 +204,13 @@ export function Header() {
                   <div className="px-4 py-2">
                     <span className="text-sm text-slate-400 block truncate">{user.email}</span>
                   </div>
+                  <Link
+                    href="/mypage"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-base font-semibold transition-all py-3 px-4 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-slate-800"
+                  >
+                    마이페이지
+                  </Link>
                   <Button
                     variant="outline"
                     size="default"

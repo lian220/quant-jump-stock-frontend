@@ -27,7 +27,7 @@ export default function Home() {
         });
         setFeaturedStrategies(response.strategies);
       } catch (error) {
-        console.error('Failed to fetch featured strategies:', error);
+        console.warn('Failed to fetch featured strategies:', error);
       } finally {
         setIsLoadingStrategies(false);
       }
