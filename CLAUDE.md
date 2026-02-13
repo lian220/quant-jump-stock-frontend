@@ -45,18 +45,30 @@ src/
 │   ├── page.tsx                # 홈페이지
 │   ├── auth/                   # 인증 페이지
 │   │   └── page.tsx
+│   ├── recommendations/        # 종목 추천 페이지
+│   │   └── page.tsx
+│   ├── strategies/             # 전략 마켓플레이스
+│   ├── stocks/                 # 종목 탐색
 │   ├── payment/                # 결제 페이지
 │   │   └── page.tsx
 │   └── api/                    # API 라우트
-│       └── payments/           # 결제 승인 API
+│       ├── payments/           # 결제 승인 API
+│       └── predictions/        # 종목 추천 API (프록시)
+│           └── buy-signals/
 │
 ├── components/                 # React 컴포넌트
 │   ├── ui/                     # Shadcn/ui 기본 컴포넌트
 │   ├── auth/                   # 인증 관련 컴포넌트
 │   ├── payment/                # 결제 관련 컴포넌트
-│   └── seo/                    # SEO 컴포넌트
+│   ├── seo/                    # SEO 컴포넌트
+│   ├── pwa/                    # PWA 관련 컴포넌트
+│   └── layout/                 # 레이아웃 컴포넌트
+│       └── Header.tsx          # 네비게이션 헤더
 │
 ├── lib/                        # 유틸리티
+│   ├── api/                    # API 클라이언트
+│   │   ├── predictions.ts      # 종목 추천 API 클라이언트
+│   │   └── strategies.ts       # 전략 API 클라이언트
 │   ├── supabase.ts             # Supabase 클라이언트
 │   ├── toss-payments.ts        # TossPayments 설정
 │   └── utils.ts                # 공통 유틸
@@ -255,3 +267,80 @@ Backoffice 실행:
 cd quant-jump-stock-backoffice
 pnpm dev  # 포트 4000
 ```
+
+## 종목 추천 시스템
+
+### 개요
+AI 기반 종목 추천 기능으로, 기술적 지표를 분석하여 매수 신호를 제공합니다.
+
+### 파일 구조
+- **API 클라이언트**: `lib/api/predictions.ts`
+  - `getBuySignals()`: 매수 신호 조회
+  - `getConfidenceGrade()`: 신뢰도 등급 변환
+  - `getScoreGrade()`: 종합 점수 등급 변환
+- **API 프록시**: `app/api/predictions/buy-signals/route.ts` (CORS 우회)
+- **페이지**: `app/recommendations/page.tsx`
+
+### 점수 시스템 (BETA)
+
+**현재 상태** (2026-02-13):
+- AI 예측 및 감정 분석 **미통합**
+- 기술적 지표만 사용 → `composite_score` 최대 1.4점
+- 통합 후 예상 최대: 7.5점
+
+**점수 계산식**:
+```text
+composite_score = 0.3 × rise_probability + 0.4 × tech_conditions + 0.3 × sentiment
+tech_conditions = 1.5 × golden_cross + 1.0 × (rsi < 50) + 1.0 × macd_buy_signal
+```
+
+**등급 기준** (`lib/api/predictions.ts`):
+```typescript
+// 신뢰도 등급
+CONFIDENCE_GRADE_THRESHOLDS = {
+  VERY_HIGH: 0.9,  // 매우 높음
+  HIGH: 0.8,       // 높음
+  MEDIUM: 0.7      // 중간
+}
+
+// 종합 점수 등급 (현재: AI/감정 미통합)
+COMPOSITE_SCORE_GRADE_THRESHOLDS.CURRENT = {
+  EXCELLENT: 1.2,  // 우수 (85%ile)
+  GOOD: 0.8,       // 양호 (57%ile)
+  FAIR: 0.5        // 보통 (35%ile)
+}
+
+// 통합 후 예상 기준
+COMPOSITE_SCORE_GRADE_THRESHOLDS.FUTURE = {
+  EXCELLENT: 6.0,  // 우수
+  GOOD: 4.0,       // 양호
+  FAIR: 2.0        // 보통
+}
+```
+
+### Admin 관리 계획
+점수 기준은 Backoffice Admin 페이지에서 동적 관리 예정:
+- 신뢰도/종합 점수 임계값 조정
+- 현재/통합 모드 전환 (CURRENT ↔ FUTURE)
+- 변경 이력 추적
+
+<!-- TODO: Admin 페이지 개발 시 상세 문서 추가 예정 -->
+
+### 사용 예시
+
+```tsx
+import { getBuySignals, getConfidenceGrade, getScoreGrade } from '@/lib/api/predictions';
+
+// 매수 신호 조회 (신뢰도 70% 이상)
+const response = await getBuySignals({ minConfidence: 0.7 });
+
+// 등급 계산
+const confidenceGrade = getConfidenceGrade(stock.confidence);
+// { grade: '높음', color: 'text-cyan-400' }
+
+const scoreGrade = getScoreGrade(stock.compositeScore);
+// { grade: '양호', color: 'text-cyan-400', badge: 'BETA' }
+```
+
+### API 문서
+상세 스펙: [Predictions API](../../../docs/api/predictions.md)

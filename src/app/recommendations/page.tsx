@@ -1,0 +1,509 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { PageSEO } from '@/components/seo';
+import { getBuySignals, getScoreGrade, TIER_THRESHOLDS } from '@/lib/api/predictions';
+import { getStrategies } from '@/lib/api/strategies';
+import { getCategoryLabel } from '@/lib/strategy-helpers';
+import { Footer } from '@/components/layout/Footer';
+import type { BuySignal } from '@/lib/api/predictions';
+import type { Strategy } from '@/types/strategy';
+
+export default function RecommendationsPage() {
+  // 종목 추천 상태
+  const [recommendations, setRecommendations] = useState<BuySignal[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
+  const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
+
+  // 인기 전략 상태
+  const [popularStrategies, setPopularStrategies] = useState<Strategy[]>([]);
+  const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
+  const [strategiesError, setStrategiesError] = useState<string | null>(null);
+
+  // 종목 분석 데이터 가져오기 (신뢰도 0.1 이상)
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const response = await getBuySignals({ minConfidence: 0.1 });
+        setRecommendations(response.data ?? []);
+      } catch (error) {
+        console.error('Failed to fetch recommendations:', error);
+        setRecommendationsError('종목 분석 데이터를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoadingRecommendations(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, []);
+
+  // 인기 전략 가져오기 (구독자순 상위 3개)
+  useEffect(() => {
+    const fetchPopularStrategies = async () => {
+      try {
+        const response = await getStrategies({
+          sortBy: 'subscribers',
+          page: 0,
+          size: 3,
+        });
+        setPopularStrategies(response.strategies);
+      } catch (error) {
+        console.error('Failed to fetch strategies:', error);
+        setStrategiesError('전략을 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoadingStrategies(false);
+      }
+    };
+
+    fetchPopularStrategies();
+  }, []);
+
+  return (
+    <>
+      <PageSEO
+        title="종목 분석 - Alpha Foundry"
+        description="AI 기반 오늘의 주목 종목과 검증된 퀀트 투자 전략을 확인하세요."
+        keywords="AI 종목 분석, 매수 관심, 퀀트 전략, 투자 참고, Alpha Foundry"
+      />
+
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        {/* 메인 컨텐츠 */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Hero 섹션: 오늘의 AI 추천 종목 */}
+          <section className="mb-20">
+            {/* 헤더 */}
+            <div className="text-center mb-12">
+              <Badge className="mb-4 bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-lg px-4 py-1">
+                🤖 AI 분석
+              </Badge>
+              <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">오늘의 주목 종목</h1>
+              <p className="text-lg text-slate-500 mb-6">
+                {new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString('ko-KR', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}{' '}
+                종가 기준 분석
+              </p>
+              <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+                실시간 데이터 분석 기반 매수 관심 종목
+                <br />
+                <span className="text-emerald-400 font-semibold">데이터 기반</span> 분석 종목을
+                엄선했습니다
+              </p>
+
+              {/* Beta 경고 배너 */}
+              <div className="mt-8 max-w-4xl mx-auto space-y-4">
+                <Card className="bg-yellow-500/10 border-yellow-500/30">
+                  <CardContent className="pt-6 pb-6">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">⚠️</span>
+                      <div className="text-left">
+                        <h3 className="text-yellow-400 font-semibold mb-2">
+                          BETA - 점수 시스템 개선 중
+                        </h3>
+                        <p className="text-sm text-slate-300 leading-relaxed">
+                          현재 종합 점수는{' '}
+                          <strong className="text-yellow-400">기술적 지표만</strong> 반영하여 낮게
+                          표시됩니다 (최대 1.4점).
+                          <br />
+                          AI 예측 및 감정 분석 통합 후 점수가 자연스럽게 상승할 예정입니다 (예상
+                          최대 7.5점).
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 업데이트 시간 안내 배너 */}
+                <Card className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-cyan-500/30">
+                  <CardContent className="pt-6 pb-6">
+                    <div className="flex items-start gap-3">
+                      <svg
+                        className="w-6 h-6 text-cyan-400 flex-shrink-0 mt-0.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <div className="text-left">
+                        <h3 className="text-cyan-300 font-semibold mb-2">데이터 업데이트 시간</h3>
+                        <p className="text-sm text-slate-300 leading-relaxed">
+                          매일 저녁 <span className="font-semibold text-cyan-300">23:05(KST)</span>
+                          에 전날 종가 기준으로 AI 분석이 완료됩니다.
+                          <br />
+                          분석 완료 시각은 약{' '}
+                          <span className="font-semibold text-cyan-300">23:10 KST</span>이며, 이후
+                          최신 추천 종목을 확인하실 수 있습니다.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* 로딩 상태 */}
+            {isLoadingRecommendations && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="bg-slate-800/50 border-slate-700">
+                    <CardContent className="pt-6">
+                      <div className="animate-pulse">
+                        <div className="h-8 bg-slate-700 rounded mb-4"></div>
+                        <div className="h-6 bg-slate-700 rounded mb-3 w-2/3"></div>
+                        <div className="h-4 bg-slate-700 rounded mb-2"></div>
+                        <div className="h-4 bg-slate-700 rounded w-3/4"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* 에러 상태 */}
+            {recommendationsError && (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="pt-6 text-center py-12">
+                  <p className="text-xl text-red-400 mb-4">⚠️ {recommendationsError}</p>
+                  <Button
+                    onClick={() => window.location.reload()}
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    다시 시도
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 추천 종목 카드 */}
+            {!isLoadingRecommendations && !recommendationsError && recommendations.length > 0 && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {recommendations.map((stock) => {
+                  const scoreGrade = getScoreGrade(stock.compositeScore);
+                  const score = stock.compositeScore;
+                  const isStrong = score >= TIER_THRESHOLDS.STRONG;
+                  const isMedium = score >= TIER_THRESHOLDS.MEDIUM;
+
+                  return (
+                    <Card
+                      key={stock.ticker}
+                      className={`bg-gradient-to-br from-slate-800/80 to-slate-800/50 transition-all hover:shadow-lg ${
+                        isStrong
+                          ? 'border-emerald-500/50 hover:border-emerald-400 hover:shadow-emerald-500/10'
+                          : isMedium
+                            ? 'border-cyan-500/30 hover:border-cyan-400 hover:shadow-cyan-500/10'
+                            : 'border-slate-700 hover:border-slate-600'
+                      }`}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <CardTitle className="text-2xl text-white mb-1">
+                              {stock.stockName}
+                            </CardTitle>
+                            <p className="text-sm text-slate-400 font-mono">{stock.ticker}</p>
+                          </div>
+                          <Badge
+                            className={
+                              isStrong
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-sm'
+                                : isMedium
+                                  ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-sm'
+                                  : 'bg-slate-500/20 text-slate-400 border-slate-500/30 text-sm'
+                            }
+                          >
+                            {isStrong ? '추천' : isMedium ? '참고' : '모니터링'}
+                          </Badge>
+                        </div>
+
+                        {/* 점수 상세 */}
+                        <div className="grid grid-cols-3 gap-3 mb-4">
+                          <div className="bg-slate-700/30 p-3 rounded-lg">
+                            <p className="text-xs text-slate-400 mb-1">종합 점수</p>
+                            <div className="flex items-center gap-1 mb-1">
+                              <p className={`text-lg font-bold ${scoreGrade.color}`}>
+                                {score.toFixed(1)}
+                              </p>
+                              {scoreGrade.badge && (
+                                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] px-1.5 py-0">
+                                  {scoreGrade.badge}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500">{scoreGrade.grade}</p>
+                          </div>
+                          <div className="bg-slate-700/30 p-3 rounded-lg">
+                            <p className="text-xs text-slate-400 mb-1">기술 점수</p>
+                            <p className="text-lg font-bold text-cyan-400">
+                              {stock.techScore.toFixed(1)}
+                            </p>
+                          </div>
+                          <div className="bg-slate-700/30 p-3 rounded-lg">
+                            <p className="text-xs text-slate-400 mb-1">AI 점수</p>
+                            <p className="text-lg font-bold text-purple-400">
+                              {stock.aiScore.toFixed(1)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* 가격 정보 */}
+                        {stock.currentPrice != null && (
+                          <div className="bg-slate-700/20 p-4 rounded-lg mb-4">
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                              <div>
+                                <p className="text-xs text-slate-400 mb-1">현재가</p>
+                                <p className="text-xl font-bold text-white font-mono">
+                                  ${stock.currentPrice.toFixed(2)}
+                                </p>
+                              </div>
+                              {stock.targetPrice != null && (
+                                <div>
+                                  <p className="text-xs text-slate-400 mb-1">목표가</p>
+                                  <p className="text-xl font-bold text-emerald-400 font-mono">
+                                    ${stock.targetPrice.toFixed(2)}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              {stock.upsidePercent !== undefined &&
+                                stock.upsidePercent !== null && (
+                                  <Badge
+                                    className={`
+                                  ${
+                                    stock.upsidePercent >= 10
+                                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                      : stock.upsidePercent >= 5
+                                        ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                                        : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                  }
+                                `}
+                                  >
+                                    상승여력 {stock.upsidePercent > 0 ? '+' : ''}
+                                    {stock.upsidePercent.toFixed(1)}%
+                                  </Badge>
+                                )}
+
+                              {stock.priceRecommendation && (
+                                <Badge
+                                  className={`
+                                  ${
+                                    stock.priceRecommendation === '강력매수' ||
+                                    stock.priceRecommendation === '높은 관심'
+                                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                      : stock.priceRecommendation === '매수' ||
+                                          stock.priceRecommendation === '관심'
+                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                        : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                  }
+                                `}
+                                >
+                                  {stock.priceRecommendation}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </CardHeader>
+
+                      <CardContent>
+                        {/* 분석 근거 */}
+                        {stock.recommendationReason && (
+                          <div className="mb-4">
+                            <p className="text-xs text-slate-400 mb-2">분석 근거</p>
+                            <p className="text-sm text-slate-300 leading-relaxed">
+                              {stock.recommendationReason}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* CTA 버튼 */}
+                        <Link href={`/stocks?query=${stock.ticker}`}>
+                          <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                            상세 분석 보기 →
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 결과 없음 */}
+            {!isLoadingRecommendations && !recommendationsError && recommendations.length === 0 && (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="pt-6 text-center py-16">
+                  <p className="text-slate-400 text-lg mb-2">오늘은 분석 데이터가 없습니다</p>
+                  <p className="text-slate-500 text-sm">
+                    신뢰도 기준을 충족하는 매수 관심 종목이 발견되지 않았습니다.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+
+          {/* 구분선 */}
+          <div className="relative mb-20">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-700"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-slate-900 px-6 text-slate-500 text-sm">장기 투자 전략</span>
+            </div>
+          </div>
+
+          {/* 하단 섹션: 인기 투자 전략 */}
+          <section>
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-bold text-white mb-4">검증된 퀀트 전략</h2>
+              <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-6">
+                장기 포트폴리오 구성을 위한 체계적인 투자 전략을 탐색하세요
+              </p>
+              <Link href="/strategies">
+                <Button
+                  variant="outline"
+                  className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                >
+                  모든 전략 보기 →
+                </Button>
+              </Link>
+            </div>
+
+            {/* 로딩 상태 */}
+            {isLoadingStrategies && (
+              <div className="grid md:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="bg-slate-800/50 border-slate-700">
+                    <CardContent className="pt-6">
+                      <div className="animate-pulse">
+                        <div className="h-6 bg-slate-700 rounded mb-4"></div>
+                        <div className="h-4 bg-slate-700 rounded mb-2"></div>
+                        <div className="h-4 bg-slate-700 rounded w-2/3"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* 에러 상태 */}
+            {strategiesError && (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="pt-6 text-center">
+                  <p className="text-red-400">{strategiesError}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 전략 카드 */}
+            {!isLoadingStrategies && !strategiesError && popularStrategies.length > 0 && (
+              <div className="grid md:grid-cols-3 gap-6">
+                {popularStrategies.map((strategy) => (
+                  <Link key={strategy.id} href={`/strategies/${strategy.id}`}>
+                    <Card className="bg-slate-800/50 border-slate-700 hover:border-cyan-500/50 transition-all h-full">
+                      <CardHeader>
+                        <div className="flex justify-between items-start mb-2">
+                          <Badge
+                            className={`
+                              ${strategy.category === 'value' ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' : ''}
+                              ${strategy.category === 'momentum' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : ''}
+                              ${strategy.category === 'asset_allocation' ? 'bg-green-500/20 text-green-400 border-green-500/30' : ''}
+                              ${strategy.category === 'quant_composite' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : ''}
+                              ${strategy.category === 'seasonal' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : ''}
+                              ${strategy.category === 'ml_prediction' ? 'bg-pink-500/20 text-pink-400 border-pink-500/30' : ''}
+                            `}
+                          >
+                            {getCategoryLabel(strategy.category)}
+                          </Badge>
+                          {strategy.isPremium && (
+                            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                              프리미엄
+                            </Badge>
+                          )}
+                        </div>
+                        <CardTitle className="text-xl text-white">{strategy.name}</CardTitle>
+                        <CardDescription className="text-slate-400 line-clamp-2">
+                          {strategy.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-slate-400">연평균 수익률</p>
+                            <p className="text-emerald-400 font-semibold">
+                              {strategy.annualReturn}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400">샤프 비율</p>
+                            <p className="text-cyan-400 font-semibold">{strategy.sharpeRatio}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400">구독자</p>
+                            <p className="text-slate-300 font-semibold">
+                              {strategy.subscribers.toLocaleString()}명
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400">평점</p>
+                            <p className="text-yellow-400 font-semibold">⭐ {strategy.rating}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* CTA 섹션 */}
+          <section className="mt-20">
+            <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
+              <CardContent className="text-center py-12">
+                <h2 className="text-3xl font-bold mb-4 text-white">
+                  지금 바로 데이터 기반 투자를 시작하세요
+                </h2>
+                <p className="text-xl mb-8 text-emerald-100">
+                  AI 분석 종목과 검증된 퀀트 전략으로 스마트한 투자를 경험하세요.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link href="/strategies">
+                    <Button size="lg" className="bg-white text-emerald-700 hover:bg-slate-100">
+                      전략 둘러보기
+                    </Button>
+                  </Link>
+                  <Link href="/auth">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="border-white text-white hover:bg-white/10"
+                    >
+                      무료 회원가입
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        </main>
+
+        {/* 푸터 */}
+        <Footer />
+      </div>
+    </>
+  );
+}
