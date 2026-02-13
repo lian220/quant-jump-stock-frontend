@@ -79,7 +79,7 @@ export function Header() {
                   : 'text-slate-300 hover:text-emerald-400',
               )}
             >
-              종목 추천
+              종목 분석
             </Link>
             <Link
               href="/strategies"
@@ -165,7 +165,7 @@ export function Header() {
                     : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800',
                 )}
               >
-                종목 추천
+                종목 분석
               </Link>
               <Link
                 href="/strategies"

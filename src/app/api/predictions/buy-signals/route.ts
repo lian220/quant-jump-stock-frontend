@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
+    console.log('[Proxy] Backend response:', JSON.stringify(data));
     // Backend 응답 형식을 Frontend 기대 형식으로 변환
     return NextResponse.json({ data: data.buySignals || [] });
   } catch (error) {

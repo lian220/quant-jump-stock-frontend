@@ -8,26 +8,99 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 // === 타입 정의 ===
 
 export type Signal = 'BUY' | 'SELL' | 'HOLD';
+export type CompositeGrade = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'LOW';
+export type SignalTier = 'strong' | 'medium' | 'weak';
 
 export interface BuySignal {
-  symbol: string;
+  ticker: string;
   stockName: string;
-  signal: Signal;
-  confidence: number; // 0~1 사이의 신뢰도
-  compositeScore: number; // 종합 점수
-  recommendationReason: string; // 추천 이유
-  // 🆕 Phase 6.5: 가격 메트릭
-  currentPrice?: number; // 현재가 (최신 종가)
-  targetPrice?: number; // 목표가 (AI 예측 가격)
-  upsidePercent?: number; // 상승여력 (%)
-  priceRecommendation?: string; // 가격 추천 (강력매수/매수/보유/매도)
+  analysisDate: string;
+  compositeScore: number;
+  compositeGrade: CompositeGrade;
+  aiScore: number;
+  techScore: number;
+  sentimentScore: number;
+  isRecommended: boolean;
+  recommendationReason?: string;
+  currentPrice?: number;
+  targetPrice?: number;
+  upsidePercent?: number;
+  priceRecommendation?: string;
 }
 
 export interface BuySignalsResponse {
   data: BuySignal[];
 }
 
+// === Tier 분류 ===
+
+/** Tier 기준 (현재 BETA: 기술적 지표만, max 1.4) */
+export const TIER_THRESHOLDS = {
+  STRONG: 0.8, // GOOD 이상 → "AI 추천"
+  MEDIUM: 0.5, // FAIR 이상 → "분석 참고"
+} as const;
+
+/** 종목을 Tier별로 분류 */
+export function classifyByTier(signals: BuySignal[]): {
+  strong: BuySignal[];
+  medium: BuySignal[];
+  weak: BuySignal[];
+} {
+  const strong: BuySignal[] = [];
+  const medium: BuySignal[] = [];
+  const weak: BuySignal[] = [];
+
+  for (const signal of signals) {
+    const score = Number(signal.compositeScore);
+    if (score >= TIER_THRESHOLDS.STRONG) {
+      strong.push(signal);
+    } else if (score >= TIER_THRESHOLDS.MEDIUM) {
+      medium.push(signal);
+    } else {
+      weak.push(signal);
+    }
+  }
+
+  // 각 Tier 내에서 점수 높은 순 정렬
+  const byScoreDesc = (a: BuySignal, b: BuySignal) =>
+    Number(b.compositeScore) - Number(a.compositeScore);
+
+  strong.sort(byScoreDesc);
+  medium.sort(byScoreDesc);
+  weak.sort(byScoreDesc);
+
+  return { strong, medium, weak };
+}
+
+/** Tier 라벨 및 스타일 */
+export function getTierInfo(tier: SignalTier) {
+  switch (tier) {
+    case 'strong':
+      return {
+        label: '🔥 AI 추천 종목',
+        subtitle: '강한 매수 신호가 감지된 종목',
+        badgeClass: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+        borderClass: 'border-emerald-500/50',
+      };
+    case 'medium':
+      return {
+        label: '📊 분석된 종목 (참고용)',
+        subtitle: '기술적 신호가 일부 감지된 종목',
+        badgeClass: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+        borderClass: 'border-cyan-500/30',
+      };
+    case 'weak':
+      return {
+        label: '📈 모니터링 종목',
+        subtitle: '약한 신호 - 추가 확인 필요',
+        badgeClass: 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+        borderClass: 'border-slate-700',
+      };
+  }
+}
+
 export interface GetBuySignalsParams {
+  date?: string; // 조회 날짜 (YYYY-MM-DD, 기본값: 어제)
   minConfidence?: number; // 최소 신뢰도 (기본값: 0.7)
 }
 
@@ -40,6 +113,10 @@ export interface GetBuySignalsParams {
  */
 export async function getBuySignals(params: GetBuySignalsParams = {}): Promise<BuySignalsResponse> {
   const searchParams = new URLSearchParams();
+
+  if (params.date !== undefined) {
+    searchParams.append('date', params.date);
+  }
 
   if (params.minConfidence !== undefined) {
     searchParams.append('minConfidence', String(params.minConfidence));
