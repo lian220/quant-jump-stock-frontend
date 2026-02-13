@@ -71,6 +71,17 @@ export function Header() {
           {/* 중앙: 데스크톱 네비게이션 */}
           <nav className="hidden md:flex items-center justify-center space-x-6">
             <Link
+              href="/recommendations"
+              className={cn(
+                'inline-flex items-center transition-colors font-medium',
+                isActive('/recommendations')
+                  ? 'text-emerald-400'
+                  : 'text-slate-300 hover:text-emerald-400',
+              )}
+            >
+              종목 추천
+            </Link>
+            <Link
               href="/strategies"
               className={cn(
                 'inline-flex items-center transition-colors font-medium',
@@ -89,18 +100,6 @@ export function Header() {
               )}
             >
               종목 탐색
-            </Link>
-            <Link
-              href="/#features"
-              className="inline-flex items-center transition-colors font-medium text-slate-300 hover:text-emerald-400"
-            >
-              기능
-            </Link>
-            <Link
-              href="/#pricing"
-              className="inline-flex items-center transition-colors font-medium text-slate-300 hover:text-emerald-400"
-            >
-              요금제
             </Link>
           </nav>
 
@@ -157,6 +156,18 @@ export function Header() {
           <div className="md:hidden border-t border-slate-700 py-6 animate-in slide-in-from-top-2">
             <nav className="flex flex-col gap-4">
               <Link
+                href="/recommendations"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  'text-base font-semibold transition-all py-3 px-4 rounded-lg',
+                  isActive('/recommendations')
+                    ? 'text-emerald-400 bg-emerald-500/10'
+                    : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800',
+                )}
+              >
+                종목 추천
+              </Link>
+              <Link
                 href="/strategies"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
@@ -179,20 +190,6 @@ export function Header() {
                 )}
               >
                 종목 탐색
-              </Link>
-              <Link
-                href="/#features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-semibold transition-all py-3 px-4 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-slate-800"
-              >
-                기능
-              </Link>
-              <Link
-                href="/#pricing"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-semibold transition-all py-3 px-4 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-slate-800"
-              >
-                요금제
               </Link>
 
               {/* 모바일 사용자 정보 */}

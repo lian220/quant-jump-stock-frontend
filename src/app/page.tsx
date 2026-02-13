@@ -10,6 +10,7 @@ import { PageSEO } from '@/components/seo';
 import { pageDefaults } from '@/lib/seo/config';
 import { getStrategies } from '@/lib/api/strategies';
 import { getCategoryLabel } from '@/lib/strategy-helpers';
+import { Footer } from '@/components/layout/Footer';
 import type { Strategy } from '@/types/strategy';
 
 export default function Home() {
@@ -43,8 +44,8 @@ export default function Home() {
       status: 'completed',
     },
     {
-      title: '🤖 AI 퀀트 분석',
-      description: '머신러닝 기반 종목 분석 및 투자 신호',
+      title: '🤖 AI 데이터 분석',
+      description: '머신러닝 기반 종목 분석 및 투자 참고 정보',
       status: 'completed',
     },
     {
@@ -54,7 +55,7 @@ export default function Home() {
     },
     {
       title: '🔔 알림 시스템',
-      description: '맞춤형 매매 신호 및 포트폴리오 알림',
+      description: '맞춤형 분석 정보 및 포트폴리오 알림',
       status: 'completed',
     },
   ];
@@ -184,7 +185,7 @@ export default function Home() {
   const premiumFeatures = [
     { icon: '📊', title: '실시간 시세', description: '전 종목 실시간 호가 및 체결 정보' },
     { icon: '🎯', title: '맞춤 AI 분석', description: '관심 종목 상세 분석 리포트' },
-    { icon: '🔔', title: '매매 알림', description: '실시간 매수/매도 신호 푸시 알림' },
+    { icon: '🔔', title: '분석 알림', description: '실시간 매수/매도 관심 종목 푸시 알림' },
     { icon: '📁', title: '포트폴리오 관리', description: '보유 종목 수익률 추적 및 분석' },
     { icon: '⚙️', title: '커스텀 백테스트', description: '나만의 전략 시뮬레이션' },
     { icon: '📈', title: '상세 차트', description: '고급 기술적 지표 및 패턴 분석' },
@@ -481,7 +482,7 @@ export default function Home() {
                         등락률
                       </th>
                       <th className="px-4 py-3 text-center text-sm font-semibold text-slate-300">
-                        AI 신호
+                        AI 분석
                       </th>
                     </tr>
                   </thead>
@@ -766,18 +767,7 @@ export default function Home() {
         </main>
 
         {/* 푸터 */}
-        <footer className="bg-slate-900 border-t border-slate-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center text-slate-500">
-              <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
-              <p className="text-sm">© 2025 Alpha Foundry. All rights reserved.</p>
-              <p className="text-xs mt-2 text-slate-600">
-                투자에 대한 최종 결정은 본인에게 있으며, 투자 손실에 대한 책임은 투자자 본인에게
-                있습니다.
-              </p>
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </>
   );
