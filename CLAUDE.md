@@ -289,7 +289,7 @@ AI 기반 종목 추천 기능으로, 기술적 지표를 분석하여 매수 �
 - 통합 후 예상 최대: 7.5점
 
 **점수 계산식**:
-```
+```text
 composite_score = 0.3 × rise_probability + 0.4 × tech_conditions + 0.3 × sentiment
 tech_conditions = 1.5 × golden_cross + 1.0 × (rsi < 50) + 1.0 × macd_buy_signal
 ```

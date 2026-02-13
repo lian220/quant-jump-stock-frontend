@@ -24,7 +24,9 @@ export function Footer() {
         {/* 메인 텍스트 */}
         <div className="text-center text-slate-500">
           <p className="mb-2 font-medium">Alpha Foundry - AI 기반 주식 데이터 분석 플랫폼</p>
-          <p className="text-sm mb-4">&copy; 2025 Alpha Foundry. All rights reserved.</p>
+          <p className="text-sm mb-4">
+            &copy; 2025-{new Date().getFullYear()} Alpha Foundry. All rights reserved.
+          </p>
 
           {/* 면책 조항 강화 */}
           <div className="max-w-3xl mx-auto space-y-2">

@@ -24,7 +24,7 @@ export default function RecommendationsPage() {
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
   const [strategiesError, setStrategiesError] = useState<string | null>(null);
 
-  // 종목 분석 데이터 가져오기 (신뢰도 0.7 이상)
+  // 종목 분석 데이터 가져오기 (신뢰도 0.1 이상)
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
@@ -92,7 +92,7 @@ export default function RecommendationsPage() {
               <p className="text-xl text-slate-400 max-w-3xl mx-auto">
                 실시간 데이터 분석 기반 매수 관심 종목
                 <br />
-                <span className="text-emerald-400 font-semibold">신뢰도 70% 이상</span> 종목만
+                <span className="text-emerald-400 font-semibold">데이터 기반</span> 분석 종목을
                 엄선했습니다
               </p>
 
@@ -190,8 +190,8 @@ export default function RecommendationsPage() {
             {!isLoadingRecommendations && !recommendationsError && recommendations.length > 0 && (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {recommendations.map((stock) => {
-                  const scoreGrade = getScoreGrade(Number(stock.compositeScore));
-                  const score = Number(stock.compositeScore);
+                  const scoreGrade = getScoreGrade(stock.compositeScore);
+                  const score = stock.compositeScore;
                   const isStrong = score >= TIER_THRESHOLDS.STRONG;
                   const isMedium = score >= TIER_THRESHOLDS.MEDIUM;
 
@@ -246,32 +246,32 @@ export default function RecommendationsPage() {
                           <div className="bg-slate-700/30 p-3 rounded-lg">
                             <p className="text-xs text-slate-400 mb-1">기술 점수</p>
                             <p className="text-lg font-bold text-cyan-400">
-                              {Number(stock.techScore).toFixed(1)}
+                              {stock.techScore.toFixed(1)}
                             </p>
                           </div>
                           <div className="bg-slate-700/30 p-3 rounded-lg">
                             <p className="text-xs text-slate-400 mb-1">AI 점수</p>
                             <p className="text-lg font-bold text-purple-400">
-                              {Number(stock.aiScore).toFixed(1)}
+                              {stock.aiScore.toFixed(1)}
                             </p>
                           </div>
                         </div>
 
                         {/* 가격 정보 */}
-                        {stock.currentPrice && (
+                        {stock.currentPrice != null && (
                           <div className="bg-slate-700/20 p-4 rounded-lg mb-4">
                             <div className="grid grid-cols-2 gap-4 mb-3">
                               <div>
                                 <p className="text-xs text-slate-400 mb-1">현재가</p>
                                 <p className="text-xl font-bold text-white font-mono">
-                                  ${Number(stock.currentPrice).toFixed(2)}
+                                  ${stock.currentPrice.toFixed(2)}
                                 </p>
                               </div>
-                              {stock.targetPrice && (
+                              {stock.targetPrice != null && (
                                 <div>
                                   <p className="text-xs text-slate-400 mb-1">목표가</p>
                                   <p className="text-xl font-bold text-emerald-400 font-mono">
-                                    ${Number(stock.targetPrice).toFixed(2)}
+                                    ${stock.targetPrice.toFixed(2)}
                                   </p>
                                 </div>
                               )}
@@ -283,16 +283,16 @@ export default function RecommendationsPage() {
                                   <Badge
                                     className={`
                                   ${
-                                    Number(stock.upsidePercent) >= 10
+                                    stock.upsidePercent >= 10
                                       ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                      : Number(stock.upsidePercent) >= 5
+                                      : stock.upsidePercent >= 5
                                         ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
                                         : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                                   }
                                 `}
                                   >
-                                    상승여력 {Number(stock.upsidePercent) > 0 ? '+' : ''}
-                                    {Number(stock.upsidePercent).toFixed(1)}%
+                                    상승여력 {stock.upsidePercent > 0 ? '+' : ''}
+                                    {stock.upsidePercent.toFixed(1)}%
                                   </Badge>
                                 )}
 

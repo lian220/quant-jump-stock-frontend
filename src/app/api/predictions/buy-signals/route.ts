@@ -34,9 +34,31 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log('[Proxy] Backend response:', JSON.stringify(data));
-    // Backend 응답 형식을 Frontend 기대 형식으로 변환
-    return NextResponse.json({ data: data.buySignals || [] });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Proxy] Backend response item count:', data.buySignals?.length ?? 0);
+    }
+    // Backend 응답 형식을 Frontend 기대 형식으로 변환 (숫자 필드 정규화)
+    const NUMERIC_FIELDS = [
+      'compositeScore',
+      'techScore',
+      'aiScore',
+      'sentimentScore',
+      'currentPrice',
+      'targetPrice',
+      'upsidePercent',
+    ] as const;
+
+    const normalized = (data.buySignals || []).map((signal: Record<string, unknown>) => {
+      const result = { ...signal };
+      for (const field of NUMERIC_FIELDS) {
+        if (result[field] != null) {
+          result[field] = Number(result[field]);
+        }
+      }
+      return result;
+    });
+
+    return NextResponse.json({ data: normalized });
   } catch (error) {
     console.error('Failed to fetch buy signals from backend:', error);
     const message =

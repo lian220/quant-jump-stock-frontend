@@ -51,7 +51,7 @@ export function classifyByTier(signals: BuySignal[]): {
   const weak: BuySignal[] = [];
 
   for (const signal of signals) {
-    const score = Number(signal.compositeScore);
+    const score = signal.compositeScore;
     if (score >= TIER_THRESHOLDS.STRONG) {
       strong.push(signal);
     } else if (score >= TIER_THRESHOLDS.MEDIUM) {
@@ -62,8 +62,7 @@ export function classifyByTier(signals: BuySignal[]): {
   }
 
   // 각 Tier 내에서 점수 높은 순 정렬
-  const byScoreDesc = (a: BuySignal, b: BuySignal) =>
-    Number(b.compositeScore) - Number(a.compositeScore);
+  const byScoreDesc = (a: BuySignal, b: BuySignal) => b.compositeScore - a.compositeScore;
 
   strong.sort(byScoreDesc);
   medium.sort(byScoreDesc);
