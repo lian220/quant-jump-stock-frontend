@@ -7,6 +7,7 @@ import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 
 import { Header } from '@/components/layout/Header';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { CopyProtection } from '@/components/CopyProtection';
 import { Toaster } from 'sonner';
 
@@ -138,7 +139,8 @@ export default function RootLayout({
         <Toaster position="top-center" richColors />
         <AuthProvider>
           <Header />
-          {children}
+          <div className="pb-16 md:pb-0">{children}</div>
+          <BottomNav />
         </AuthProvider>
       </body>
     </html>
