@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
+/** 백엔드 등급(A~F) → 프론트엔드 등급(EXCELLENT~LOW) 매핑 */
+const GRADE_MAP: Record<string, string> = {
+  A: 'EXCELLENT',
+  B: 'EXCELLENT',
+  C: 'GOOD',
+  D: 'FAIR',
+  F: 'LOW',
+};
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const queryString = searchParams.toString();
@@ -25,7 +34,30 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+
+    // 백엔드 응답을 프론트엔드 기대 형식으로 변환
+    const stats = data.stats || data;
+
+    // 등급 분포 매핑 (B/C/D → EXCELLENT/GOOD/FAIR/LOW)
+    const rawDist: Record<string, number> = stats.gradeDistribution || {};
+    const mappedDist: Record<string, number> = {};
+    for (const [grade, count] of Object.entries(rawDist)) {
+      const mapped = GRADE_MAP[grade] || 'LOW';
+      mappedDist[mapped] = (mappedDist[mapped] || 0) + count;
+    }
+
+    const normalized = {
+      totalPredictions: stats.total ?? stats.totalPredictions ?? 0,
+      uniqueTickers: stats.uniqueTickers ?? 0,
+      avgCompositeScore: Number(stats.averageCompositeScore ?? stats.avgCompositeScore ?? 0),
+      gradeDistribution: mappedDist,
+      dateRange: stats.dateRange ?? {
+        from: data.period?.split(' ~ ')[0] ?? '',
+        to: data.period?.split(' ~ ')[1] ?? '',
+      },
+    };
+
+    return NextResponse.json(normalized);
   } catch (error) {
     console.error('Failed to fetch prediction stats:', error);
     const message =

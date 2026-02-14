@@ -405,8 +405,8 @@ export default function RecommendationsPage() {
                       const score = stock.compositeScore;
                       const isStrong = score >= TIER_THRESHOLDS.STRONG;
                       const isMedium = score >= TIER_THRESHOLDS.MEDIUM;
-                      // 게이지 바: BETA 기간 최대 1.4점 기준
-                      const gaugeMax = 1.4;
+                      // 게이지 바: AI/감정 통합 후 현재 범위 ~3.5점 기준
+                      const gaugeMax = 3.5;
                       const gaugePercent = Math.min((score / gaugeMax) * 100, 100);
                       const gaugeColor = isStrong
                         ? 'bg-emerald-400'
