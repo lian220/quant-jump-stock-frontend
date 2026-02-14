@@ -28,6 +28,9 @@ export default function StrategiesPage() {
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | 'all'>('all');
   const [selectedSort, setSelectedSort] = useState<SortOption>('popularity');
 
+  // 모바일 필터 토글
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
@@ -154,7 +157,7 @@ export default function StrategiesPage() {
                         strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length ||
                           0,
                       );
-                      return avg > 0 ? avg.toLocaleString() : '집계 중';
+                      return avg > 0 ? avg.toLocaleString() : '-';
                     })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 구독자</p>
@@ -168,7 +171,7 @@ export default function StrategiesPage() {
                   : (() => {
                       const avg =
                         strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length || 0;
-                      return avg > 0 ? avg.toFixed(1) : '집계 중';
+                      return avg > 0 ? avg.toFixed(1) : '-';
                     })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 평점</p>
@@ -181,7 +184,7 @@ export default function StrategiesPage() {
                   ? '-'
                   : (() => {
                       const count = strategies.filter((s) => s.isPremium).length;
-                      return count > 0 ? count : '준비 중';
+                      return count > 0 ? count : '-';
                     })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">프리미엄 전략</p>
@@ -193,18 +196,43 @@ export default function StrategiesPage() {
         <div className="grid lg:grid-cols-[280px_1fr] gap-8">
           {/* 필터 사이드바 */}
           <aside className="lg:sticky lg:top-4 h-fit">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="pt-6">
-                <StrategyFilter
-                  selectedCategory={selectedCategory}
-                  selectedRiskLevel={selectedRiskLevel}
-                  selectedSort={selectedSort}
-                  onCategoryChange={handleCategoryChange}
-                  onRiskLevelChange={handleRiskLevelChange}
-                  onSortChange={handleSortChange}
-                />
-              </CardContent>
-            </Card>
+            {/* 모바일: 접기/펼치기 토글 */}
+            <div className="lg:hidden mb-3">
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="flex items-center justify-between w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-left"
+              >
+                <span className="text-sm font-medium text-slate-300">필터 / 정렬</span>
+                <svg
+                  className={`w-4 h-4 text-slate-400 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+            </div>
+            {/* 모바일에서는 isFilterOpen일 때만 표시, 데스크톱에서는 항상 표시 */}
+            <div className={`${isFilterOpen ? 'block' : 'hidden'} lg:block`}>
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="pt-6">
+                  <StrategyFilter
+                    selectedCategory={selectedCategory}
+                    selectedRiskLevel={selectedRiskLevel}
+                    selectedSort={selectedSort}
+                    onCategoryChange={handleCategoryChange}
+                    onRiskLevelChange={handleRiskLevelChange}
+                    onSortChange={handleSortChange}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           </aside>
 
           {/* 전략 그리드 */}

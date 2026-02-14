@@ -71,7 +71,9 @@ export default function Home() {
           page: 0,
           size: 3,
         });
-        setFeaturedStrategies(response.strategies);
+        setFeaturedStrategies(
+          response.strategies.filter((s) => !String(s.annualReturn).startsWith('-')),
+        );
       } catch (error) {
         console.warn('Failed to fetch featured strategies:', error);
       } finally {

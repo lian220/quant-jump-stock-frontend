@@ -146,7 +146,9 @@ export default function RecommendationsPage() {
           page: 0,
           size: 3,
         });
-        setPopularStrategies(response.strategies);
+        setPopularStrategies(
+          response.strategies.filter((s) => !String(s.annualReturn).startsWith('-')),
+        );
       } catch (error) {
         console.error('Failed to fetch strategies:', error);
         setStrategiesError('전략을 불러오는데 실패했습니다.');
@@ -785,7 +787,13 @@ export default function RecommendationsPage() {
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-slate-400">연평균 수익률</p>
-                            <p className="text-emerald-400 font-semibold">
+                            <p
+                              className={`font-semibold ${
+                                String(strategy.annualReturn).startsWith('-')
+                                  ? 'text-red-400'
+                                  : 'text-emerald-400'
+                              }`}
+                            >
                               {strategy.annualReturn}
                             </p>
                           </div>

@@ -46,8 +46,9 @@ function formatDate(dateStr: string | null): string {
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {
+  const isEmpty = value === '-';
   return (
-    <div>
+    <div className={isEmpty ? 'hidden md:block' : ''}>
       <p className="text-sm text-slate-400 mb-1">{label}</p>
       <p className="text-white">{value}</p>
     </div>
