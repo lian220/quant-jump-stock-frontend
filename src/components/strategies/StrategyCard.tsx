@@ -12,6 +12,18 @@ interface StrategyCardProps {
   strategy: Strategy;
 }
 
+function MetricValue({
+  value,
+  className = 'text-lg font-bold text-emerald-400',
+}: {
+  value: string | number | null | undefined;
+  className?: string;
+}) {
+  const isEmpty = value == null || value === '' || value === '-' || value === 'N/A';
+  if (isEmpty) return <p className="text-lg font-bold text-slate-600">-</p>;
+  return <p className={className}>{value}</p>;
+}
+
 export function StrategyCard({ strategy }: StrategyCardProps) {
   return (
     <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
@@ -44,26 +56,39 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-700/30 p-3 rounded-lg">
             <p className="text-xs text-slate-400 mb-1">누적 수익률</p>
-            <p className="text-lg font-bold text-emerald-400">{strategy.totalReturn}</p>
+            <MetricValue
+              value={strategy.totalReturn}
+              className="text-lg font-bold text-emerald-400"
+            />
           </div>
           <div className="bg-slate-700/30 p-3 rounded-lg">
             <p className="text-xs text-slate-400 mb-1">연환산 수익률</p>
-            <p className="text-lg font-bold text-cyan-400">{strategy.annualReturn}</p>
+            <MetricValue
+              value={strategy.annualReturn}
+              className="text-lg font-bold text-cyan-400"
+            />
           </div>
           <div className="bg-slate-700/30 p-3 rounded-lg">
             <p className="text-xs text-slate-400 mb-1">승률</p>
-            <p className="text-sm font-semibold text-white">{strategy.winRate}</p>
+            <MetricValue value={strategy.winRate} className="text-sm font-semibold text-white" />
           </div>
           <div className="bg-slate-700/30 p-3 rounded-lg">
             <p className="text-xs text-slate-400 mb-1">샤프 비율</p>
-            <p className="text-sm font-semibold text-white">{strategy.sharpeRatio}</p>
+            <MetricValue
+              value={strategy.sharpeRatio}
+              className="text-sm font-semibold text-white"
+            />
           </div>
         </div>
 
         {/* 위험 지표 */}
         <div className="flex items-center justify-between text-sm">
           <span className="text-slate-400">최대 낙폭</span>
-          <span className="text-red-400 font-mono">{strategy.maxDrawdown}</span>
+          <span className="text-red-400 font-mono">
+            {strategy.maxDrawdown && strategy.maxDrawdown !== '-' && strategy.maxDrawdown !== 'N/A'
+              ? strategy.maxDrawdown
+              : '-'}
+          </span>
         </div>
 
         {/* 추가 정보 */}

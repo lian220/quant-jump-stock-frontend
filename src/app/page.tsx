@@ -123,29 +123,6 @@ export default function Home() {
     fetchRecommendations();
   }, []);
 
-  const features = [
-    {
-      title: '📊 실시간 시세',
-      description: '국내외 주식 실시간 시세 및 차트 제공',
-      status: 'completed',
-    },
-    {
-      title: '🤖 AI 데이터 분석',
-      description: '머신러닝 기반 종목 분석 및 투자 참고 정보',
-      status: 'completed',
-    },
-    {
-      title: '📈 백테스팅',
-      description: '과거 데이터 기반 전략 검증 시스템',
-      status: 'completed',
-    },
-    {
-      title: '🔔 알림 시스템',
-      description: '맞춤형 분석 정보 및 포트폴리오 알림',
-      status: 'completed',
-    },
-  ];
-
   const aGradeRatio = predictionStats?.gradeDistribution
     ? (() => {
         const dist = predictionStats.gradeDistribution;
@@ -183,38 +160,11 @@ export default function Home() {
         predictionStats?.avgCompositeScore != null
           ? predictionStats.avgCompositeScore.toFixed(2)
           : '-',
-      basis: 'BETA · 최대 1.4점',
+      basis: '기술 지표 기준 · 최대 1.4점',
     },
   ];
 
   // 전략 데이터로부터 백테스트 결과 생성 (플러스 수익률만 노출)
-  const backtestResults = featuredStrategies
-    .filter((s) => {
-      if (!s.totalReturn || s.totalReturn === '-') return false;
-      const numericReturn = parseFloat(String(s.totalReturn).replace(/[^-\d.]/g, ''));
-      return !isNaN(numericReturn) && numericReturn > 0;
-    })
-    .map((s) => ({
-      strategy: s.name,
-      period: s.backtestPeriod || '-',
-      totalReturn: s.totalReturn || '-',
-      annualReturn: s.annualReturn || '-',
-      maxDrawdown: s.maxDrawdown || '-',
-      winRate: s.winRate || '-',
-      sharpeRatio: s.sharpeRatio || '-',
-      id: s.id,
-    }));
-
-  // 로그인 필요 기능
-  const premiumFeatures = [
-    { icon: '📊', title: '실시간 시세', description: '전 종목 실시간 호가 및 체결 정보' },
-    { icon: '🎯', title: '맞춤 AI 분석', description: '관심 종목 상세 분석 리포트' },
-    { icon: '🔔', title: '분석 알림', description: '실시간 분석 정보 푸시 알림' },
-    { icon: '📁', title: '포트폴리오 관리', description: '보유 종목 수익률 추적 및 분석' },
-    { icon: '⚙️', title: '커스텀 백테스트', description: '나만의 전략 시뮬레이션' },
-    { icon: '📈', title: '상세 차트', description: '고급 기술적 지표 및 패턴 분석' },
-  ];
-
   return (
     <>
       <PageSEO
@@ -233,20 +183,19 @@ export default function Home() {
               AI 기반 퀀트 투자 플랫폼
             </Badge>
             <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold text-white mb-2 md:mb-6">
-              데이터로{' '}
+              매일 밤,{' '}
               <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                스마트하게
+                AI가 종목을 분석
               </span>
-              <br />
-              투자하세요
+              합니다
             </h1>
             <p className="hidden sm:block text-lg md:text-xl text-slate-400 mb-6 md:mb-8 max-w-3xl mx-auto">
-              AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요.
+              2,500+ 종목의 기술적 지표를 매일 자동 분석하고, 매수 신호를 알려드립니다.
               <br />
-              감정이 아닌 데이터 기반의 체계적인 투자를 경험해보세요.
+              감이 아닌 데이터로, 놓치고 있던 기회를 찾아보세요.
             </p>
             <p className="sm:hidden text-sm text-slate-400 mb-3">
-              AI 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요
+              2,500+ 종목을 매일 분석, 매수 신호를 알려드립니다
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/recommendations">
@@ -730,116 +679,6 @@ export default function Home() {
                 </CardContent>
               </Card>
             )}
-          </div>
-
-          {/* 백테스트 결과 */}
-          {backtestResults.length > 0 && (
-            <div className="mb-16">
-              <h2 className="text-3xl font-bold text-center text-white mb-4">📈 백테스트 성과</h2>
-              <p className="text-center text-slate-400 mb-8">전략별 시뮬레이션 결과</p>
-              <div className="grid md:grid-cols-3 gap-6">
-                {backtestResults.map((result) => (
-                  <Link key={result.strategy} href={`/strategies/${result.id}`}>
-                    <Card className="bg-slate-800/50 border-slate-700 hover:border-cyan-500/50 transition-colors h-full">
-                      <CardHeader>
-                        <CardTitle className="text-lg text-white text-center">
-                          {result.strategy}
-                        </CardTitle>
-                        <p className="text-xs text-slate-500 text-center">{result.period}</p>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-center mb-4">
-                          <p className="text-3xl font-bold text-emerald-400">
-                            {result.totalReturn}
-                          </p>
-                          <p className="text-sm text-slate-400">누적 수익률</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="bg-slate-700/30 p-2 rounded">
-                            <p className="text-slate-400 text-xs">연환산 수익률</p>
-                            <p className="text-white font-semibold">{result.annualReturn}</p>
-                          </div>
-                          <div className="bg-slate-700/30 p-2 rounded">
-                            <p className="text-slate-400 text-xs">최대 낙폭</p>
-                            <p className="text-red-400 font-semibold">{result.maxDrawdown}</p>
-                          </div>
-                          <div className="bg-slate-700/30 p-2 rounded">
-                            <p className="text-slate-400 text-xs">승률</p>
-                            <p className="text-white font-semibold">{result.winRate}</p>
-                          </div>
-                          <div className="bg-slate-700/30 p-2 rounded">
-                            <p className="text-slate-400 text-xs">샤프 비율</p>
-                            <p className="text-cyan-400 font-semibold">{result.sharpeRatio}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 기능 섹션 */}
-          <div className="mb-16">
-            <h2 className="text-3xl font-bold text-center text-white mb-12">
-              Alpha Foundry의 핵심 기능
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature, index) => (
-                <Card
-                  key={index}
-                  className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors"
-                >
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg text-white">{feature.title}</CardTitle>
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                        {feature.status === 'completed' ? '제공중' : '준비중'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-slate-400">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* 프리미엄 기능 (로그인 필요) */}
-          <div className="mb-16">
-            <h2 className="text-3xl font-bold text-center text-white mb-4">🔐 프리미엄 기능</h2>
-            <p className="text-center text-slate-400 mb-8">
-              로그인하면 더 많은 기능을 이용할 수 있습니다
-            </p>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {premiumFeatures.map((feature, index) => (
-                <Card
-                  key={index}
-                  className="bg-slate-800/30 border-slate-700/50 opacity-75 hover:opacity-100 transition-opacity"
-                >
-                  <CardContent className="pt-6">
-                    <div className="flex items-start space-x-4">
-                      <span className="text-2xl">{feature.icon}</span>
-                      <div>
-                        <h3 className="font-semibold text-white mb-1">{feature.title}</h3>
-                        <p className="text-sm text-slate-400">{feature.description}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            <div className="text-center mt-8">
-              <Link href="/auth">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700">
-                  무료 회원가입하고 이용하기
-                </Button>
-              </Link>
-            </div>
           </div>
 
           {/* 투자위험 고지 */}

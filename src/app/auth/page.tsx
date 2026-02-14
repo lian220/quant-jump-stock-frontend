@@ -157,6 +157,31 @@ export default function AuthPage() {
             </a>
           </p>
         </div>
+
+        {/* 가입 혜택 안내 */}
+        <div className="mt-6 space-y-3">
+          <div className="flex items-center gap-3 rounded-lg border border-slate-700/50 bg-slate-800/30 px-4 py-3">
+            <span className="text-lg">📊</span>
+            <div>
+              <p className="text-sm font-medium text-slate-300">2,500+ 종목 AI 분석</p>
+              <p className="text-xs text-slate-500">매일 자동 분석 리포트 제공</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border border-slate-700/50 bg-slate-800/30 px-4 py-3">
+            <span className="text-lg">🔔</span>
+            <div>
+              <p className="text-sm font-medium text-slate-300">매수 신호 알림</p>
+              <p className="text-xs text-slate-500">기술적 지표 기반 매매 타이밍 포착</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border border-slate-700/50 bg-slate-800/30 px-4 py-3">
+            <span className="text-lg">📈</span>
+            <div>
+              <p className="text-sm font-medium text-slate-300">전략 백테스트</p>
+              <p className="text-xs text-slate-500">과거 데이터로 투자 전략 검증</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

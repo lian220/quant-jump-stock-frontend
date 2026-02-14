@@ -358,60 +358,11 @@ export default function RecommendationsPage() {
                 </div>
               </div>
 
-              {/* Beta 경고 배너 - 데스크톱만 */}
-              <div className="hidden sm:block mt-4 max-w-4xl mx-auto space-y-4">
-                <Card className="bg-yellow-500/10 border-yellow-500/30">
-                  <CardContent className="pt-6 pb-6">
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">⚠️</span>
-                      <div className="text-left">
-                        <h3 className="text-yellow-400 font-semibold mb-2">
-                          BETA - 점수 시스템 개선 중
-                        </h3>
-                        <p className="text-sm text-slate-300 leading-relaxed">
-                          현재 종합 점수는{' '}
-                          <strong className="text-yellow-400">기술적 지표만</strong> 반영하여 낮게
-                          표시됩니다 (최대 1.4점).
-                          <br />
-                          AI 예측 및 감정 분석 통합 후 점수가 자연스럽게 상승할 예정입니다 (예상
-                          최대 7.5점).
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* 업데이트 시간 안내 배너 */}
-                <Card className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-cyan-500/30">
-                  <CardContent className="pt-6 pb-6">
-                    <div className="flex items-start gap-3">
-                      <svg
-                        className="w-6 h-6 text-cyan-400 flex-shrink-0 mt-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <div className="text-left">
-                        <h3 className="text-cyan-300 font-semibold mb-2">데이터 업데이트 시간</h3>
-                        <p className="text-sm text-slate-300 leading-relaxed">
-                          매일 저녁 <span className="font-semibold text-cyan-300">23:05(KST)</span>
-                          에 전날 종가 기준으로 AI 분석이 완료됩니다.
-                          <br />
-                          분석 완료 시각은 약{' '}
-                          <span className="font-semibold text-cyan-300">23:10 KST</span>이며, 이후
-                          최신 추천 종목을 확인하실 수 있습니다.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* 안내 바 - 데스크톱만 */}
+              <div className="hidden sm:flex mt-4 max-w-4xl mx-auto items-center justify-center gap-4 text-xs text-slate-500">
+                <span>기술적 지표 기반 분석 (최대 1.4점)</span>
+                <span className="text-slate-700">|</span>
+                <span>매일 23:05 KST 업데이트</span>
               </div>
             </div>
 
