@@ -144,10 +144,10 @@ export default function RecommendationsPage() {
         const response = await getStrategies({
           sortBy: 'subscribers',
           page: 0,
-          size: 3,
+          size: 10,
         });
         setPopularStrategies(
-          response.strategies.filter((s) => !String(s.annualReturn).startsWith('-')),
+          response.strategies.filter((s) => !String(s.annualReturn).startsWith('-')).slice(0, 3),
         );
       } catch (error) {
         console.error('Failed to fetch strategies:', error);

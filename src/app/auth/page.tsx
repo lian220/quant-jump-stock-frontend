@@ -62,7 +62,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 pt-8 pb-28 md:py-16">
       <div className="w-full max-w-md">
         {/* Logo and Title */}
         <div className="mb-8 text-center">

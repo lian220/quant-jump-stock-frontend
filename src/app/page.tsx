@@ -69,10 +69,10 @@ export default function Home() {
         const response = await getStrategies({
           sortBy: 'subscribers',
           page: 0,
-          size: 3,
+          size: 10,
         });
         setFeaturedStrategies(
-          response.strategies.filter((s) => !String(s.annualReturn).startsWith('-')),
+          response.strategies.filter((s) => !String(s.annualReturn).startsWith('-')).slice(0, 3),
         );
       } catch (error) {
         console.warn('Failed to fetch featured strategies:', error);

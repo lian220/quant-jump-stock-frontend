@@ -22,10 +22,17 @@ export function MetricCard({
   valueColor = 'text-white',
   formatter,
 }: MetricCardProps) {
-  const displayValue = formatter ? formatter(value) : value;
+  // 데이터 없는 상태 감지: "0.00%", "0.00", "N/A", "NaN%" 등
+  const isNoData =
+    !value ||
+    value === 'N/A' ||
+    value === 'NaN%' ||
+    (metricKey && /^0(\.0+)?%?$/.test(value.trim()));
+
+  const displayValue = isNoData ? '-' : formatter ? formatter(value) : value;
 
   let gradeResult: GradeResult | null = null;
-  if (metricKey) {
+  if (metricKey && !isNoData) {
     const numValue = parseMetricValue(value);
     if (numValue !== null) {
       gradeResult = gradeMetric(metricKey, numValue);
@@ -43,10 +50,13 @@ export function MetricCard({
         </div>
       )}
       <CardContent className="pt-6 text-center">
-        <p className={`text-2xl font-bold ${valueColor}`}>{displayValue}</p>
+        <p className={`text-2xl font-bold ${isNoData ? 'text-slate-500' : valueColor}`}>
+          {displayValue}
+        </p>
         <p className="text-xs text-slate-400 mt-1">
           {termKey ? <TermTooltip termKey={termKey}>{label}</TermTooltip> : label}
         </p>
+        {isNoData && <p className="text-[10px] text-slate-500 mt-0.5">백테스트 미실행</p>}
       </CardContent>
     </Card>
   );
