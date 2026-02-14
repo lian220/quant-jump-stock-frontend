@@ -21,7 +21,7 @@ export interface AuthContextType {
     phone?: string,
   ) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
-  signInWithGoogle: () => Promise<{ error?: string }>;
+  // signInWithGoogle: () => Promise<{ error?: string }>; // 구글 로그인 비활성화
   signInWithNaver: () => Promise<{ error?: string }>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
 }

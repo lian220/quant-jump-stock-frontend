@@ -183,16 +183,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const signInWithGoogle = async () => {
-    try {
-      localStorage.setItem('auth_callback_url', window.location.href);
-      window.location.href = `${BACKEND_URL}/api/v1/auth/oauth2/authorize/google`;
-      return {};
-    } catch (error) {
-      console.error('Google 로그인 오류:', error);
-      return { error: 'Google 로그인에 실패했습니다' };
-    }
-  };
+  // 구글 로그인 비활성화
+  // const signInWithGoogle = async () => {
+  //   try {
+  //     localStorage.setItem('auth_callback_url', window.location.href);
+  //     window.location.href = `${BACKEND_URL}/api/v1/auth/oauth2/authorize/google`;
+  //     return {};
+  //   } catch (error) {
+  //     console.error('Google 로그인 오류:', error);
+  //     return { error: 'Google 로그인에 실패했습니다' };
+  //   }
+  // };
 
   const signInWithNaver = async () => {
     try {
@@ -250,7 +251,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signUp,
     signOut,
     resetPassword,
-    signInWithGoogle,
+    // signInWithGoogle, // 구글 로그인 비활성화
     signInWithNaver,
   };
 

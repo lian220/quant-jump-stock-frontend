@@ -41,7 +41,7 @@ export const apiEndpoints = {
     logout: '/api/auth/logout',
     me: '/api/auth/me',
     resetPassword: '/api/auth/reset-password',
-    googleOAuth: '/api/auth/google',
+    // googleOAuth: '/api/auth/google', // 구글 로그인 비활성화
     naverOAuth: '/api/auth/naver',
     callback: '/auth/callback',
   },

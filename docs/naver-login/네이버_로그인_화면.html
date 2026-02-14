@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 - Alpha Foundry</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: linear-gradient(to bottom right, rgb(15, 23, 42), rgb(30, 41, 59), rgb(15, 23, 42));
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+    }
+    .container {
+      max-width: 28rem;
+      width: 100%;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .logo {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1rem;
+      background: #3b82f6;
+      border-radius: 1rem;
+    }
+    .title {
+      font-size: 1.875rem;
+      font-weight: bold;
+      background: linear-gradient(to right, rgb(52, 211, 153), rgb(34, 211, 238));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: rgb(148, 163, 184);
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgb(51, 65, 85);
+      border-radius: 0.5rem;
+      padding: 2rem;
+    }
+    .card-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 0.5rem;
+    }
+    .card-description {
+      color: rgb(148, 163, 184);
+      font-size: 0.875rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-label {
+      display: block;
+      color: rgb(203, 213, 225);
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+    .form-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      background: rgba(51, 65, 85, 0.5);
+      border: 1px solid rgb(71, 85, 105);
+      border-radius: 0.375rem;
+      color: white;
+      font-size: 0.875rem;
+    }
+    .form-input::placeholder {
+      color: rgb(100, 116, 139);
+    }
+    .btn {
+      width: 100%;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background: rgb(5, 150, 105);
+      color: white;
+      margin-bottom: 1.5rem;
+    }
+    .btn-naver {
+      background: #03C75A;
+      color: white;
+      border: 1px solid #03C75A;
+    }
+    .divider {
+      position: relative;
+      margin: 1.5rem 0;
+    }
+    .divider-line {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+    }
+    .divider-border {
+      width: 100%;
+      border-top: 1px solid rgb(71, 85, 105);
+    }
+    .divider-text-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+    .divider-text {
+      padding: 0 0.5rem;
+      background: rgba(30, 41, 59, 0.5);
+      color: rgb(100, 116, 139);
+      font-size: 0.875rem;
+    }
+    .footer-text {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: rgb(148, 163, 184);
+    }
+    .footer-link {
+      color: rgb(52, 211, 153);
+      font-weight: 500;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo"></div>
+      <h1 class="title">Alpha Foundry</h1>
+      <p class="subtitle">AI 기반 스마트 투자 플랫폼</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">로그인</h2>
+        <p class="card-description">계정에 로그인하여 투자 분석을 시작하세요</p>
+      </div>
+
+      <form>
+        <div class="form-group">
+          <label class="form-label">아이디</label>
+          <input type="text" class="form-input" placeholder="아이디를 입력하세요">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label class="form-label">비밀번호</label>
+          <input type="password" class="form-input" placeholder="비밀번호를 입력하세요">
+        </div>
+
+        <button type="submit" class="btn btn-primary">로그인</button>
+      </form>
+
+      <div class="divider">
+        <div class="divider-line">
+          <div class="divider-border"></div>
+        </div>
+        <div class="divider-text-wrapper">
+          <span class="divider-text">또는</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-naver">
+        <svg style="width: 1.25rem; height: 1.25rem;" viewBox="0 0 24 24">
+          <path
+            fill="currentColor"
+            d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"
+          />
+        </svg>
+        네이버로 로그인
+      </button>
+
+      <p class="footer-text">
+        계정이 없으신가요?
+        <a href="#" class="footer-link">회원가입</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
