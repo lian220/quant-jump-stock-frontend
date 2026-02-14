@@ -572,20 +572,20 @@ export default function RecommendationsPage() {
 
                             {/* CTA 버튼 - Primary/Secondary 위계 */}
                             <div className="flex gap-2">
-                              <Link href={`/stocks?query=${stock.ticker}`} className="flex-1">
-                                <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
-                                  종목 상세
-                                </Button>
-                              </Link>
-                              <Link href="/strategies" className="shrink-0">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-slate-400 hover:text-slate-200 text-xs"
-                                >
-                                  전략 보기 →
-                                </Button>
-                              </Link>
+                              <Button
+                                asChild
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                              >
+                                <Link href={`/stocks?query=${stock.ticker}`}>종목 상세</Link>
+                              </Button>
+                              <Button
+                                asChild
+                                variant="ghost"
+                                size="sm"
+                                className="shrink-0 text-slate-400 hover:text-slate-200 text-xs"
+                              >
+                                <Link href="/strategies">전략 보기 →</Link>
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>

@@ -212,9 +212,9 @@ export default function BacktestPage() {
             <div className="bg-slate-800/50 border border-emerald-500/30 rounded-lg p-6 text-center mb-8">
               <p className="text-white text-lg mb-2">로그인이 필요합니다</p>
               <p className="text-slate-400 mb-4">백테스트를 실행하려면 먼저 로그인해 주세요.</p>
-              <Link href="/auth">
-                <Button className="bg-emerald-600 hover:bg-emerald-700">로그인하기</Button>
-              </Link>
+              <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
+                <Link href="/auth">로그인하기</Link>
+              </Button>
             </div>
           )}
 
@@ -238,11 +238,9 @@ export default function BacktestPage() {
                     <p className="text-slate-400 text-sm mb-5">
                       로그인하면 상세 성과 지표, 수익 곡선, 거래 내역을 모두 확인할 수 있습니다.
                     </p>
-                    <Link href="/auth">
-                      <Button className="bg-emerald-600 hover:bg-emerald-700 w-full mb-3">
-                        무료 로그인하기
-                      </Button>
-                    </Link>
+                    <Button asChild className="bg-emerald-600 hover:bg-emerald-700 w-full mb-3">
+                      <Link href="/auth">무료 로그인하기</Link>
+                    </Button>
                     <p className="text-xs text-slate-500">
                       미리보기 데이터는 실제 결과와 다를 수 있습니다
                     </p>
