@@ -7,7 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { searchStocks, marketLabels, designationLabels } from '@/lib/api/stocks';
+import { getBuySignals, type BuySignal } from '@/lib/api/predictions';
 import { PageSEO } from '@/components/seo';
+import { Footer } from '@/components/layout/Footer';
 import type { StockSummary, Market, StockSearchResponse } from '@/lib/api/stocks';
 
 const marketOptions: { value: '' | Market; label: string }[] = [
@@ -29,6 +31,7 @@ export default function StocksPage() {
   const [stocks, setStocks] = useState<StockSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [priceMap, setPriceMap] = useState<Record<string, BuySignal>>({});
 
   // 필터 상태
   const [query, setQuery] = useState('');
@@ -40,6 +43,25 @@ export default function StocksPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const pageSize = 20;
+
+  // 가격 데이터 로드 (한 번만)
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const res = await getBuySignals({ minConfidence: 0.01 });
+        if (res.data) {
+          const map: Record<string, BuySignal> = {};
+          for (const signal of res.data) {
+            map[signal.ticker] = signal;
+          }
+          setPriceMap(map);
+        }
+      } catch {
+        // 가격 데이터는 선택적이므로 무시
+      }
+    };
+    fetchPrices();
+  }, []);
 
   const fetchStocks = useCallback(async () => {
     setIsLoading(true);
@@ -186,49 +208,81 @@ export default function StocksPage() {
         {/* 종목 카드 그리드 */}
         {!isLoading && !error && stocks.length > 0 && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {stocks.map((stock) => (
-              <Link key={stock.id} href={`/stocks/${stock.id}`}>
-                <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all h-full cursor-pointer">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="text-white font-semibold text-lg">{stock.stockName}</p>
-                        <p className="text-slate-400 text-sm font-mono">{stock.ticker}</p>
+            {stocks.map((stock) => {
+              const prediction = priceMap[stock.ticker];
+              const price = prediction?.currentPrice;
+              const upside = prediction?.upsidePercent;
+              return (
+                <Link key={stock.id} href={`/stocks/${stock.id}`}>
+                  <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all h-full cursor-pointer">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="text-white font-semibold text-lg">{stock.stockName}</p>
+                          <p className="text-slate-400 text-sm font-mono">{stock.ticker}</p>
+                        </div>
+                        <div className="text-right">
+                          {price != null ? (
+                            <>
+                              <p className="text-white font-semibold font-mono">
+                                $
+                                {price.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
+                              {upside != null && (
+                                <p
+                                  className={`text-xs font-medium ${upside > 0 ? 'text-emerald-400' : upside < 0 ? 'text-red-400' : 'text-slate-400'}`}
+                                >
+                                  {upside > 0 ? '+' : ''}
+                                  {upside.toFixed(1)}%
+                                </p>
+                              )}
+                            </>
+                          ) : (
+                            <Badge className={designationColors[stock.designationStatus] || ''}>
+                              {designationLabels[stock.designationStatus]}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      <Badge className={designationColors[stock.designationStatus] || ''}>
-                        {designationLabels[stock.designationStatus]}
-                      </Badge>
-                    </div>
 
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      <Badge
-                        variant="secondary"
-                        className="bg-slate-700/50 text-slate-300 border-slate-600"
-                      >
-                        {marketLabels[stock.market]}
-                      </Badge>
-                      {stock.sector && (
+                      <div className="flex flex-wrap gap-2 mt-3">
                         <Badge
                           variant="secondary"
                           className="bg-slate-700/50 text-slate-300 border-slate-600"
                         >
-                          {stock.sector}
+                          {marketLabels[stock.market]}
                         </Badge>
-                      )}
-                      {stock.isEtf && (
-                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                          ETF
-                        </Badge>
-                      )}
-                    </div>
+                        {stock.sector && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-slate-700/50 text-slate-300 border-slate-600"
+                          >
+                            {stock.sector}
+                          </Badge>
+                        )}
+                        {stock.isEtf && (
+                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                            ETF
+                          </Badge>
+                        )}
+                        {price != null && (
+                          <Badge className={designationColors[stock.designationStatus] || ''}>
+                            {designationLabels[stock.designationStatus]}
+                          </Badge>
+                        )}
+                      </div>
 
-                    {stock.stockNameEn && (
-                      <p className="text-xs text-slate-500 mt-2">{stock.stockNameEn}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                      {stock.stockNameEn && (
+                        <p className="text-xs text-slate-500 mt-2">{stock.stockNameEn}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         )}
 
@@ -297,14 +351,7 @@ export default function StocksPage() {
       </main>
 
       {/* 푸터 */}
-      <footer className="bg-slate-900 border-t border-slate-800 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-slate-500">
-            <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
-            <p className="text-sm">&copy; 2025 Alpha Foundry. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

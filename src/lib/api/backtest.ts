@@ -5,6 +5,8 @@ import type {
   BacktestMetrics,
   BacktestEquityPoint,
   BacktestTradeResponse,
+  EnhancedBacktestResult,
+  BenchmarkOption,
 } from '@/types/backtest';
 
 function getAuthHeaders(): Record<string, string> {
@@ -116,6 +118,44 @@ export async function pollBacktestResult(
   }
 
   throw new Error('백테스트 시간이 초과되었습니다.');
+}
+
+/**
+ * 강화 백테스트 결과 조회
+ */
+export async function getEnhancedBacktestResult(id: string): Promise<EnhancedBacktestResult> {
+  const response = await fetch(`/api/backtest/${id}/enhanced`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error(`강화 백테스트 결과 조회 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 사용 가능한 벤치마크 목록 조회
+ */
+export async function getAvailableBenchmarks(): Promise<BenchmarkOption[]> {
+  const response = await fetch('/api/backtest/benchmarks', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`벤치마크 목록 조회 실패: ${response.status}`);
+  }
+
+  const data: { ticker: string; name: string; type?: string }[] = await response.json();
+
+  return data.map((item) => ({
+    value: item.ticker,
+    label: `${item.name} (${item.ticker})`,
+  }));
 }
 
 /**

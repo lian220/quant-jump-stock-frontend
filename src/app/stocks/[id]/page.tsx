@@ -8,8 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getStockDetail, marketLabels, designationLabels } from '@/lib/api/stocks';
+import {
+  getPredictionsBySymbol,
+  getScoreGrade,
+  type PredictionHistory,
+} from '@/lib/api/predictions';
 import { PageSEO } from '@/components/seo';
 import type { StockDetailResponse } from '@/lib/api/stocks';
+import { Footer } from '@/components/layout/Footer';
 
 const designationColors: Record<string, string> = {
   NORMAL: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -40,8 +46,9 @@ function formatDate(dateStr: string | null): string {
 }
 
 function InfoItem({ label, value }: { label: string; value: string }) {
+  const isEmpty = value === '-';
   return (
-    <div>
+    <div className={isEmpty ? 'hidden md:block' : ''}>
       <p className="text-sm text-slate-400 mb-1">{label}</p>
       <p className="text-white">{value}</p>
     </div>
@@ -56,6 +63,8 @@ export default function StockDetailPage() {
   const [stock, setStock] = useState<StockDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [predictions, setPredictions] = useState<PredictionHistory[]>([]);
+  const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
 
   const fetchStock = async () => {
     setIsLoading(true);
@@ -81,6 +90,25 @@ export default function StockDetailPage() {
     fetchStock();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // AI 분석 이력 가져오기
+  useEffect(() => {
+    if (!stock?.ticker) return;
+
+    const fetchPredictions = async () => {
+      setIsLoadingPredictions(true);
+      try {
+        const res = await getPredictionsBySymbol(stock.ticker, 20);
+        setPredictions(res.predictions ?? []);
+      } catch (err) {
+        console.warn('AI 분석 이력 조회 실패:', err);
+      } finally {
+        setIsLoadingPredictions(false);
+      }
+    };
+
+    fetchPredictions();
+  }, [stock?.ticker]);
 
   // 로딩 상태
   if (isLoading) {
@@ -140,13 +168,43 @@ export default function StockDetailPage() {
 
         {/* Hero 섹션 */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-white">{stock.stockName}</h1>
-            {stock.stockNameEn && (
-              <span className="text-lg text-slate-400">{stock.stockNameEn}</span>
-            )}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-white">{stock.stockName}</h1>
+                {stock.stockNameEn && (
+                  <span className="text-lg text-slate-400">{stock.stockNameEn}</span>
+                )}
+              </div>
+              <p className="text-xl text-emerald-400 font-mono mb-4">{stock.ticker}</p>
+            </div>
+            {(() => {
+              const latestWithPrice = predictions.find((p) => p.currentPrice != null);
+              if (!latestWithPrice) return null;
+              const price = latestWithPrice.currentPrice!;
+              const upside = latestWithPrice.upsidePercent;
+              return (
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-white font-mono">
+                    $
+                    {price.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
+                  {upside != null && (
+                    <p
+                      className={`text-sm font-medium ${upside > 0 ? 'text-emerald-400' : upside < 0 ? 'text-red-400' : 'text-slate-400'}`}
+                    >
+                      상승여력 {upside > 0 ? '+' : ''}
+                      {upside.toFixed(1)}%
+                    </p>
+                  )}
+                  <p className="text-xs text-slate-500 mt-1">{latestWithPrice.analysisDate} 기준</p>
+                </div>
+              );
+            })()}
           </div>
-          <p className="text-xl text-emerald-400 font-mono mb-4">{stock.ticker}</p>
           <div className="flex flex-wrap gap-2">
             <Badge className="bg-slate-700/50 text-slate-300 border-slate-600">
               {marketLabels[stock.market]}
@@ -227,17 +285,114 @@ export default function StockDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* AI 분석 이력 */}
+        <Card className="bg-slate-800/50 border-slate-700 mb-6">
+          <CardHeader>
+            <CardTitle className="text-white text-lg">AI 분석 이력</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingPredictions ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto mb-3"></div>
+                <p className="text-slate-400 text-sm">분석 이력 로딩 중...</p>
+              </div>
+            ) : predictions.length > 0 ? (
+              <>
+                {/* Track record 요약 */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="bg-slate-700/30 p-3 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-emerald-400">{predictions.length}</p>
+                    <p className="text-xs text-slate-400">총 분석 횟수</p>
+                  </div>
+                  <div className="bg-slate-700/30 p-3 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-cyan-400">
+                      {predictions.filter((p) => p.isRecommended).length}
+                    </p>
+                    <p className="text-xs text-slate-400">추천 횟수</p>
+                  </div>
+                  <div className="bg-slate-700/30 p-3 rounded-lg text-center">
+                    <p className="text-2xl font-bold text-purple-400">
+                      {(
+                        predictions.reduce((sum, p) => sum + p.compositeScore, 0) /
+                        predictions.length
+                      ).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-slate-400">평균 점수</p>
+                  </div>
+                </div>
+
+                {/* 타임라인 리스트 */}
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {predictions.map((p, idx) => {
+                    const grade = getScoreGrade(p.compositeScore);
+                    return (
+                      <div
+                        key={`${p.analysisDate}-${idx}`}
+                        className="flex items-center justify-between p-3 bg-slate-700/20 rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-slate-400 font-mono w-24">
+                            {p.analysisDate}
+                          </span>
+                          <Badge
+                            className={`${grade.color} bg-slate-700/30 border-slate-600 text-xs`}
+                          >
+                            {grade.grade}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-sm font-bold ${grade.color}`}>
+                            {p.compositeScore.toFixed(2)}
+                          </span>
+                          {p.isRecommended && (
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
+                              추천
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="text-center text-slate-500 py-8">
+                이 종목에 대한 AI 분석 이력이 없습니다.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* CTA 카드 - Primary/Secondary 위계 */}
+        <div className="space-y-3 mb-6">
+          <Link href="/recommendations">
+            <Card className="bg-emerald-600/20 border-emerald-500/40 hover:border-emerald-400 transition-colors cursor-pointer">
+              <CardContent className="pt-5 pb-5 flex items-center justify-between">
+                <div>
+                  <p className="text-base font-semibold text-white">AI 분석 전체 보기</p>
+                  <p className="text-xs text-slate-400">오늘의 AI 추천 종목을 확인하세요</p>
+                </div>
+                <span className="text-emerald-400 text-lg">→</span>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link href="/strategies">
+            <Card className="bg-slate-800/30 border-slate-700 hover:border-slate-600 transition-colors cursor-pointer">
+              <CardContent className="pt-4 pb-4 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-300">전략 둘러보기</p>
+                  <p className="text-xs text-slate-500">검증된 퀀트 전략을 탐색하세요</p>
+                </div>
+                <span className="text-slate-500 text-sm">→</span>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
       </main>
 
       {/* 푸터 */}
-      <footer className="bg-slate-900 border-t border-slate-800 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-slate-500">
-            <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
-            <p className="text-sm">&copy; 2025 Alpha Foundry. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

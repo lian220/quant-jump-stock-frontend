@@ -4,8 +4,8 @@ export type BacktestStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
 // 리밸런싱 주기
 export type RebalancePeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
 
-// 벤치마크 종류
-export type BenchmarkType = 'SPY' | 'QQQ';
+// 벤치마크 종류 (동적으로 확장 가능)
+export type BenchmarkType = 'SPY' | 'QQQ' | (string & {});
 
 // 백테스트 실행 요청
 export interface BacktestRunRequest {
@@ -75,6 +75,37 @@ export interface BacktestTradeResponse {
   amount: number | null;
   pnl: number | null;
   pnlPercent: number | null;
+}
+
+// 등급별 지표
+export interface GradedMetric {
+  name: string;
+  value: number | string | null;
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  description: string;
+}
+
+// 용어 사전 항목
+export interface GlossaryItem {
+  term: string;
+  definition: string;
+  category: string;
+}
+
+// 강화 백테스트 결과
+export interface EnhancedBacktestResult {
+  backtestId: string;
+  overallGrade: 'A' | 'B' | 'C' | 'D' | 'F';
+  overallSummary: string;
+  gradedMetrics: GradedMetric[];
+  glossary: GlossaryItem[];
+}
+
+// 벤치마크 옵션
+export interface BenchmarkOption {
+  value: string;
+  label: string;
+  description?: string;
 }
 
 // 백테스트 결과 응답 (폴링 결과)

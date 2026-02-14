@@ -14,6 +14,7 @@ import {
   EquityCurveChart,
   TermTooltip,
 } from '@/components/strategies';
+import { Footer } from '@/components/layout/Footer';
 import {
   getRiskColor,
   getRiskLabel,
@@ -709,14 +710,7 @@ export default function StrategyDetailPage() {
       </main>
 
       {/* 푸터 */}
-      <footer className="bg-slate-900 border-t border-slate-800 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-slate-500">
-            <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
-            <p className="text-sm">© 2025 Alpha Foundry. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

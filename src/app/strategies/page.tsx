@@ -8,6 +8,7 @@ import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { getStrategies } from '@/lib/api/strategies';
+import { Footer } from '@/components/layout/Footer';
 import type {
   Strategy,
   StrategyCategory,
@@ -26,6 +27,9 @@ export default function StrategiesPage() {
   const [selectedCategory, setSelectedCategory] = useState<StrategyCategory>('all');
   const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | 'all'>('all');
   const [selectedSort, setSelectedSort] = useState<SortOption>('popularity');
+
+  // 모바일 필터 토글
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
@@ -148,10 +152,13 @@ export default function StrategiesPage() {
               <p className="text-3xl font-bold text-cyan-400">
                 {isLoading
                   ? '-'
-                  : Math.round(
-                      strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length ||
-                        0,
-                    ).toLocaleString()}
+                  : (() => {
+                      if (strategies.length === 0) return '-';
+                      const avg = Math.round(
+                        strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length,
+                      );
+                      return avg > 0 ? avg.toLocaleString() : '-';
+                    })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 구독자</p>
             </CardContent>
@@ -161,9 +168,12 @@ export default function StrategiesPage() {
               <p className="text-3xl font-bold text-yellow-400">
                 {isLoading
                   ? '-'
-                  : (
-                      strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length || 0
-                    ).toFixed(1)}
+                  : (() => {
+                      if (strategies.length === 0) return '-';
+                      const avg =
+                        strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length;
+                      return avg > 0 ? avg.toFixed(1) : '-';
+                    })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 평점</p>
             </CardContent>
@@ -171,7 +181,12 @@ export default function StrategiesPage() {
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-purple-400">
-                {isLoading ? '-' : strategies.filter((s) => s.isPremium).length}
+                {isLoading
+                  ? '-'
+                  : (() => {
+                      const count = strategies.filter((s) => s.isPremium).length;
+                      return count > 0 ? count : '-';
+                    })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">프리미엄 전략</p>
             </CardContent>
@@ -182,18 +197,48 @@ export default function StrategiesPage() {
         <div className="grid lg:grid-cols-[280px_1fr] gap-8">
           {/* 필터 사이드바 */}
           <aside className="lg:sticky lg:top-4 h-fit">
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="pt-6">
-                <StrategyFilter
-                  selectedCategory={selectedCategory}
-                  selectedRiskLevel={selectedRiskLevel}
-                  selectedSort={selectedSort}
-                  onCategoryChange={handleCategoryChange}
-                  onRiskLevelChange={handleRiskLevelChange}
-                  onSortChange={handleSortChange}
-                />
-              </CardContent>
-            </Card>
+            {/* 모바일: 접기/펼치기 토글 */}
+            <div className="lg:hidden mb-3">
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                aria-expanded={isFilterOpen}
+                aria-controls="strategy-filter-panel"
+                className="flex items-center justify-between w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-left"
+              >
+                <span className="text-sm font-medium text-slate-300">필터 / 정렬</span>
+                <svg
+                  className={`w-4 h-4 text-slate-400 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+            </div>
+            {/* 모바일에서는 isFilterOpen일 때만 표시, 데스크톱에서는 항상 표시 */}
+            <div
+              id="strategy-filter-panel"
+              className={`${isFilterOpen ? 'block' : 'hidden'} lg:block`}
+            >
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="pt-6">
+                  <StrategyFilter
+                    selectedCategory={selectedCategory}
+                    selectedRiskLevel={selectedRiskLevel}
+                    selectedSort={selectedSort}
+                    onCategoryChange={handleCategoryChange}
+                    onRiskLevelChange={handleRiskLevelChange}
+                    onSortChange={handleSortChange}
+                  />
+                </CardContent>
+              </Card>
+            </div>
           </aside>
 
           {/* 전략 그리드 */}
@@ -241,14 +286,7 @@ export default function StrategiesPage() {
       </main>
 
       {/* 푸터 */}
-      <footer className="bg-slate-900 border-t border-slate-800 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-slate-500">
-            <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
-            <p className="text-sm">© 2025 Alpha Foundry. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -98,6 +98,60 @@ export function getTierInfo(tier: SignalTier) {
   }
 }
 
+// === 추가 타입 정의 ===
+
+export interface PredictionStatsResponse {
+  totalPredictions: number;
+  uniqueTickers: number;
+  avgCompositeScore: number;
+  gradeDistribution: Record<string, number>;
+  dateRange: { from: string; to: string };
+}
+
+export interface LatestPrediction {
+  ticker: string;
+  stockName: string;
+  analysisDate: string;
+  compositeScore: number;
+  compositeGrade: CompositeGrade;
+  isRecommended: boolean;
+}
+
+export interface LatestPredictionsResponse {
+  predictions: LatestPrediction[];
+  count: number;
+  analysisDate: string;
+}
+
+export interface PredictionHistory {
+  ticker: string;
+  stockName: string;
+  analysisDate: string;
+  compositeScore: number;
+  compositeGrade: CompositeGrade;
+  techScore: number;
+  aiScore: number;
+  sentimentScore: number;
+  isRecommended: boolean;
+  recommendationReason?: string;
+  currentPrice?: number | null;
+  targetPrice?: number | null;
+  upsidePercent?: number | null;
+  priceRecommendation?: string | null;
+}
+
+export interface PredictionsBySymbolResponse {
+  predictions: PredictionHistory[];
+  ticker: string;
+  totalCount: number;
+}
+
+export interface PredictionsByDateResponse {
+  predictions: BuySignal[];
+  date: string;
+  count: number;
+}
+
 export interface GetBuySignalsParams {
   date?: string; // 조회 날짜 (YYYY-MM-DD, 기본값: 어제)
   minConfidence?: number; // 최소 신뢰도 (기본값: 0.7)
@@ -138,6 +192,115 @@ export async function getBuySignals(params: GetBuySignalsParams = {}): Promise<B
 
   if (!response.ok) {
     throw new Error(`매수 신호 조회 실패: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 예측 통계 조회
+ */
+export async function getPredictionStats(days?: number): Promise<PredictionStatsResponse> {
+  const searchParams = new URLSearchParams();
+  if (days !== undefined) {
+    searchParams.append('days', String(days));
+  }
+
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? `/api/predictions/stats` : `${API_URL}/api/v1/predictions/stats`;
+  const qs = searchParams.toString();
+  const url = qs ? `${baseUrl}?${qs}` : baseUrl;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`예측 통계 조회 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 최신 예측 결과 조회
+ */
+export async function getLatestPredictions(): Promise<LatestPredictionsResponse> {
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? `/api/predictions/latest` : `${API_URL}/api/v1/predictions/latest`;
+
+  const response = await fetch(baseUrl, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`최신 예측 조회 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 종목별 예측 이력 조회
+ */
+export async function getPredictionsBySymbol(
+  symbol: string,
+  limit?: number,
+): Promise<PredictionsBySymbolResponse> {
+  if (!symbol || !symbol.trim()) {
+    throw new Error('종목 심볼이 필요합니다.');
+  }
+
+  const searchParams = new URLSearchParams();
+  if (limit !== undefined) {
+    searchParams.append('limit', String(limit));
+  }
+
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser
+    ? `/api/predictions/${encodeURIComponent(symbol)}`
+    : `${API_URL}/api/v1/predictions/${encodeURIComponent(symbol)}`;
+  const qs = searchParams.toString();
+  const url = qs ? `${baseUrl}?${qs}` : baseUrl;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`종목 예측 이력 조회 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 날짜별 예측 결과 조회
+ */
+export async function getPredictionsByDate(date: string): Promise<PredictionsByDateResponse> {
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser
+    ? `/api/predictions/by-date/${encodeURIComponent(date)}`
+    : `${API_URL}/api/v1/predictions/by-date/${encodeURIComponent(date)}`;
+
+  const response = await fetch(baseUrl, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`날짜별 예측 조회 실패: ${response.status}`);
   }
 
   return response.json();
