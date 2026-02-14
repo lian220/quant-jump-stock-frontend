@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 interface OnboardingProgressProps {
   currentStep: OnboardingStep;
-  totalSteps: number;
+  totalSteps: 3;
 }
 
 const STEP_LABELS = ['투자 성향', '시장 · 리스크', '완료'];

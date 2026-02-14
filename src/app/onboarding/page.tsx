@@ -55,14 +55,14 @@ export default function OnboardingPage() {
   // 다음 스텝
   const handleNext = () => {
     if (step === 1 && categories.length === 0) return;
-    if (step === 2 && (markets.length === 0 || !riskTolerance)) return;
 
     if (step === 2) {
+      if (markets.length === 0 || !riskTolerance) return;
       // Step 2 → 3: 선호도 저장
       const prefs: UserPreferences = {
         investmentCategories: categories,
         markets,
-        riskTolerance: riskTolerance!,
+        riskTolerance,
       };
       setUserPreferences(prefs);
       setOnboardingCompleted();
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
   // Step 3 CTA
   const handleGoStrategies = () => {
     const firstCategory = categories[0];
-    router.push(`/strategies?category=${firstCategory}`);
+    router.push(firstCategory ? `/strategies?category=${firstCategory}` : '/strategies');
   };
 
   const handleGoRecommendations = () => {
@@ -149,12 +149,12 @@ export default function OnboardingPage() {
             onRiskChange={setRiskTolerance}
           />
         )}
-        {step === 3 && (
+        {step === 3 && riskTolerance && (
           <StepComplete
             preferences={{
               investmentCategories: categories,
               markets,
-              riskTolerance: riskTolerance!,
+              riskTolerance,
             }}
             onGoStrategies={handleGoStrategies}
             onGoRecommendations={handleGoRecommendations}

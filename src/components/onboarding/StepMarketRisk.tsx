@@ -29,8 +29,10 @@ export function StepMarketRisk({
 
   return (
     <div className="animate-in fade-in-0 slide-in-from-right-4 duration-300">
-      <h2 className="text-2xl font-bold text-white mb-2">투자 스타일을 알려주세요</h2>
-      <p className="text-slate-400 mb-6 text-sm">관심 시장과 리스크 성향을 선택해주세요.</p>
+      <h2 className="text-2xl font-bold text-white mb-2">관심 시장과 리스크 성향을 알려주세요</h2>
+      <p className="text-slate-400 mb-6 text-sm">
+        투자할 시장과 감수할 수 있는 리스크를 선택해주세요.
+      </p>
 
       {/* 관심 시장 */}
       <div className="mb-6">

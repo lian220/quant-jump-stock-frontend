@@ -25,7 +25,16 @@ export function getUserPreferences(): UserPreferences | null {
   const raw = localStorage.getItem(PREFERENCES_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as UserPreferences;
+    const parsed = JSON.parse(raw);
+    if (
+      !parsed ||
+      !Array.isArray(parsed.investmentCategories) ||
+      !Array.isArray(parsed.markets) ||
+      typeof parsed.riskTolerance !== 'string'
+    ) {
+      return null;
+    }
+    return parsed as UserPreferences;
   } catch {
     return null;
   }

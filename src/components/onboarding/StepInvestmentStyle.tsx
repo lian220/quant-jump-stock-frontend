@@ -65,7 +65,7 @@ export function StepInvestmentStyle({ selected, onChange }: StepInvestmentStyleP
       </div>
 
       {selected.length === 0 && (
-        <p className="text-xs text-slate-600 mt-4 text-center">최소 1개 이상 선택해주세요</p>
+        <p className="text-xs text-slate-400 mt-4 text-center">최소 1개 이상 선택해주세요</p>
       )}
     </div>
   );
