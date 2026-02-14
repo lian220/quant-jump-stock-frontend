@@ -25,6 +25,14 @@ const gradeDotColors: Record<string, string> = {
   F: 'bg-red-400',
 };
 
+const gradeTextColors: Record<string, string> = {
+  A: 'text-emerald-400',
+  B: 'text-cyan-400',
+  C: 'text-yellow-400',
+  D: 'text-orange-400',
+  F: 'text-red-400',
+};
+
 export default function EnhancedPerformanceCards({ enhanced }: EnhancedPerformanceCardsProps) {
   const [showGlossary, setShowGlossary] = useState(false);
 
@@ -73,7 +81,7 @@ export default function EnhancedPerformanceCards({ enhanced }: EnhancedPerforman
                     className={`w-3 h-3 rounded-full ${gradeDotColors[metric.grade] || gradeDotColors.C}`}
                   />
                   <span
-                    className={`text-sm font-bold ${(gradeColors[metric.grade] || gradeColors.C).split(' ')[0]}`}
+                    className={`text-sm font-bold ${gradeTextColors[metric.grade] || gradeTextColors.C}`}
                   >
                     {metric.grade}
                   </span>
@@ -87,7 +95,19 @@ export default function EnhancedPerformanceCards({ enhanced }: EnhancedPerforman
       {/* 용어 사전 (접이식) */}
       {enhanced.glossary.length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader className="cursor-pointer" onClick={() => setShowGlossary(!showGlossary)}>
+          <CardHeader
+            role="button"
+            tabIndex={0}
+            aria-expanded={showGlossary}
+            className="cursor-pointer"
+            onClick={() => setShowGlossary(!showGlossary)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowGlossary(!showGlossary);
+              }
+            }}
+          >
             <CardTitle className="text-white text-lg flex items-center justify-between">
               <span>투자 용어 사전</span>
               <span className="text-slate-400 text-sm font-normal">

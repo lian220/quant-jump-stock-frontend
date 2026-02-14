@@ -127,14 +127,7 @@
     -webkit-text-size-adjust: 100%;
   }
 
-  /* 터치 타겟 최소 크기 (44x44px) */
-  button,
-  a,
-  input,
-  select,
-  textarea {
-    @apply min-h-[44px] min-w-[44px];
-  }
+  /* 터치 타겟 최소 크기 - 인라인/네비 요소 제외 */
 
   /* 모바일 스크롤 최적화 */
   * {
@@ -149,10 +142,9 @@
     }
   }
 
-  /* Safe Area Inset 지원 (iOS Notch) */
+  /* Safe Area Inset 지원 (iOS Notch) - bottom은 BottomNav에서 처리 */
   body {
     padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }

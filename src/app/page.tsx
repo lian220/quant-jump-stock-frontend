@@ -35,10 +35,20 @@ function parseIndicatorBadges(reason?: string): string[] {
     badges.push('골든크로스');
   }
   if (lower.includes('rsi')) {
-    badges.push('RSI 과매도');
+    // 컨텍스트에 따라 과매수/과매도 구분
+    if (lower.includes('과매수') || lower.includes('overbought')) {
+      badges.push('RSI 과매수');
+    } else {
+      badges.push('RSI 과매도');
+    }
   }
   if (lower.includes('macd')) {
-    badges.push('MACD 매수');
+    // 컨텍스트에 따라 매수/매도 구분
+    if (lower.includes('매도') || lower.includes('sell') || lower.includes('bearish')) {
+      badges.push('MACD 매도');
+    } else {
+      badges.push('MACD 매수');
+    }
   }
   if (lower.includes('볼린저') || lower.includes('bollinger')) {
     badges.push('볼린저 하단');
@@ -72,7 +82,7 @@ export default function Home() {
           size: 10,
         });
         setFeaturedStrategies(
-          response.strategies.filter((s) => !String(s.annualReturn).startsWith('-')).slice(0, 3),
+          response.strategies.filter((s) => parseFloat(String(s.annualReturn)) >= 0).slice(0, 3),
         );
       } catch (error) {
         console.warn('Failed to fetch featured strategies:', error);
@@ -87,19 +97,15 @@ export default function Home() {
   // 예측 통계 및 최신 분석 데이터 가져오기
   useEffect(() => {
     const fetchStatsAndLatest = async () => {
-      try {
-        const [statsRes, latestRes] = await Promise.allSettled([
-          getPredictionStats(30),
-          getLatestPredictions(),
-        ]);
-        if (statsRes.status === 'fulfilled') {
-          setPredictionStats(statsRes.value);
-        }
-        if (latestRes.status === 'fulfilled') {
-          setLastUpdated(latestRes.value.analysisDate);
-        }
-      } catch (error) {
-        console.warn('Failed to fetch prediction stats:', error);
+      const [statsRes, latestRes] = await Promise.allSettled([
+        getPredictionStats(30),
+        getLatestPredictions(),
+      ]);
+      if (statsRes.status === 'fulfilled') {
+        setPredictionStats(statsRes.value);
+      }
+      if (latestRes.status === 'fulfilled') {
+        setLastUpdated(latestRes.value.analysisDate);
       }
     };
 
@@ -354,7 +360,7 @@ export default function Home() {
                     )}
                     <p className="text-center mb-4 md:mb-8">
                       <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] sm:text-xs">
-                        기술적 지표 기반 · AI 통합 예정
+                        기술적 지표 + AI 분석 기반
                       </Badge>
                     </p>
                     <div className="grid md:grid-cols-3 gap-6">
@@ -398,26 +404,75 @@ export default function Home() {
                                     </div>
                                   )}
 
-                                  {/* 점수 분해 */}
-                                  <div className="flex flex-wrap gap-3 text-[10px]">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-slate-500">기술</span>
-                                      <div className="w-12 h-1 bg-slate-700 rounded-full overflow-hidden">
-                                        <div
-                                          className="h-full bg-cyan-400 rounded-full"
-                                          style={{
-                                            width: `${Math.min((stock.techScore / 3.5) * 100, 100)}%`,
-                                          }}
-                                        />
-                                      </div>
-                                      <span className="text-cyan-400 font-mono">
-                                        {stock.techScore.toFixed(1)}
-                                      </span>
+                                  {/* 가격 정보 */}
+                                  {(stock.currentPrice != null || stock.targetPrice != null) && (
+                                    <div className="bg-slate-700/20 p-3 rounded-lg">
+                                      {stock.currentPrice != null ? (
+                                        <div className="flex items-end justify-between">
+                                          <div>
+                                            <p className="text-[10px] text-slate-500 mb-0.5">
+                                              현재가
+                                            </p>
+                                            <p className="text-xl font-bold text-white font-mono tabular-nums">
+                                              ${stock.currentPrice.toFixed(2)}
+                                            </p>
+                                          </div>
+                                          {stock.targetPrice != null && (
+                                            <div className="text-right">
+                                              <p className="text-[10px] text-slate-500 mb-0.5">
+                                                목표가
+                                              </p>
+                                              <p className="text-lg font-bold text-emerald-400 font-mono tabular-nums">
+                                                ${stock.targetPrice.toFixed(2)}
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div>
+                                          <p className="text-[10px] text-slate-500 mb-0.5">
+                                            AI 목표가
+                                          </p>
+                                          <p className="text-2xl font-bold text-emerald-400 font-mono tabular-nums">
+                                            ${stock.targetPrice!.toFixed(2)}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {stock.upsidePercent != null && (
+                                        <div className="mt-2">
+                                          <Badge
+                                            className={`${stock.upsidePercent > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'} text-xs`}
+                                          >
+                                            상승여력 {stock.upsidePercent > 0 ? '+' : ''}
+                                            {stock.upsidePercent.toFixed(1)}%
+                                          </Badge>
+                                        </div>
+                                      )}
                                     </div>
-                                    {stock.aiScore > 0 && (
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-slate-500">AI</span>
-                                        <div className="w-12 h-1 bg-slate-700 rounded-full overflow-hidden">
+                                  )}
+
+                                  {/* 기술/AI 점수 */}
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="bg-slate-700/30 p-2.5 rounded-lg">
+                                      <p className="text-[10px] text-slate-500 mb-1.5">기술 점수</p>
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-1.5 bg-slate-600 rounded-full overflow-hidden">
+                                          <div
+                                            className="h-full bg-cyan-400 rounded-full"
+                                            style={{
+                                              width: `${Math.min((stock.techScore / 3.5) * 100, 100)}%`,
+                                            }}
+                                          />
+                                        </div>
+                                        <span className="text-sm font-bold text-cyan-400 tabular-nums">
+                                          {stock.techScore.toFixed(1)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="bg-slate-700/30 p-2.5 rounded-lg">
+                                      <p className="text-[10px] text-slate-500 mb-1.5">AI 점수</p>
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-1.5 bg-slate-600 rounded-full overflow-hidden">
                                           <div
                                             className="h-full bg-purple-400 rounded-full"
                                             style={{
@@ -425,40 +480,12 @@ export default function Home() {
                                             }}
                                           />
                                         </div>
-                                        <span className="text-purple-400 font-mono">
+                                        <span className="text-sm font-bold text-purple-400 tabular-nums">
                                           {stock.aiScore.toFixed(1)}
                                         </span>
                                       </div>
-                                    )}
-                                  </div>
-
-                                  <div className="flex justify-between text-sm">
-                                    <span className="text-slate-400">현재가</span>
-                                    <span className="text-white font-mono">
-                                      $
-                                      {stock.currentPrice != null
-                                        ? stock.currentPrice.toFixed(2)
-                                        : '-'}
-                                    </span>
-                                  </div>
-                                  {stock.targetPrice != null && (
-                                    <div className="flex justify-between text-sm">
-                                      <span className="text-slate-400">목표가</span>
-                                      <span className="text-emerald-400 font-mono">
-                                        ${stock.targetPrice.toFixed(2)}
-                                      </span>
                                     </div>
-                                  )}
-                                  {stock.upsidePercent != null && (
-                                    <div className="flex justify-between text-sm">
-                                      <span className="text-slate-400">상승여력</span>
-                                      <span
-                                        className={`font-bold ${stock.upsidePercent > 0 ? 'text-emerald-400' : 'text-red-400'}`}
-                                      >
-                                        {stock.upsidePercent.toFixed(1)}%
-                                      </span>
-                                    </div>
-                                  )}
+                                  </div>
                                   {stock.recommendationReason && (
                                     <div className="border-t border-slate-700 pt-3 mt-3">
                                       <p className="text-xs text-slate-500 mb-1">분석 근거</p>
@@ -646,7 +673,7 @@ export default function Home() {
                             <p className="text-slate-400">연평균 수익률</p>
                             <p
                               className={`font-semibold ${
-                                String(strategy.annualReturn).startsWith('-')
+                                parseFloat(String(strategy.annualReturn)) < 0
                                   ? 'text-red-400'
                                   : 'text-emerald-400'
                               }`}

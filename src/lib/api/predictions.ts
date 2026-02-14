@@ -214,6 +214,7 @@ export async function getPredictionStats(days?: number): Promise<PredictionStats
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     cache: 'no-store',
   });
 
@@ -234,6 +235,7 @@ export async function getLatestPredictions(): Promise<LatestPredictionsResponse>
   const response = await fetch(baseUrl, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     cache: 'no-store',
   });
 
@@ -251,6 +253,10 @@ export async function getPredictionsBySymbol(
   symbol: string,
   limit?: number,
 ): Promise<PredictionsBySymbolResponse> {
+  if (!symbol || !symbol.trim()) {
+    throw new Error('종목 심볼이 필요합니다.');
+  }
+
   const searchParams = new URLSearchParams();
   if (limit !== undefined) {
     searchParams.append('limit', String(limit));
@@ -266,6 +272,7 @@ export async function getPredictionsBySymbol(
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     cache: 'no-store',
   });
 
@@ -288,6 +295,7 @@ export async function getPredictionsByDate(date: string): Promise<PredictionsByD
   const response = await fetch(baseUrl, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     cache: 'no-store',
   });
 

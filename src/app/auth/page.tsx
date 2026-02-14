@@ -160,6 +160,7 @@ export default function AuthPage() {
 
         {/* 가입 혜택 안내 */}
         <div className="mt-6 space-y-3">
+          <h2 className="text-sm font-semibold text-slate-300">가입 혜택</h2>
           <div className="flex items-center gap-3 rounded-lg border border-slate-700/50 bg-slate-800/30 px-4 py-3">
             <span className="text-lg">📊</span>
             <div>

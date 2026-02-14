@@ -14,12 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PageSEO } from '@/components/seo';
-import {
-  getBuySignals,
-  getScoreGrade,
-  getPredictionsByDate,
-  TIER_THRESHOLDS,
-} from '@/lib/api/predictions';
+import { getBuySignals, getScoreGrade, TIER_THRESHOLDS } from '@/lib/api/predictions';
 import { getStrategies } from '@/lib/api/strategies';
 import { getCategoryLabel } from '@/lib/strategy-helpers';
 import { Footer } from '@/components/layout/Footer';
@@ -35,7 +30,8 @@ export default function RecommendationsPage() {
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
 
   // 필터/정렬 상태
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const defaultDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState<string>(defaultDate);
   const [sortBy, setSortBy] = useState<string>('compositeScore');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
@@ -50,11 +46,16 @@ export default function RecommendationsPage() {
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
   const [strategiesError, setStrategiesError] = useState<string | null>(null);
 
-  // 종목 분석 데이터 가져오기 (신뢰도 0.1 이상)
+  // 종목 분석 데이터 가져오기 (날짜 변경 시 자동 재조회)
   useEffect(() => {
     const fetchRecommendations = async () => {
+      setIsLoadingRecommendations(true);
+      setRecommendationsError(null);
       try {
-        const response = await getBuySignals({ minConfidence: 0.1 });
+        const response = await getBuySignals({
+          date: selectedDate || undefined,
+          minConfidence: 0.1,
+        });
         setRecommendations(response.data ?? []);
       } catch (error) {
         console.error('Failed to fetch recommendations:', error);
@@ -65,27 +66,6 @@ export default function RecommendationsPage() {
     };
 
     fetchRecommendations();
-  }, []);
-
-  // 날짜 변경 시 해당 날짜 데이터 가져오기
-  useEffect(() => {
-    if (!selectedDate) return;
-
-    const fetchByDate = async () => {
-      setIsLoadingRecommendations(true);
-      setRecommendationsError(null);
-      try {
-        const response = await getPredictionsByDate(selectedDate);
-        setRecommendations(response.predictions ?? []);
-      } catch (error) {
-        console.error('Failed to fetch by date:', error);
-        setRecommendationsError('해당 날짜의 데이터를 불러오는데 실패했습니다.');
-      } finally {
-        setIsLoadingRecommendations(false);
-      }
-    };
-
-    fetchByDate();
   }, [selectedDate]);
 
   // 정렬된 추천 목록
@@ -127,14 +107,7 @@ export default function RecommendationsPage() {
   }, [sortBy, sortOrder, selectedDate]);
 
   const handleDateReset = () => {
-    setSelectedDate('');
-    // 기본 데이터 다시 로드
-    setIsLoadingRecommendations(true);
-    setRecommendationsError(null);
-    getBuySignals({ minConfidence: 0.1 })
-      .then((response) => setRecommendations(response.data ?? []))
-      .catch(() => setRecommendationsError('종목 분석 데이터를 불러오는데 실패했습니다.'))
-      .finally(() => setIsLoadingRecommendations(false));
+    setSelectedDate(defaultDate);
   };
 
   // 인기 전략 가져오기 (구독자순 상위 3개)
@@ -147,7 +120,7 @@ export default function RecommendationsPage() {
           size: 10,
         });
         setPopularStrategies(
-          response.strategies.filter((s) => !String(s.annualReturn).startsWith('-')).slice(0, 3),
+          response.strategies.filter((s) => parseFloat(String(s.annualReturn)) >= 0).slice(0, 3),
         );
       } catch (error) {
         console.error('Failed to fetch strategies:', error);
@@ -208,13 +181,15 @@ export default function RecommendationsPage() {
                         </span>
                       )}
                       <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">
-                        기술 지표 기반
+                        기술 지표 + AI 분석
                       </Badge>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsFilterOpen(!isFilterOpen)}
+                      aria-label="필터 및 정렬 옵션 토글"
+                      aria-expanded={isFilterOpen}
                       className="text-slate-400 hover:text-white text-xs px-2"
                     >
                       {isFilterOpen ? '접기' : '필터/정렬'}
@@ -286,8 +261,7 @@ export default function RecommendationsPage() {
                         </div>
                         {/* 모바일 Beta 안내 (컴팩트) */}
                         <p className="text-[10px] text-slate-500 leading-relaxed">
-                          현재 기술적 지표만 반영 (최대 1.4점) · AI 통합 후 최대 7.5점 · 매일 23:05
-                          KST 업데이트
+                          기술적 지표 + AI 분석 반영 · 매일 23:05 KST 업데이트
                         </p>
                       </CardContent>
                     </Card>
@@ -362,7 +336,7 @@ export default function RecommendationsPage() {
 
               {/* 안내 바 - 데스크톱만 */}
               <div className="hidden sm:flex mt-4 max-w-4xl mx-auto items-center justify-center gap-4 text-xs text-slate-500">
-                <span>기술적 지표 기반 분석 (최대 1.4점)</span>
+                <span>기술적 지표 + AI 분석 기반</span>
                 <span className="text-slate-700">|</span>
                 <span>매일 23:05 KST 업데이트</span>
               </div>
@@ -516,24 +490,33 @@ export default function RecommendationsPage() {
                             </div>
 
                             {/* 가격 정보 */}
-                            {stock.currentPrice != null && (
+                            {(stock.currentPrice != null || stock.targetPrice != null) && (
                               <div className="bg-slate-700/20 p-4 rounded-lg mb-4">
-                                <div className="grid grid-cols-2 gap-4 mb-3">
-                                  <div>
-                                    <p className="text-xs text-slate-400 mb-1">현재가</p>
-                                    <p className="text-xl font-bold text-white font-mono tabular-nums">
-                                      ${stock.currentPrice.toFixed(2)}
-                                    </p>
-                                  </div>
-                                  {stock.targetPrice != null && (
+                                {stock.currentPrice != null ? (
+                                  <div className="grid grid-cols-2 gap-4 mb-3">
                                     <div>
-                                      <p className="text-xs text-slate-400 mb-1">목표가</p>
-                                      <p className="text-xl font-bold text-emerald-400 font-mono tabular-nums">
-                                        ${stock.targetPrice.toFixed(2)}
+                                      <p className="text-xs text-slate-400 mb-1">현재가</p>
+                                      <p className="text-xl font-bold text-white font-mono tabular-nums">
+                                        ${stock.currentPrice.toFixed(2)}
                                       </p>
                                     </div>
-                                  )}
-                                </div>
+                                    {stock.targetPrice != null && (
+                                      <div>
+                                        <p className="text-xs text-slate-400 mb-1">목표가</p>
+                                        <p className="text-xl font-bold text-emerald-400 font-mono tabular-nums">
+                                          ${stock.targetPrice.toFixed(2)}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="mb-3">
+                                    <p className="text-xs text-slate-400 mb-1">AI 목표가</p>
+                                    <p className="text-2xl font-bold text-emerald-400 font-mono tabular-nums">
+                                      ${stock.targetPrice!.toFixed(2)}
+                                    </p>
+                                  </div>
+                                )}
 
                                 <div className="flex items-center justify-between">
                                   {stock.upsidePercent !== undefined &&
@@ -789,7 +772,7 @@ export default function RecommendationsPage() {
                             <p className="text-slate-400">연평균 수익률</p>
                             <p
                               className={`font-semibold ${
-                                String(strategy.annualReturn).startsWith('-')
+                                parseFloat(String(strategy.annualReturn)) < 0
                                   ? 'text-red-400'
                                   : 'text-emerald-400'
                               }`}

@@ -153,9 +153,9 @@ export default function StrategiesPage() {
                 {isLoading
                   ? '-'
                   : (() => {
+                      if (strategies.length === 0) return '-';
                       const avg = Math.round(
-                        strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length ||
-                          0,
+                        strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length,
                       );
                       return avg > 0 ? avg.toLocaleString() : '-';
                     })()}
@@ -169,8 +169,9 @@ export default function StrategiesPage() {
                 {isLoading
                   ? '-'
                   : (() => {
+                      if (strategies.length === 0) return '-';
                       const avg =
-                        strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length || 0;
+                        strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length;
                       return avg > 0 ? avg.toFixed(1) : '-';
                     })()}
               </p>
@@ -200,6 +201,8 @@ export default function StrategiesPage() {
             <div className="lg:hidden mb-3">
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
+                aria-expanded={isFilterOpen}
+                aria-controls="strategy-filter-panel"
                 className="flex items-center justify-between w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-left"
               >
                 <span className="text-sm font-medium text-slate-300">필터 / 정렬</span>
@@ -219,7 +222,10 @@ export default function StrategiesPage() {
               </button>
             </div>
             {/* 모바일에서는 isFilterOpen일 때만 표시, 데스크톱에서는 항상 표시 */}
-            <div className={`${isFilterOpen ? 'block' : 'hidden'} lg:block`}>
+            <div
+              id="strategy-filter-panel"
+              className={`${isFilterOpen ? 'block' : 'hidden'} lg:block`}
+            >
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardContent className="pt-6">
                   <StrategyFilter

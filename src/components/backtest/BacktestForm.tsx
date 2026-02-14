@@ -118,12 +118,18 @@ export default function BacktestForm({ strategyId, onSubmit, isLoading }: Backte
       .then((options) => {
         if (options && options.length > 0) {
           setBenchmarkOptions(options);
+          // 현재 선택된 벤치마크가 새 옵션에 없으면 첫 번째 옵션으로 변경
+          const currentBenchmark = watch('benchmark');
+          const hasCurrentBenchmark = options.some((opt) => opt.value === currentBenchmark);
+          if (!hasCurrentBenchmark) {
+            setValue('benchmark', options[0].value);
+          }
         }
       })
       .catch(() => {
         // 실패 시 기존 SPY/QQQ fallback 유지
       });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // SSR 하이드레이션 불일치 방지: 컴포넌트 내부에서 날짜 계산
   const defaultDates = useMemo(
