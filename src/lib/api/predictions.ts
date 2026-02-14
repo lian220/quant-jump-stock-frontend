@@ -134,6 +134,10 @@ export interface PredictionHistory {
   sentimentScore: number;
   isRecommended: boolean;
   recommendationReason?: string;
+  currentPrice?: number | null;
+  targetPrice?: number | null;
+  upsidePercent?: number | null;
+  priceRecommendation?: string | null;
 }
 
 export interface PredictionsBySymbolResponse {
