@@ -10,6 +10,7 @@ import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { CopyProtection } from '@/components/CopyProtection';
 import { Toaster } from 'sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -138,9 +139,11 @@ export default function RootLayout({
 
         <Toaster position="top-center" richColors />
         <AuthProvider>
-          <Header />
-          <div className="pb-16 md:pb-0">{children}</div>
-          <BottomNav />
+          <TooltipProvider>
+            <Header />
+            <div className="pb-16 md:pb-0">{children}</div>
+            <BottomNav />
+          </TooltipProvider>
         </AuthProvider>
       </body>
     </html>

@@ -99,6 +99,10 @@ export interface StrategyDetail extends Strategy {
   monthlyReturns: MonthlyReturnData[];
   // 거래 내역
   trades: BacktestTradeData[];
+  // 전략별 기본 리스크 설정 (JSON string)
+  riskSettings?: string;
+  positionSizing?: string;
+  tradingCosts?: string;
 }
 
 export interface StrategyRuleItem {

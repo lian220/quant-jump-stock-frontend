@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import BacktestForm from '@/components/backtest/BacktestForm';
 import PerformanceCards from '@/components/backtest/PerformanceCards';
 import EnhancedPerformanceCards from '@/components/backtest/EnhancedPerformanceCards';
+import RiskAnalysisCards from '@/components/backtest/RiskAnalysisCards';
 import EquityCurveChart from '@/components/backtest/EquityCurveChart';
 import TradeHistoryTable from '@/components/backtest/TradeHistoryTable';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,13 +40,21 @@ export default function BacktestPage() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [selectedBenchmark, setSelectedBenchmark] = useState<string>('SPY');
   const [strategyName, setStrategyName] = useState<string>('');
+  const [strategyRiskSettings, setStrategyRiskSettings] = useState<string | undefined>();
+  const [strategyPositionSizing, setStrategyPositionSizing] = useState<string | undefined>();
+  const [strategyTradingCosts, setStrategyTradingCosts] = useState<string | undefined>();
   const [enhancedResult, setEnhancedResult] = useState<EnhancedBacktestResult | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // 전략 이름 조회
+  // 전략 정보 조회 (이름 + 기본 리스크 설정)
   useEffect(() => {
     getStrategyById(strategyId)
-      .then((strategy) => setStrategyName(strategy.name))
+      .then((strategy) => {
+        setStrategyName(strategy.name);
+        setStrategyRiskSettings(strategy.riskSettings);
+        setStrategyPositionSizing(strategy.positionSizing);
+        setStrategyTradingCosts(strategy.tradingCosts);
+      })
       .catch(() => setStrategyName(`전략 #${strategyId}`));
   }, [strategyId]);
 
@@ -190,7 +199,14 @@ export default function BacktestPage() {
 
           {/* 백테스트 폼 */}
           <div className="mb-8">
-            <BacktestForm strategyId={strategyId} onSubmit={handleSubmit} isLoading={isLoading} />
+            <BacktestForm
+              strategyId={strategyId}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+              defaultRiskSettings={strategyRiskSettings}
+              defaultPositionSizing={strategyPositionSizing}
+              defaultTradingCosts={strategyTradingCosts}
+            />
           </div>
 
           {/* 로딩 상태 */}
@@ -257,6 +273,9 @@ export default function BacktestPage() {
                 ) : (
                   <PerformanceCards metrics={result.metrics} />
                 )}
+
+                {/* 리스크 분석 카드 */}
+                <RiskAnalysisCards metrics={result.metrics} />
 
                 {/* 수익 곡선 차트 */}
                 <EquityCurveChart

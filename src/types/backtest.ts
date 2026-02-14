@@ -7,6 +7,68 @@ export type RebalancePeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
 // 벤치마크 종류 (동적으로 확장 가능)
 export type BenchmarkType = 'SPY' | 'QQQ' | (string & {});
 
+// 스탑 유형
+export type StopType = 'PERCENTAGE' | 'FIXED_AMOUNT' | 'ATR';
+
+// 포지션 사이징 방법
+export type PositionSizingMethod =
+  | 'FIXED_PERCENTAGE'
+  | 'EQUAL_WEIGHT'
+  | 'RISK_PARITY'
+  | 'KELLY'
+  | 'VOLATILITY_TARGET';
+
+// 슬리피지 유형
+export type SlippageType = 'NONE' | 'FIXED' | 'ADAPTIVE' | 'RANDOM';
+
+// 손절 설정
+export interface StopLossSettings {
+  enabled: boolean;
+  type: StopType;
+  value: number | null;
+}
+
+// 익절 설정
+export interface TakeProfitSettings {
+  enabled: boolean;
+  type: StopType;
+  value: number | null;
+}
+
+// 트레일링 스탑 설정
+export interface TrailingStopSettings {
+  enabled: boolean;
+  type: StopType;
+  value: number | null;
+  activationThreshold: number | null;
+}
+
+// 리스크 설정
+export interface RiskSettings {
+  stopLoss?: StopLossSettings;
+  takeProfit?: TakeProfitSettings;
+  trailingStop?: TrailingStopSettings;
+}
+
+// 포지션 사이징 설정
+export interface PositionSizingConfig {
+  method: PositionSizingMethod;
+  maxPositionPct: number;
+  maxPositions: number;
+  riskPerTrade: number | null;
+}
+
+// 거래 비용 설정
+export interface TradingCostsConfig {
+  commission: number;
+  tax: number;
+  slippageModel?: {
+    type: SlippageType;
+    baseSlippage: number;
+    volumeImpact: number | null;
+  };
+}
+
 // 백테스트 실행 요청
 export interface BacktestRunRequest {
   strategyId: string;
@@ -15,6 +77,9 @@ export interface BacktestRunRequest {
   initialCapital: number;
   benchmark: BenchmarkType;
   rebalancePeriod: RebalancePeriod;
+  riskSettings?: RiskSettings;
+  positionSizing?: PositionSizingConfig;
+  tradingCosts?: TradingCostsConfig;
 }
 
 // 백테스트 실행 응답 (202 Accepted)
@@ -56,6 +121,12 @@ export interface BacktestMetrics {
   worstTrade: number | null;
   maxConsecutiveWins: number | null;
   maxConsecutiveLosses: number | null;
+  // SCRUM-330: 리스크 비율 및 청산 통계
+  riskRewardRatio: number | null;
+  calmarRatio: number | null;
+  stopLossCount: number | null;
+  takeProfitCount: number | null;
+  trailingStopCount: number | null;
 }
 
 // 수익 곡선 데이터 포인트
@@ -64,6 +135,16 @@ export interface BacktestEquityPoint {
   value: number;
   benchmark: number | null;
 }
+
+// 거래 청산 사유
+export type ExitReason =
+  | 'SIGNAL'
+  | 'STOP_LOSS'
+  | 'TAKE_PROFIT'
+  | 'TRAILING_STOP'
+  | 'REBALANCE'
+  | 'FORCED'
+  | 'EXPIRED';
 
 // 거래 내역
 export interface BacktestTradeResponse {
@@ -75,6 +156,11 @@ export interface BacktestTradeResponse {
   amount: number | null;
   pnl: number | null;
   pnlPercent: number | null;
+  // SCRUM-330: 비용 상세 및 청산 사유
+  exitReason: ExitReason | null;
+  executionPrice: number | null;
+  slippageAmount: number | null;
+  taxAmount: number | null;
 }
 
 // 등급별 지표

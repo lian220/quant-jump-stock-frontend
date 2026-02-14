@@ -45,10 +45,23 @@ export default function PerformanceCards({ metrics }: PerformanceCardsProps) {
       value: metrics.totalTrades != null ? `${metrics.totalTrades}회` : '-',
       color: 'text-yellow-400',
     },
+    {
+      label: '손익비 (Profit Factor)',
+      value: fmt(metrics.profitFactor),
+      color: (metrics.profitFactor ?? 0) >= 1 ? 'text-emerald-400' : 'text-red-400',
+    },
+    {
+      label: '기대값 (Expectancy)',
+      value:
+        metrics.expectancy != null
+          ? `${metrics.expectancy > 0 ? '+' : ''}${fmt(metrics.expectancy)}%`
+          : '-',
+      color: (metrics.expectancy ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400',
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
       {cards.map((card) => (
         <Card key={card.label} className="bg-slate-800/50 border-slate-700">
           <CardContent className="pt-6 text-center">

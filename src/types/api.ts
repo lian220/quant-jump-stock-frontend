@@ -121,6 +121,9 @@ export interface BackendStrategyDetail {
   rules: BackendStrategyRule[];
   monthlyReturns: BackendMonthlyReturn[];
   trades: BackendBacktestTrade[];
+  riskSettings?: string;
+  positionSizing?: string;
+  tradingCosts?: string;
   createdAt: string;
 }
 

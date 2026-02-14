@@ -235,6 +235,10 @@ export function generateMockBacktestResult(
       amount,
       pnl,
       pnlPercent,
+      exitReason: null,
+      executionPrice: null,
+      slippageAmount: null,
+      taxAmount: null,
     });
   }
 
@@ -290,6 +294,11 @@ export function generateMockBacktestResult(
     worstTrade: null,
     maxConsecutiveWins: null,
     maxConsecutiveLosses: null,
+    riskRewardRatio: null,
+    calmarRatio: null,
+    stopLossCount: null,
+    takeProfitCount: null,
+    trailingStopCount: null,
   };
 
   return {
