@@ -90,12 +90,23 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
           </div>
         )}
 
-        {/* 액션 버튼 */}
-        <Link href={`/strategies/${strategy.id}`} className="block">
-          <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-            상세보기
-          </Button>
-        </Link>
+        {/* 액션 버튼 - Primary/Secondary 위계 */}
+        <div className="flex items-center gap-2">
+          <Link href={`/strategies/${strategy.id}`} className="flex-1">
+            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+              상세보기
+            </Button>
+          </Link>
+          <Link href={`/strategies/${strategy.id}/backtest`} className="shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-400 hover:text-slate-200 text-xs"
+            >
+              백테스트 →
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

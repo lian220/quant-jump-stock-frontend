@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod/v4';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import type { BacktestRunRequest, BenchmarkType, RebalancePeriod } from '@/types/backtest';
+import type {
+  BacktestRunRequest,
+  BenchmarkType,
+  RebalancePeriod,
+  BenchmarkOption,
+} from '@/types/backtest';
+import { getAvailableBenchmarks } from '@/lib/api/backtest';
 import { MAX_BACKTEST_DAYS } from '@/constants/backtest';
 
 const backtestFormSchema = z
@@ -51,7 +57,7 @@ interface BacktestFormProps {
   isLoading: boolean;
 }
 
-const benchmarkOptions: { value: BenchmarkType; label: string }[] = [
+const defaultBenchmarkOptions: BenchmarkOption[] = [
   { value: 'SPY', label: 'S&P 500 (SPY)' },
   { value: 'QQQ', label: 'NASDAQ 100 (QQQ)' },
 ];
@@ -103,6 +109,22 @@ function getTodayString(): string {
 }
 
 export default function BacktestForm({ strategyId, onSubmit, isLoading }: BacktestFormProps) {
+  const [benchmarkOptions, setBenchmarkOptions] =
+    useState<BenchmarkOption[]>(defaultBenchmarkOptions);
+
+  // 동적 벤치마크 로딩
+  useEffect(() => {
+    getAvailableBenchmarks()
+      .then((options) => {
+        if (options && options.length > 0) {
+          setBenchmarkOptions(options);
+        }
+      })
+      .catch(() => {
+        // 실패 시 기존 SPY/QQQ fallback 유지
+      });
+  }, []);
+
   // SSR 하이드레이션 불일치 방지: 컴포넌트 내부에서 날짜 계산
   const defaultDates = useMemo(
     () => ({

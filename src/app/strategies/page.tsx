@@ -8,6 +8,7 @@ import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { getStrategies } from '@/lib/api/strategies';
+import { Footer } from '@/components/layout/Footer';
 import type {
   Strategy,
   StrategyCategory,
@@ -148,10 +149,13 @@ export default function StrategiesPage() {
               <p className="text-3xl font-bold text-cyan-400">
                 {isLoading
                   ? '-'
-                  : Math.round(
-                      strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length ||
-                        0,
-                    ).toLocaleString()}
+                  : (() => {
+                      const avg = Math.round(
+                        strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length ||
+                          0,
+                      );
+                      return avg > 0 ? avg.toLocaleString() : '집계 중';
+                    })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 구독자</p>
             </CardContent>
@@ -161,9 +165,11 @@ export default function StrategiesPage() {
               <p className="text-3xl font-bold text-yellow-400">
                 {isLoading
                   ? '-'
-                  : (
-                      strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length || 0
-                    ).toFixed(1)}
+                  : (() => {
+                      const avg =
+                        strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length || 0;
+                      return avg > 0 ? avg.toFixed(1) : '집계 중';
+                    })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 평점</p>
             </CardContent>
@@ -171,7 +177,12 @@ export default function StrategiesPage() {
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-purple-400">
-                {isLoading ? '-' : strategies.filter((s) => s.isPremium).length}
+                {isLoading
+                  ? '-'
+                  : (() => {
+                      const count = strategies.filter((s) => s.isPremium).length;
+                      return count > 0 ? count : '준비 중';
+                    })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">프리미엄 전략</p>
             </CardContent>
@@ -241,14 +252,7 @@ export default function StrategiesPage() {
       </main>
 
       {/* 푸터 */}
-      <footer className="bg-slate-900 border-t border-slate-800 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-slate-500">
-            <p className="mb-2">Alpha Foundry - AI 기반 스마트 투자 플랫폼</p>
-            <p className="text-sm">© 2025 Alpha Foundry. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
