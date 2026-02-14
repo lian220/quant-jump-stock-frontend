@@ -1,6 +1,6 @@
 // Service Worker for Alpha Foundry PWA
 // 배포 시 이 버전을 변경하면 SW가 자동 업데이트됨
-const SW_VERSION = '2';
+const SW_VERSION = '3';
 const STATIC_CACHE = `alphafoundry-static-v${SW_VERSION}`;
 const DYNAMIC_CACHE = `alphafoundry-dynamic-v${SW_VERSION}`;
 
@@ -84,21 +84,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Next.js 빌드 에셋 (_next/) → Network-First
+  // Next.js 빌드 에셋 (_next/) → Network-First, 404 시 캐시 폴백 + 리로드 유도
   if (url.pathname.startsWith('/_next/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.status === 200) {
+          if (response.ok) {
             const responseClone = response.clone();
             caches.open(DYNAMIC_CACHE).then((cache) => {
               cache.put(request, responseClone);
             });
+            return response;
           }
-          return response;
+          // 404 등 에러 → 새 빌드 배포 후 이전 chunk 요청
+          return caches.match(request).then((cached) => {
+            if (cached) return cached;
+            // 캐시에도 없으면 클라이언트에 리로드 알림
+            self.clients.matchAll({ type: 'window' }).then((clients) => {
+              clients.forEach((client) => {
+                client.postMessage({ type: 'CHUNK_LOAD_FAILED' });
+              });
+            });
+            return response;
+          });
         })
         .catch(() => {
-          return caches.match(request);
+          return caches.match(request).then((cached) => {
+            return cached || new Response('', { status: 503 });
+          });
         }),
     );
     return;

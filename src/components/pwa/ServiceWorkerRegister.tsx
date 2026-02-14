@@ -14,10 +14,14 @@ export function ServiceWorkerRegister() {
           console.error('[PWA] Service Worker 등록 실패:', error);
         });
 
-      // SW가 업데이트되면 자동 리로드
+      // SW 메시지 처리
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data?.type === 'SW_UPDATED') {
           console.log('[PWA] 새 버전 감지, 페이지 리로드...');
+          window.location.reload();
+        }
+        if (event.data?.type === 'CHUNK_LOAD_FAILED') {
+          console.log('[PWA] 청크 로드 실패 (새 빌드 감지), 페이지 리로드...');
           window.location.reload();
         }
       });
