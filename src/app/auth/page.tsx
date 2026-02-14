@@ -1,179 +1,146 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+
 export default function AuthPage() {
+  const router = useRouter();
+  const { user, loading: authLoading, signIn, signInWithNaver } = useAuth();
+
+  const [userId, setUserId] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 이미 로그인된 경우 홈으로 리다이렉트
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push('/');
+    }
+  }, [user, authLoading, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!userId.trim() || !password.trim()) {
+      setError('아이디와 비밀번호를 입력해주세요');
+      return;
+    }
+
+    setIsSubmitting(true);
+    const result = await signIn(userId, password);
+
+    if (result.error) {
+      setError(result.error);
+      setIsSubmitting(false);
+    }
+    // 성공 시 useEffect에서 리다이렉트 처리
+  };
+
+  const handleNaverLogin = async () => {
+    setError('');
+    const result = await signInWithNaver();
+    if (result.error) {
+      setError(result.error);
+    }
+  };
+
+  // 로딩 중
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-emerald-500" />
+      </div>
+    );
+  }
+
+  // 이미 로그인된 경우 빈 화면 (리다이렉트 대기)
+  if (user) {
+    return null;
+  }
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background:
-          'linear-gradient(to bottom right, rgb(15, 23, 42), rgb(30, 41, 59), rgb(15, 23, 42))',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '3rem 1rem',
-      }}
-    >
-      <div style={{ maxWidth: '28rem', width: '100%' }}>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12">
+      <div className="w-full max-w-md">
         {/* Logo and Title */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              margin: '0 auto 1rem',
-              background: '#3b82f6',
-              borderRadius: '1rem',
-            }}
-          />
-          <h1
-            style={{
-              fontSize: '1.875rem',
-              fontWeight: 'bold',
-              background: 'linear-gradient(to right, rgb(52, 211, 153), rgb(34, 211, 238))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              marginBottom: '0.5rem',
-            }}
-          >
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-blue-500" />
+          <h1 className="mb-2 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-3xl font-bold text-transparent">
             Alpha Foundry
           </h1>
-          <p style={{ color: 'rgb(148, 163, 184)' }}>AI 기반 스마트 투자 플랫폼</p>
+          <p className="text-slate-400">AI 기반 스마트 투자 플랫폼</p>
         </div>
 
         {/* Login Card */}
-        <div
-          style={{
-            background: 'rgba(30, 41, 59, 0.5)',
-            border: '1px solid rgb(51, 65, 85)',
-            borderRadius: '0.5rem',
-            padding: '2rem',
-          }}
-        >
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <h2
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                color: 'white',
-                marginBottom: '0.5rem',
-              }}
-            >
-              로그인
-            </h2>
-            <p style={{ color: 'rgb(148, 163, 184)', fontSize: '0.875rem' }}>
-              계정에 로그인하여 투자 분석을 시작하세요
-            </p>
+        <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-8">
+          <div className="mb-6 text-center">
+            <h2 className="mb-2 text-2xl font-bold text-white">로그인</h2>
+            <p className="text-sm text-slate-400">계정에 로그인하여 투자 분석을 시작하세요</p>
           </div>
 
-          <div style={{ marginBottom: '1.5rem' }}>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 rounded-md bg-red-500/10 p-3 text-center text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin}>
             {/* ID Input */}
-            <div style={{ marginBottom: '1rem' }}>
-              <label
-                style={{
-                  display: 'block',
-                  color: 'rgb(203, 213, 225)',
-                  fontSize: '0.875rem',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                아이디
-              </label>
+            <div className="mb-4">
+              <label className="mb-2 block text-sm text-slate-300">아이디</label>
               <input
                 type="text"
                 placeholder="아이디를 입력하세요"
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  background: 'rgba(51, 65, 85, 0.5)',
-                  border: '1px solid rgb(71, 85, 105)',
-                  borderRadius: '0.375rem',
-                  color: 'white',
-                  fontSize: '0.875rem',
-                }}
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                disabled={isSubmitting}
+                className="w-full rounded-md border border-slate-600 bg-slate-700/50 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
               />
             </div>
 
             {/* Password Input */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label
-                style={{
-                  display: 'block',
-                  color: 'rgb(203, 213, 225)',
-                  fontSize: '0.875rem',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                비밀번호
-              </label>
+            <div className="mb-6">
+              <label className="mb-2 block text-sm text-slate-300">비밀번호</label>
               <input
                 type="password"
                 placeholder="비밀번호를 입력하세요"
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  background: 'rgba(51, 65, 85, 0.5)',
-                  border: '1px solid rgb(71, 85, 105)',
-                  borderRadius: '0.375rem',
-                  color: 'white',
-                  fontSize: '0.875rem',
-                }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting}
+                className="w-full rounded-md border border-slate-600 bg-slate-700/50 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
               />
             </div>
 
             {/* Login Button */}
             <button
-              style={{
-                width: '100%',
-                padding: '0.5rem 1rem',
-                background: 'rgb(5, 150, 105)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                cursor: 'pointer',
-              }}
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              로그인
+              {isSubmitting ? '로그인 중...' : '로그인'}
             </button>
-          </div>
+          </form>
 
           {/* Divider */}
-          <div style={{ position: 'relative', margin: '1.5rem 0' }}>
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
-              <div style={{ width: '100%', borderTop: '1px solid rgb(71, 85, 105)' }} />
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-600" />
             </div>
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-              <span
-                style={{
-                  padding: '0 0.5rem',
-                  background: 'rgb(30, 41, 59)',
-                  color: 'rgb(100, 116, 139)',
-                  fontSize: '0.875rem',
-                }}
-              >
-                또는
-              </span>
+            <div className="relative flex justify-center">
+              <span className="bg-slate-800 px-2 text-sm text-slate-500">또는</span>
             </div>
           </div>
 
           {/* Naver Login Button */}
           <button
-            style={{
-              width: '100%',
-              padding: '0.5rem 1rem',
-              background: '#03C75A',
-              color: 'white',
-              border: '1px solid #03C75A',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-            }}
+            onClick={handleNaverLogin}
+            disabled={isSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-[#03C75A] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#02b350] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <svg style={{ width: '1.25rem', height: '1.25rem' }} viewBox="0 0 24 24">
+            <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727v12.845z"
@@ -183,19 +150,9 @@ export default function AuthPage() {
           </button>
 
           {/* Sign Up Link */}
-          <p
-            style={{
-              textAlign: 'center',
-              marginTop: '1rem',
-              fontSize: '0.875rem',
-              color: 'rgb(148, 163, 184)',
-            }}
-          >
+          <p className="mt-4 text-center text-sm text-slate-400">
             계정이 없으신가요?{' '}
-            <a
-              href="#"
-              style={{ color: 'rgb(52, 211, 153)', fontWeight: '500', textDecoration: 'none' }}
-            >
+            <a href="#" className="font-medium text-emerald-400 hover:text-emerald-300">
               회원가입
             </a>
           </p>
