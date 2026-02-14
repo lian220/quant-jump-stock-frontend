@@ -283,38 +283,28 @@ AI 기반 종목 추천 기능으로, 기술적 지표를 분석하여 매수 �
 
 ### 점수 시스템 (BETA)
 
-**현재 상태** (2026-02-13):
-- AI 예측 및 감정 분석 **미통합**
-- 기술적 지표만 사용 → `composite_score` 최대 1.4점
-- 통합 후 예상 최대: 7.5점
+**현재 상태** (2026-02-14):
+- AI 예측 및 감정 분석 **통합 완료**
+- 현재 점수 범위: ~0.6 ~ 3.5점
 
 **점수 계산식**:
 ```text
-composite_score = 0.3 × rise_probability + 0.4 × tech_conditions + 0.3 × sentiment
-tech_conditions = 1.5 × golden_cross + 1.0 × (rsi < 50) + 1.0 × macd_buy_signal
+composite_score = 0.3 × aiScore + 0.4 × techScore + 0.3 × sentimentScore
 ```
 
 **등급 기준** (`lib/api/predictions.ts`):
 ```typescript
-// 신뢰도 등급
-CONFIDENCE_GRADE_THRESHOLDS = {
-  VERY_HIGH: 0.9,  // 매우 높음
-  HIGH: 0.8,       // 높음
-  MEDIUM: 0.7      // 중간
+// Tier 분류 기준
+TIER_THRESHOLDS = {
+  STRONG: 2.5,  // 상위 ~25% → "AI 추천"
+  MEDIUM: 1.5   // 중간 ~50% → "분석 참고"
 }
 
-// 종합 점수 등급 (현재: AI/감정 미통합)
+// 종합 점수 등급
 COMPOSITE_SCORE_GRADE_THRESHOLDS.CURRENT = {
-  EXCELLENT: 1.2,  // 우수 (85%ile)
-  GOOD: 0.8,       // 양호 (57%ile)
-  FAIR: 0.5        // 보통 (35%ile)
-}
-
-// 통합 후 예상 기준
-COMPOSITE_SCORE_GRADE_THRESHOLDS.FUTURE = {
-  EXCELLENT: 6.0,  // 우수
-  GOOD: 4.0,       // 양호
-  FAIR: 2.0        // 보통
+  EXCELLENT: 3.0,  // 우수 (상위 ~10%)
+  GOOD: 2.0,       // 양호 (상위 ~40%)
+  FAIR: 1.2        // 보통 (상위 ~70%)
 }
 ```
 

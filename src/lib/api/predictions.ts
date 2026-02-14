@@ -34,10 +34,10 @@ export interface BuySignalsResponse {
 
 // === Tier 분류 ===
 
-/** Tier 기준 (현재 BETA: 기술적 지표만, max 1.4) */
+/** Tier 기준 (AI/감정 점수 통합 반영, 현재 범위 ~0.6~3.5) */
 export const TIER_THRESHOLDS = {
-  STRONG: 0.8, // GOOD 이상 → "AI 추천"
-  MEDIUM: 0.5, // FAIR 이상 → "분석 참고"
+  STRONG: 2.5, // 상위 ~25% → "AI 추천"
+  MEDIUM: 1.5, // 중간 ~50% → "분석 참고"
 } as const;
 
 /** 종목을 Tier별로 분류 */
@@ -321,24 +321,19 @@ export const CONFIDENCE_GRADE_THRESHOLDS = {
 /**
  * 종합 점수 등급 기준
  *
- * 현재 상태: AI/감정 분석 미통합 (기술적 지표만)
- * - 계산식: composite_score = 0.4 × tech_conditions_count (max 3.5)
- * - 현재 범위: 0 ~ 1.4
- *
- * 통합 후 예상:
- * - 계산식: 0.3 × rise_prob + 0.4 × tech + 0.3 × sentiment
- * - 예상 범위: 2.0 ~ 7.5
+ * 현재 상태: AI/감정 분석 통합 완료
+ * - 계산식: 0.3 × aiScore + 0.4 × techScore + 0.3 × sentimentScore
+ * - 현재 범위: ~0.6 ~ 3.5
  *
  * TODO: Admin 페이지에서 동적 관리
  */
 export const COMPOSITE_SCORE_GRADE_THRESHOLDS = {
-  // 현재 기준 (AI/감정 미통합)
   CURRENT: {
-    EXCELLENT: 1.2, // 85%ile (tech 조건 거의 모두 충족)
-    GOOD: 0.8, // 57%ile (tech 조건 2개 이상)
-    FAIR: 0.5, // 35%ile (tech 조건 1개 이상)
+    EXCELLENT: 3.0, // 상위 ~10% (거의 모든 지표 우수)
+    GOOD: 2.0, // 상위 ~40% (대부분 지표 양호)
+    FAIR: 1.2, // 상위 ~70% (일부 지표 충족)
   },
-  // 통합 후 기준 (참고용)
+  // 향후 점수 범위 확장 시 기준
   FUTURE: {
     EXCELLENT: 6.0,
     GOOD: 4.0,
