@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { getPostLoginRedirect } from '@/lib/onboarding';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function AuthCallbackPage() {
           if (data.success && data.user) {
             setStatus('success');
             setMessage(`환영합니다, ${data.user.name || data.user.email || data.user.userId}님!`);
-            setTimeout(() => router.push('/'), 1500);
+            setTimeout(() => router.push(getPostLoginRedirect()), 1500);
           } else {
             throw new Error('사용자 정보를 가져올 수 없습니다');
           }
@@ -61,7 +62,7 @@ export default function AuthCallbackPage() {
     if (storedToken) {
       setStatus('success');
       setMessage('로그인 성공! 잠시 후 이동합니다...');
-      setTimeout(() => router.push('/'), 1500);
+      setTimeout(() => router.push(getPostLoginRedirect()), 1500);
       return;
     }
 

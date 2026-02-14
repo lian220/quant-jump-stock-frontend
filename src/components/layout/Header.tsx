@@ -42,6 +42,9 @@ export function Header() {
     setMobileMenuOpen(false);
   }, [pathname]);
 
+  // 온보딩 페이지에서 헤더 숨김
+  if (pathname === '/onboarding') return null;
+
   return (
     <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
