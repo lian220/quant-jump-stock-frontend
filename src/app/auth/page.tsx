@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { getPostLoginRedirect } from '@/lib/onboarding';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -13,10 +14,10 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 이미 로그인된 경우 홈으로 리다이렉트
+  // 이미 로그인된 경우 리다이렉트 (온보딩 미완료 시 /onboarding, 완료 시 /)
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/');
+      router.push(getPostLoginRedirect());
     }
   }, [user, authLoading, router]);
 

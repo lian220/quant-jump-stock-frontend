@@ -21,6 +21,9 @@ export function BottomNav() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // 온보딩 페이지에서 하단 네비 숨김
+  if (pathname === '/onboarding') return null;
+
   const myPageHref = user ? '/mypage' : '/auth';
   const isDetailPage = !mainPaths.includes(pathname);
 
