@@ -275,7 +275,7 @@ export default function BacktestPage() {
                 )}
 
                 {/* 리스크 분석 카드 */}
-                <RiskAnalysisCards metrics={result.metrics} />
+                {result.metrics && <RiskAnalysisCards metrics={result.metrics} />}
 
                 {/* 수익 곡선 차트 */}
                 <EquityCurveChart

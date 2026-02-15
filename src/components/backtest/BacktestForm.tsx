@@ -190,15 +190,15 @@ export default function BacktestForm({
         const rs = JSON.parse(defaultRiskSettings);
         if (rs.stopLoss?.enabled) {
           setStopLossEnabled(true);
-          setStopLossValue(rs.stopLoss.percentage ?? 5);
+          setStopLossValue(rs.stopLoss.value ?? rs.stopLoss.percentage ?? 5);
         }
         if (rs.takeProfit?.enabled) {
           setTakeProfitEnabled(true);
-          setTakeProfitValue(rs.takeProfit.percentage ?? 10);
+          setTakeProfitValue(rs.takeProfit.value ?? rs.takeProfit.percentage ?? 10);
         }
         if (rs.trailingStop?.enabled) {
           setTrailingStopEnabled(true);
-          setTrailingStopValue(rs.trailingStop.percentage ?? 3);
+          setTrailingStopValue(rs.trailingStop.value ?? rs.trailingStop.percentage ?? 3);
         }
         setShowAdvanced(true);
       } catch {
@@ -299,8 +299,16 @@ export default function BacktestForm({
       rebalancePeriod: data.rebalancePeriod as RebalancePeriod,
     };
 
-    // 고급 설정이 열려있으면 리스크 파라미터 추가
-    if (showAdvanced) {
+    // 고급 설정이 한번이라도 열렸고 값이 설정되어 있으면 리스크 파라미터 추가
+    const hasRiskSettings = stopLossEnabled || takeProfitEnabled || trailingStopEnabled;
+    const hasCustomPositionSizing =
+      positionMethod !== 'FIXED_PERCENTAGE' || maxPositionPct !== 20 || maxPositions !== 10;
+    const hasCustomCosts =
+      commissionRate !== 0.015 ||
+      taxRate !== 0.23 ||
+      slippageModel !== 'FIXED' ||
+      baseSlippage !== 0.1;
+    if (showAdvanced || hasRiskSettings || hasCustomPositionSizing || hasCustomCosts) {
       const riskSettings: RiskSettings = {};
       if (stopLossEnabled) {
         riskSettings.stopLoss = { enabled: true, type: 'PERCENTAGE', value: stopLossValue };
@@ -461,6 +469,7 @@ export default function BacktestForm({
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
               className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+              aria-expanded={showAdvanced}
             >
               <span className={`transform transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>
                 ▶

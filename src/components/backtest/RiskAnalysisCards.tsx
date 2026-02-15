@@ -26,7 +26,7 @@ export default function RiskAnalysisCards({ metrics }: RiskAnalysisCardsProps) {
     { label: '트레일링', count: metrics.trailingStopCount ?? 0, color: 'bg-cyan-500' },
   ];
   const totalExitCount = exitReasons.reduce((sum, r) => sum + r.count, 0);
-  const signalCount = (metrics.totalTrades ?? 0) - totalExitCount;
+  const signalCount = Math.max((metrics.totalTrades ?? 0) - totalExitCount, 0);
 
   // 거래 비용 합계
   const totalCosts =
@@ -180,13 +180,13 @@ export default function RiskAnalysisCards({ metrics }: RiskAnalysisCardsProps) {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">최대 연속 승리</span>
                 <span className="text-sm font-mono text-emerald-400">
-                  {metrics.maxConsecutiveWins ?? '-'}회
+                  {metrics.maxConsecutiveWins != null ? `${metrics.maxConsecutiveWins}회` : '-'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-300">최대 연속 패배</span>
                 <span className="text-sm font-mono text-red-400">
-                  {metrics.maxConsecutiveLosses ?? '-'}회
+                  {metrics.maxConsecutiveLosses != null ? `${metrics.maxConsecutiveLosses}회` : '-'}
                 </span>
               </div>
               <div className="flex justify-between items-center">

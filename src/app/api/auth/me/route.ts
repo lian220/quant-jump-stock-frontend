@@ -24,7 +24,15 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const text = await response.text();
-      const data = text ? JSON.parse(text) : { success: false, message: '인증에 실패했습니다.' };
+      let data;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = null;
+      }
+      if (!data) {
+        data = { success: false, message: '인증에 실패했습니다.' };
+      }
       return NextResponse.json(data, { status: response.status });
     }
 
