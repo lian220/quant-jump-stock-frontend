@@ -341,6 +341,10 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
       holdingDays: t.holdingDays,
       signalReason: t.signalReason,
     })),
+
+    riskSettings: backend.riskSettings,
+    positionSizing: backend.positionSizing,
+    tradingCosts: backend.tradingCosts,
   };
 }
 

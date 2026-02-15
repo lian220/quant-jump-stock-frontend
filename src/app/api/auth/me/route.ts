@@ -22,12 +22,21 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = null;
+      }
+      if (!data) {
+        data = { success: false, message: '인증에 실패했습니다.' };
+      }
       return NextResponse.json(data, { status: response.status });
     }
 
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Auth validation proxy error:', error);
