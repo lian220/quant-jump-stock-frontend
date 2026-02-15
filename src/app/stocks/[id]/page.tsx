@@ -262,46 +262,15 @@ export default function StockDetailPage() {
               <CardTitle className="text-white text-lg">시세 정보</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* 핵심 가격 영역 */}
-              <div className="flex items-end justify-between bg-slate-700/20 rounded-lg p-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div>
-                  <p className="text-sm text-slate-400 mb-1">현재가</p>
-                  <p className="text-3xl font-bold text-white font-mono">
-                    $
-                    {stock.currentPrice.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                  <p className="text-xs text-slate-500 mb-1">전일 종가</p>
+                  <p className="text-sm text-slate-300 font-mono">
+                    {stock.previousClose != null
+                      ? `$${stock.previousClose.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '-'}
                   </p>
                 </div>
-                <div className="text-right">
-                  {stock.changePercent != null && (
-                    <p
-                      className={`text-lg font-semibold ${stock.changePercent > 0 ? 'text-emerald-400' : stock.changePercent < 0 ? 'text-red-400' : 'text-slate-400'}`}
-                    >
-                      {stock.changePercent > 0 ? '+' : ''}
-                      {stock.changePercent.toFixed(2)}%
-                      {stock.changeAmount != null && (
-                        <span className="text-sm ml-1">
-                          ({stock.changeAmount > 0 ? '+' : ''}
-                          {stock.changeAmount.toFixed(2)})
-                        </span>
-                      )}
-                    </p>
-                  )}
-                  {stock.previousClose != null && (
-                    <p className="text-sm text-slate-500">
-                      전일 $
-                      {stock.previousClose.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {/* OHLCV + 펀더멘탈 */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div>
                   <p className="text-xs text-slate-500 mb-1">시가</p>
                   <p className="text-sm text-slate-300 font-mono">
