@@ -78,12 +78,37 @@ export default function NewsPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  // 기사 상세 모달
+  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
+
+  // 관심 종목 입력
+  const [tickerInput, setTickerInput] = useState('');
+  const [isAddingTicker, setIsAddingTicker] = useState(false);
+
+  // 관심 카테고리 입력
+  const [selectedCategoryToAdd, setSelectedCategoryToAdd] = useState('');
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+
   // 구독된 카테고리 Set
   const subscribedCategories = useMemo(() => {
     return new Set(
       userSubscriptions.filter((s) => s.type === 'CATEGORY' && s.isActive).map((s) => s.value),
     );
   }, [userSubscriptions]);
+
+  // 구독된 티커 Set
+  const subscribedTickers = useMemo(() => {
+    return new Set(
+      userSubscriptions.filter((s) => s.type === 'TICKER' && s.isActive).map((s) => s.value),
+    );
+  }, [userSubscriptions]);
+
+  // 아직 구독하지 않은 카테고리 목록
+  const availableCategories = useMemo(() => {
+    return categoryGroups
+      .flatMap((g) => g.categories)
+      .filter((cat) => !subscribedCategories.has(cat.name));
+  }, [categoryGroups, subscribedCategories]);
 
   // 카테고리 로드
   useEffect(() => {
@@ -239,6 +264,98 @@ export default function NewsPage() {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch {}
   }, []);
+
+  // 관심 종목 추가
+  const handleAddTicker = useCallback(
+    async (ticker: string) => {
+      const t = ticker.trim().toUpperCase();
+      if (!t || !user) return;
+      if (subscribedTickers.has(t)) return;
+      setIsAddingTicker(true);
+      try {
+        const newSub = await subscribe('TICKER', t);
+        setUserSubscriptions((prev) => [...prev, newSub]);
+        setTickerInput('');
+      } catch (err) {
+        console.error('관심 종목 추가 실패:', err);
+      } finally {
+        setIsAddingTicker(false);
+      }
+    },
+    [user, subscribedTickers],
+  );
+
+  // 관심 종목 삭제
+  const handleRemoveTicker = useCallback(
+    async (ticker: string) => {
+      const sub = userSubscriptions.find(
+        (s) => s.type === 'TICKER' && s.value === ticker && s.isActive,
+      );
+      if (!sub) return;
+      try {
+        await unsubscribe(sub.id);
+        setUserSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
+      } catch (err) {
+        console.error('관심 종목 삭제 실패:', err);
+      }
+    },
+    [userSubscriptions],
+  );
+
+  // 관심종목 뉴스 필터
+  const handleWatchlistFilter = useCallback(() => {
+    const tickers = Array.from(subscribedTickers);
+    if (tickers.length === 0) return;
+    setFilterMode('tickers');
+    setActiveFilter(tickers);
+    setFilterInput(tickers.join(','));
+    setSelectedCategory(null);
+  }, [subscribedTickers]);
+
+  // 관심 카테고리 추가
+  const handleAddCategory = useCallback(
+    async (categoryName: string) => {
+      if (!categoryName || !user || subscribedCategories.has(categoryName)) return;
+      setIsAddingCategory(true);
+      try {
+        const newSub = await subscribe('CATEGORY', categoryName);
+        setUserSubscriptions((prev) => [...prev, newSub]);
+        setSelectedCategoryToAdd('');
+      } catch (err) {
+        console.error('관심 카테고리 추가 실패:', err);
+      } finally {
+        setIsAddingCategory(false);
+      }
+    },
+    [user, subscribedCategories],
+  );
+
+  // 관심 카테고리 삭제
+  const handleRemoveCategory = useCallback(
+    async (categoryName: string) => {
+      const sub = userSubscriptions.find(
+        (s) => s.type === 'CATEGORY' && s.value === categoryName && s.isActive,
+      );
+      if (!sub) return;
+      try {
+        await unsubscribe(sub.id);
+        setUserSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
+      } catch (err) {
+        console.error('관심 카테고리 삭제 실패:', err);
+      }
+    },
+    [userSubscriptions],
+  );
+
+  // 관심 카테고리 뉴스 필터
+  const handleCategoryWatchlistFilter = useCallback(() => {
+    const cats = Array.from(subscribedCategories);
+    if (cats.length === 0) return;
+    setFilterMode('tags');
+    setActiveFilter(cats);
+    setFilterInput(cats.join(','));
+    setSelectedCategory(null);
+  }, [subscribedCategories]);
 
   // 태그/티커 뱃지 클릭
   const handleTagClick = (tag: string) => {
@@ -501,6 +618,141 @@ export default function NewsPage() {
               </div>
             )}
 
+            {/* 관심 목록 섹션 */}
+            {user && (
+              <div className="mb-4 md:mb-6 bg-slate-800/30 border border-slate-700 rounded-xl px-4 py-3 space-y-3">
+                <span className="text-sm font-medium text-white">⭐ 내 관심 목록</span>
+
+                {/* 관심 카테고리 서브섹션 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs text-slate-400">📂 관심 카테고리</span>
+                    {subscribedCategories.size > 0 && (
+                      <Badge className="text-[10px] bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                        {subscribedCategories.size}개
+                      </Badge>
+                    )}
+                  </div>
+
+                  {subscribedCategories.size > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {Array.from(subscribedCategories).map((name) => (
+                        <Badge
+                          key={name}
+                          className="text-xs bg-cyan-500/10 text-cyan-400 border-cyan-500/20 pl-2 pr-1 py-0.5 inline-flex items-center gap-1"
+                        >
+                          🔔 {name}
+                          <button
+                            onClick={() => handleRemoveCategory(name)}
+                            className="ml-0.5 hover:text-red-400 transition-colors text-cyan-500/60"
+                            aria-label={`${name} 삭제`}
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 items-center">
+                    <select
+                      value={selectedCategoryToAdd}
+                      onChange={(e) => setSelectedCategoryToAdd(e.target.value)}
+                      className="bg-slate-700/50 border border-slate-600 text-white text-sm h-8 rounded-md px-2 max-w-[200px]"
+                    >
+                      <option value="">카테고리 선택</option>
+                      {availableCategories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddCategory(selectedCategoryToAdd)}
+                      disabled={isAddingCategory || !selectedCategoryToAdd}
+                      className="bg-cyan-600 hover:bg-cyan-700 text-xs h-8 px-3"
+                    >
+                      {isAddingCategory ? '...' : '추가'}
+                    </Button>
+                    {subscribedCategories.size > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleCategoryWatchlistFilter}
+                        className="border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 text-xs h-8 px-3 ml-auto"
+                      >
+                        관심 카테고리 뉴스 보기
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 구분선 */}
+                <div className="border-t border-slate-700/50" />
+
+                {/* 관심 종목 서브섹션 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs text-slate-400">📈 관심 종목</span>
+                    {subscribedTickers.size > 0 && (
+                      <Badge className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                        {subscribedTickers.size}개
+                      </Badge>
+                    )}
+                  </div>
+
+                  {subscribedTickers.size > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {Array.from(subscribedTickers).map((ticker) => (
+                        <Badge
+                          key={ticker}
+                          className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/20 pl-2 pr-1 py-0.5 inline-flex items-center gap-1"
+                        >
+                          ${ticker}
+                          <button
+                            onClick={() => handleRemoveTicker(ticker)}
+                            className="ml-0.5 hover:text-red-400 transition-colors text-emerald-500/60"
+                            aria-label={`${ticker} 삭제`}
+                          >
+                            ×
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      placeholder="티커 입력 (예: AAPL)"
+                      value={tickerInput}
+                      onChange={(e) => setTickerInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddTicker(tickerInput)}
+                      className="bg-slate-700/50 border-slate-600 text-white text-sm h-8 max-w-[180px]"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => handleAddTicker(tickerInput)}
+                      disabled={isAddingTicker || !tickerInput.trim()}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-xs h-8 px-3"
+                    >
+                      {isAddingTicker ? '...' : '추가'}
+                    </Button>
+                    {subscribedTickers.size > 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleWatchlistFilter}
+                        className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 text-xs h-8 px-3 ml-auto"
+                      >
+                        관심종목 뉴스 보기
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 검색 필터 영역 */}
             {/* 모바일 컴팩트 바 */}
             <div className="sm:hidden mb-3">
@@ -706,7 +958,8 @@ export default function NewsPage() {
                     return (
                       <Card
                         key={article.id || idx}
-                        className={`bg-gradient-to-br from-slate-800/80 to-slate-800/50 transition-all hover:shadow-lg ${
+                        onClick={() => setSelectedArticle(article)}
+                        className={`cursor-pointer bg-gradient-to-br from-slate-800/80 to-slate-800/50 transition-all hover:shadow-lg ${
                           isHighlight
                             ? 'border-cyan-500/40 hover:border-cyan-500/60'
                             : 'border-slate-700 hover:border-slate-600'
@@ -726,25 +979,14 @@ export default function NewsPage() {
                               {formatRelativeTime(article.createdAt)}
                             </span>
                           </div>
-                          <CardTitle className="text-base md:text-lg text-white leading-snug line-clamp-2">
-                            {article.sourceUrl ? (
-                              <a
-                                href={article.sourceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="hover:text-cyan-400 transition-colors"
-                              >
-                                {article.title}
-                              </a>
-                            ) : (
-                              article.title
-                            )}
+                          <CardTitle className="text-base md:text-lg text-white leading-snug line-clamp-2 hover:text-cyan-400 transition-colors">
+                            {article.title}
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          {article.summary && (
+                          {(article.content || article.summary) && (
                             <p className="text-sm text-slate-400 mb-3 line-clamp-2">
-                              {article.summary}
+                              {article.content || article.summary}
                             </p>
                           )}
 
@@ -753,12 +995,30 @@ export default function NewsPage() {
                               {article.tickers.slice(0, 5).map((ticker) => (
                                 <button
                                   key={ticker}
-                                  onClick={() => handleTickerClick(ticker)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTickerClick(ticker);
+                                  }}
                                   className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
                                 >
                                   ${ticker}
                                 </button>
                               ))}
+                              {user && article.tickers.some((t) => !subscribedTickers.has(t)) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newTicker = article.tickers.find(
+                                      (t) => !subscribedTickers.has(t),
+                                    );
+                                    if (newTicker) handleAddTicker(newTicker);
+                                  }}
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors"
+                                  title="관심 종목 추가"
+                                >
+                                  + 관심
+                                </button>
+                              )}
                               {article.tickers.length > 5 && (
                                 <span className="text-[10px] text-slate-500">
                                   +{article.tickers.length - 5}
@@ -772,7 +1032,10 @@ export default function NewsPage() {
                               {article.tags.slice(0, 4).map((tag) => (
                                 <button
                                   key={tag}
-                                  onClick={() => handleTagClick(tag)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTagClick(tag);
+                                  }}
                                   className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400 border border-slate-600 hover:bg-slate-700 transition-colors"
                                 >
                                   #{tag}
@@ -827,6 +1090,155 @@ export default function NewsPage() {
       {/* 알림 패널 배경 클릭 닫기 */}
       {showNotifications && (
         <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+      )}
+
+      {/* 기사 상세 모달 */}
+      {selectedArticle && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setSelectedArticle(null)}
+        >
+          <div
+            className="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 헤더 */}
+            <div className="sticky top-0 bg-slate-800 border-b border-slate-700 px-5 py-4 flex items-start justify-between gap-3 rounded-t-2xl">
+              <h2 className="text-lg md:text-xl font-bold text-white leading-snug">
+                {selectedArticle.title}
+              </h2>
+              <button
+                onClick={() => setSelectedArticle(null)}
+                className="shrink-0 p-1 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                aria-label="닫기"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* 본문 */}
+            <div className="px-5 py-4 space-y-4">
+              {/* 메타 정보 */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge
+                  className={`text-xs ${getImportanceInfo(selectedArticle.importanceScore).badgeClass}`}
+                >
+                  {getImportanceInfo(selectedArticle.importanceScore).label}
+                </Badge>
+                <Badge className="bg-slate-700/50 text-slate-400 border-slate-600 text-xs">
+                  {selectedArticle.originalSource || getSourceLabel(selectedArticle.source)}
+                </Badge>
+                <span className="text-xs text-slate-500">
+                  {formatRelativeTime(selectedArticle.createdAt)}
+                </span>
+              </div>
+
+              {/* 본문 / 요약 */}
+              {selectedArticle.content || selectedArticle.summary ? (
+                <div className="space-y-2">
+                  <p className="text-sm md:text-base text-slate-300 leading-relaxed whitespace-pre-line">
+                    {selectedArticle.content || selectedArticle.summary}
+                  </p>
+                  {selectedArticle.content && selectedArticle.summary && (
+                    <p className="text-xs text-slate-500 italic">
+                      {'요약: ' + selectedArticle.summary}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500 italic">
+                  상세 내용이 없습니다. 원문에서 확인하세요.
+                </p>
+              )}
+
+              {/* 관련 티커 */}
+              {selectedArticle.tickers.length > 0 && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">관련 종목</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedArticle.tickers.map((ticker) => (
+                      <div key={ticker} className="inline-flex items-center gap-0.5">
+                        <button
+                          onClick={() => {
+                            setSelectedArticle(null);
+                            handleTickerClick(ticker);
+                          }}
+                          className="text-xs px-2 py-1 rounded-l bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                        >
+                          ${ticker}
+                        </button>
+                        {user && !subscribedTickers.has(ticker) && (
+                          <button
+                            onClick={() => handleAddTicker(ticker)}
+                            className="text-xs px-1.5 py-1 rounded-r bg-cyan-500/10 text-cyan-400 border border-l-0 border-cyan-500/20 hover:bg-cyan-500/20 transition-colors"
+                            title="관심 종목 추가"
+                          >
+                            +
+                          </button>
+                        )}
+                        {user && subscribedTickers.has(ticker) && (
+                          <span className="text-xs px-1.5 py-1 rounded-r bg-emerald-500/10 text-emerald-500/60 border border-l-0 border-emerald-500/20">
+                            ⭐
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 관련 태그 */}
+              {selectedArticle.tags.length > 0 && (
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">태그</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedArticle.tags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => {
+                          setSelectedArticle(null);
+                          handleTagClick(tag);
+                        }}
+                        className="text-xs px-2 py-1 rounded bg-slate-700/50 text-slate-400 border border-slate-600 hover:bg-slate-700 transition-colors"
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 원문 보기 버튼 */}
+              {selectedArticle.sourceUrl && (
+                <div className="pt-2">
+                  <a
+                    href={selectedArticle.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium transition-colors"
+                  >
+                    원문 보기
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
