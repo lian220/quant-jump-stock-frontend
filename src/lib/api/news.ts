@@ -32,7 +32,8 @@ export interface NewsListResponse {
  * 최신 뉴스 조회
  */
 export async function getRecentNews(limit: number = 20): Promise<NewsListResponse> {
-  const baseUrl = `${API_URL}/api/v1/news/recent`;
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? `/api/news/recent` : `${API_URL}/api/v1/news/recent`;
   const url = `${baseUrl}?limit=${limit}`;
 
   const response = await fetch(url, {
@@ -59,7 +60,9 @@ export async function getNewsByTickers(
   tickers.forEach((t) => params.append('tickers', t));
   params.append('limit', String(limit));
 
-  const url = `${API_URL}/api/v1/news/by-tickers?${params.toString()}`;
+  const isBrowser = typeof window !== 'undefined';
+  const base = isBrowser ? `/api/news/by-tickers` : `${API_URL}/api/v1/news/by-tickers`;
+  const url = `${base}?${params.toString()}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -82,7 +85,9 @@ export async function getNewsByTags(tags: string[], limit: number = 20): Promise
   tags.forEach((t) => params.append('tags', t));
   params.append('limit', String(limit));
 
-  const url = `${API_URL}/api/v1/news/by-tags?${params.toString()}`;
+  const isBrowser = typeof window !== 'undefined';
+  const base = isBrowser ? `/api/news/by-tags` : `${API_URL}/api/v1/news/by-tags`;
+  const url = `${base}?${params.toString()}`;
 
   const response = await fetch(url, {
     method: 'GET',
