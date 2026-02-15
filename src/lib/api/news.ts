@@ -26,6 +26,27 @@ export interface NewsListResponse {
   total: number;
 }
 
+export interface NewsCategory {
+  id: number;
+  name: string;
+  nameEn: string;
+  group: string;
+  description: string | null;
+  icon: string | null;
+  weight: number;
+}
+
+export interface CategoryGroup {
+  group: string;
+  groupLabel: string;
+  categories: NewsCategory[];
+}
+
+export interface CategoryListResponse {
+  groups: CategoryGroup[];
+  total: number;
+}
+
 // === API 함수 ===
 
 /**
@@ -100,6 +121,160 @@ export async function getNewsByTags(tags: string[], limit: number = 20): Promise
   }
 
   return response.json();
+}
+
+/**
+ * 카테고리 목록 조회
+ */
+export async function getCategories(): Promise<CategoryListResponse> {
+  const isBrowser = typeof window !== 'undefined';
+  const baseUrl = isBrowser ? `/api/news/categories` : `${API_URL}/api/v1/news/categories`;
+
+  const response = await fetch(baseUrl, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`카테고리 조회 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 카테고리별 뉴스 조회
+ */
+export async function getNewsByCategory(
+  categoryName: string,
+  limit: number = 20,
+): Promise<NewsListResponse> {
+  const isBrowser = typeof window !== 'undefined';
+  const base = isBrowser
+    ? `/api/news/categories/${encodeURIComponent(categoryName)}`
+    : `${API_URL}/api/v1/news/categories/${encodeURIComponent(categoryName)}`;
+  const url = `${base}?limit=${limit}`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`카테고리별 뉴스 조회 실패: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// === 구독/알림 타입 ===
+
+export interface Subscription {
+  id: number;
+  type: string;
+  value: string;
+  displayName: string | null;
+  channel: string;
+  isActive: boolean;
+}
+
+export interface SubscriptionListResponse {
+  subscriptions: Subscription[];
+  total: number;
+}
+
+export interface Notification {
+  id: number;
+  title: string;
+  message: string | null;
+  categoryName: string | null;
+  importance: number;
+  sourceUrl: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationListResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}
+
+// === 구독/알림 API ===
+
+function getAuthHeaders(): Record<string, string> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
+export async function subscribe(
+  type: string,
+  value: string,
+  channel: string = 'IN_APP',
+): Promise<Subscription> {
+  const response = await fetch('/api/news/subscriptions', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ type, value, channel }),
+  });
+  if (!response.ok) throw new Error(`구독 실패: ${response.status}`);
+  return response.json();
+}
+
+export async function unsubscribe(subscriptionId: number): Promise<void> {
+  const response = await fetch(`/api/news/subscriptions/${subscriptionId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) throw new Error(`구독 해제 실패: ${response.status}`);
+}
+
+export async function getSubscriptions(): Promise<SubscriptionListResponse> {
+  const response = await fetch('/api/news/subscriptions', {
+    method: 'GET',
+    headers: getAuthHeaders(),
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`구독 목록 조회 실패: ${response.status}`);
+  return response.json();
+}
+
+export async function getNotifications(limit: number = 30): Promise<NotificationListResponse> {
+  const response = await fetch(`/api/news/subscriptions/notifications?limit=${limit}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error(`알림 조회 실패: ${response.status}`);
+  return response.json();
+}
+
+export async function getUnreadCount(): Promise<number> {
+  const response = await fetch('/api/news/subscriptions/notifications/unread-count', {
+    method: 'GET',
+    headers: getAuthHeaders(),
+    cache: 'no-store',
+  });
+  if (!response.ok) return 0;
+  const data = await response.json();
+  return data.unreadCount ?? 0;
+}
+
+export async function markNotificationRead(notificationId: number): Promise<void> {
+  await fetch(`/api/news/subscriptions/notifications/${notificationId}/read`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await fetch('/api/news/subscriptions/notifications/read-all', {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+  });
 }
 
 // === 유틸리티 ===
