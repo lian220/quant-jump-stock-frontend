@@ -18,10 +18,13 @@ export async function DELETE(
       signal: AbortSignal.timeout(10000),
     });
 
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return new NextResponse(null, { status: response.status });
+    }
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Failed to unsubscribe:', error);
+    console.error('구독 해제 실패:', error);
     return NextResponse.json({ error: '서버 연결 실패' }, { status: 503 });
   }
 }

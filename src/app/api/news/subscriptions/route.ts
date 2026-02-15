@@ -25,8 +25,14 @@ export async function POST(request: NextRequest) {
   const auth = request.headers.get('Authorization');
   if (!auth) return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
 
+  let body;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: '잘못된 요청 형식입니다.' }, { status: 400 });
+  }
+
+  try {
     const response = await fetch(`${API_URL}/api/v1/news/subscriptions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: auth },
@@ -37,7 +43,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Failed to subscribe:', error);
+    console.error('구독 처리 실패:', error);
     return NextResponse.json({ error: '서버 연결 실패' }, { status: 503 });
   }
 }

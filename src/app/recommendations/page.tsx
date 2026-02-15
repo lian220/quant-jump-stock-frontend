@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,6 +51,9 @@ export default function RecommendationsPage() {
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
   const [strategiesError, setStrategiesError] = useState<string | null>(null);
 
+  // 초기 날짜 동기화 완료 여부
+  const initialDateSynced = useRef(false);
+
   // 종목 분석 데이터 가져오기 (날짜 변경 시 자동 재조회)
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -65,8 +68,9 @@ export default function RecommendationsPage() {
         // 백엔드가 실제 조회한 날짜로 표시 업데이트
         if (response.date) {
           setDisplayDate(response.date);
-          // 초기 로드 시 날짜 선택기도 동기화
-          if (!selectedDate) {
+          // 초기 로드 시 날짜 선택기도 동기화 (한 번만)
+          if (!initialDateSynced.current && !selectedDate) {
+            initialDateSynced.current = true;
             setSelectedDate(response.date);
           }
         }
@@ -84,7 +88,7 @@ export default function RecommendationsPage() {
   // 관련 뉴스 로드 (추천 종목 로드 후)
   useEffect(() => {
     if (recommendations.length === 0) return;
-    const tickers = recommendations.map((r) => r.ticker);
+    const tickers = Array.from(new Set(recommendations.map((r) => r.ticker)));
     getNewsByTickers(tickers, 30)
       .then((res) => {
         const grouped: Record<string, NewsArticle[]> = {};

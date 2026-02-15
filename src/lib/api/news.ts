@@ -79,7 +79,9 @@ export async function getNewsByTickers(
   limit: number = 20,
 ): Promise<NewsListResponse> {
   const params = new URLSearchParams();
-  tickers.forEach((t) => params.append('tickers', t));
+  tickers.forEach((t) => {
+    params.append('tickers', t);
+  });
   params.append('limit', String(limit));
 
   const isBrowser = typeof window !== 'undefined';
@@ -104,7 +106,9 @@ export async function getNewsByTickers(
  */
 export async function getNewsByTags(tags: string[], limit: number = 20): Promise<NewsListResponse> {
   const params = new URLSearchParams();
-  tags.forEach((t) => params.append('tags', t));
+  tags.forEach((t) => {
+    params.append('tags', t);
+  });
   params.append('limit', String(limit));
 
   const isBrowser = typeof window !== 'undefined';
@@ -265,17 +269,23 @@ export async function getUnreadCount(): Promise<number> {
 }
 
 export async function markNotificationRead(notificationId: number): Promise<void> {
-  await fetch(`/api/news/subscriptions/notifications/${notificationId}/read`, {
+  const response = await fetch(`/api/news/subscriptions/notifications/${notificationId}/read`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
   });
+  if (!response.ok) {
+    throw new Error(`알림 읽음 처리 실패: ${response.status}`);
+  }
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  await fetch('/api/news/subscriptions/notifications/read-all', {
+  const response = await fetch('/api/news/subscriptions/notifications/read-all', {
     method: 'PATCH',
     headers: getAuthHeaders(),
   });
+  if (!response.ok) {
+    throw new Error(`전체 읽음 처리 실패: ${response.status}`);
+  }
 }
 
 // === 유틸리티 ===
@@ -324,6 +334,7 @@ export function formatRelativeTime(dateStr: string | null): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 0) return '방금 전';
   const diffMin = Math.floor(diffMs / 60000);
   const diffHour = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHour / 24);

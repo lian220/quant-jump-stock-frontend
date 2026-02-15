@@ -13,10 +13,13 @@ export async function PATCH(request: NextRequest) {
       signal: AbortSignal.timeout(10000),
     });
 
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return new NextResponse(null, { status: response.status });
+    }
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
-    console.error('Failed to mark all as read:', error);
+    console.error('전체 읽음 처리 실패:', error);
     return NextResponse.json({ error: '서버 연결 실패' }, { status: 503 });
   }
 }

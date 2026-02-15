@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -126,10 +127,14 @@ export default function NewsPage() {
     }
     getSubscriptions()
       .then((res) => setUserSubscriptions(res.subscriptions ?? []))
-      .catch(() => {});
+      .catch((err) => {
+        console.error('구독 목록 조회 실패:', err);
+      });
     getUnreadCount()
       .then(setUnreadCount)
-      .catch(() => {});
+      .catch((err) => {
+        console.error('읽지 않은 알림 수 조회 실패:', err);
+      });
   }, [user]);
 
   // 데이터 조회
@@ -139,7 +144,22 @@ export default function NewsPage() {
       setError(null);
       try {
         let response;
-        if (filterMode === 'category' && selectedCategory) {
+        if (filterMode === 'category' && activeFilter.length > 0 && !selectedCategory) {
+          // 관심 카테고리 목록 필터 (복수 카테고리)
+          const results = await Promise.all(activeFilter.map((cat) => getNewsByCategory(cat, 50)));
+          const seen = new Set<string>();
+          const merged = results
+            .flatMap((r) => r.news ?? [])
+            .filter((article) => {
+              const key = article.id || article.title;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+          setArticles(merged);
+          setIsLoading(false);
+          return;
+        } else if (filterMode === 'category' && selectedCategory) {
           response = await getNewsByCategory(selectedCategory, 50);
         } else if (filterMode === 'tickers' && activeFilter.length > 0) {
           response = await getNewsByTickers(activeFilter, 50);
@@ -150,7 +170,7 @@ export default function NewsPage() {
         }
         setArticles(response.news ?? []);
       } catch (err) {
-        console.error('Failed to fetch news:', err);
+        console.error('뉴스 로드 실패:', err);
         setError('뉴스를 불러오는데 실패했습니다.');
       } finally {
         setIsLoading(false);
@@ -251,7 +271,9 @@ export default function NewsPage() {
         const res = await getNotifications(20);
         setNotifications(res.notifications ?? []);
         setUnreadCount(res.unreadCount);
-      } catch {}
+      } catch (err) {
+        console.error('알림 조회 실패:', err);
+      }
     }
     setShowNotifications((prev) => !prev);
   }, [showNotifications]);
@@ -262,7 +284,9 @@ export default function NewsPage() {
       await markAllNotificationsRead();
       setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch {}
+    } catch (err) {
+      console.error('전체 읽음 처리 실패:', err);
+    }
   }, []);
 
   // 관심 종목 추가
@@ -351,7 +375,7 @@ export default function NewsPage() {
   const handleCategoryWatchlistFilter = useCallback(() => {
     const cats = Array.from(subscribedCategories);
     if (cats.length === 0) return;
-    setFilterMode('tags');
+    setFilterMode('category');
     setActiveFilter(cats);
     setFilterInput(cats.join(','));
     setSelectedCategory(null);
@@ -371,6 +395,18 @@ export default function NewsPage() {
     setFilterInput(ticker);
     setSelectedCategory(null);
   };
+
+  // ESC 키로 모달/알림 패널 닫기
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedArticle) setSelectedArticle(null);
+        else if (showNotifications) setShowNotifications(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedArticle, showNotifications]);
 
   const handleReset = () => {
     setFilterMode('recent');
@@ -594,9 +630,9 @@ export default function NewsPage() {
                 {/* 구독 안내 (비로그인) */}
                 {!user && (
                   <p className="text-center text-xs text-slate-500 mt-2">
-                    <a href="/auth" className="text-cyan-400 hover:underline">
+                    <Link href="/auth" className="text-cyan-400 hover:underline">
                       로그인
-                    </a>
+                    </Link>
                     하면 카테고리별 알림을 받을 수 있습니다
                   </p>
                 )}
@@ -1095,6 +1131,9 @@ export default function NewsPage() {
       {/* 기사 상세 모달 */}
       {selectedArticle && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="기사 상세"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={() => setSelectedArticle(null)}
         >
