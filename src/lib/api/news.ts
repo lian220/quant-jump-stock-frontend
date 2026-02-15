@@ -12,6 +12,7 @@ export interface NewsArticle {
   title: string;
   titleEn: string | null;
   summary: string | null;
+  content: string | null;
   source: string;
   originalSource: string | null;
   tags: string[];

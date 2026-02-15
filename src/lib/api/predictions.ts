@@ -30,6 +30,7 @@ export interface BuySignal {
 
 export interface BuySignalsResponse {
   data: BuySignal[];
+  date: string | null; // 실제 조회된 날짜 (백엔드 fallback 적용 후)
 }
 
 // === Tier 분류 ===
