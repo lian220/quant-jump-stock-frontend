@@ -20,6 +20,11 @@ export interface StockSummary {
   isEtf: boolean;
   designationStatus: DesignationStatus;
   isActive: boolean;
+  currentPrice: number | null;
+  changePercent: number | null;
+  changeAmount: number | null;
+  volume: number | null;
+  priceDate: string | null;
 }
 
 export interface StockDetailResponse {
@@ -39,6 +44,17 @@ export interface StockDetailResponse {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  currentPrice: number | null;
+  previousClose: number | null;
+  changeAmount: number | null;
+  changePercent: number | null;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  volume: number | null;
+  marketCap: number | null;
+  trailingPE: number | null;
+  priceDate: string | null;
 }
 
 export interface StockSearchResponse {

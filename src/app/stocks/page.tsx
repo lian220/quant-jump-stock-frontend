@@ -7,7 +7,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { searchStocks, marketLabels, designationLabels } from '@/lib/api/stocks';
-import { getBuySignals, type BuySignal } from '@/lib/api/predictions';
 import { PageSEO } from '@/components/seo';
 import { Footer } from '@/components/layout/Footer';
 import type { StockSummary, Market, StockSearchResponse } from '@/lib/api/stocks';
@@ -31,7 +30,6 @@ export default function StocksPage() {
   const [stocks, setStocks] = useState<StockSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [priceMap, setPriceMap] = useState<Record<string, BuySignal>>({});
 
   // 필터 상태
   const [query, setQuery] = useState('');
@@ -43,25 +41,6 @@ export default function StocksPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const pageSize = 20;
-
-  // 가격 데이터 로드 (한 번만)
-  useEffect(() => {
-    const fetchPrices = async () => {
-      try {
-        const res = await getBuySignals({ minConfidence: 0.01 });
-        if (res.data) {
-          const map: Record<string, BuySignal> = {};
-          for (const signal of res.data) {
-            map[signal.ticker] = signal;
-          }
-          setPriceMap(map);
-        }
-      } catch {
-        // 가격 데이터는 선택적이므로 무시
-      }
-    };
-    fetchPrices();
-  }, []);
 
   const fetchStocks = useCallback(async () => {
     setIsLoading(true);
@@ -209,9 +188,8 @@ export default function StocksPage() {
         {!isLoading && !error && stocks.length > 0 && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {stocks.map((stock) => {
-              const prediction = priceMap[stock.ticker];
-              const price = prediction?.currentPrice;
-              const upside = prediction?.upsidePercent;
+              const price = stock.currentPrice;
+              const change = stock.changePercent;
               return (
                 <Link key={stock.id} href={`/stocks/${stock.id}`}>
                   <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all h-full cursor-pointer">
@@ -231,12 +209,12 @@ export default function StocksPage() {
                                   maximumFractionDigits: 2,
                                 })}
                               </p>
-                              {upside != null && (
+                              {change != null && (
                                 <p
-                                  className={`text-xs font-medium ${upside > 0 ? 'text-emerald-400' : upside < 0 ? 'text-red-400' : 'text-slate-400'}`}
+                                  className={`text-xs font-medium ${change > 0 ? 'text-emerald-400' : change < 0 ? 'text-red-400' : 'text-slate-400'}`}
                                 >
-                                  {upside > 0 ? '+' : ''}
-                                  {upside.toFixed(1)}%
+                                  {change > 0 ? '+' : ''}
+                                  {change.toFixed(2)}%
                                 </p>
                               )}
                             </>
@@ -247,6 +225,12 @@ export default function StocksPage() {
                           )}
                         </div>
                       </div>
+
+                      {stock.volume != null && (
+                        <p className="text-xs text-slate-500 mb-2">
+                          거래량 {stock.volume.toLocaleString()}
+                        </p>
+                      )}
 
                       <div className="flex flex-wrap gap-2 mt-3">
                         <Badge
@@ -268,7 +252,7 @@ export default function StocksPage() {
                             ETF
                           </Badge>
                         )}
-                        {price != null && (
+                        {stock.designationStatus !== 'NORMAL' && (
                           <Badge className={designationColors[stock.designationStatus] || ''}>
                             {designationLabels[stock.designationStatus]}
                           </Badge>

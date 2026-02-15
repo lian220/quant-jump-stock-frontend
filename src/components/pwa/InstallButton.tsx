@@ -78,8 +78,8 @@ export function InstallButton({ compact = false, className = '' }: InstallButton
     }
   };
 
-  // 이미 설치된 경우에만 버튼 숨김
-  if (isInstalled) {
+  // 이미 설치되었거나, 설치 프롬프트를 지원하지 않는 환경(PC 브라우저 등)에서는 숨김
+  if (isInstalled || !deferredPrompt) {
     return null;
   }
 
