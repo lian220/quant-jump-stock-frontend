@@ -40,26 +40,8 @@ export function InstallButton({ compact = false, className = '' }: InstallButton
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      // 설치 조건 미충족 시 안내 메시지
-      const userAgent = navigator.userAgent.toLowerCase();
-      let message = '앱 설치가 불가능합니다.\n\n';
+    if (!deferredPrompt) return;
 
-      if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
-        message +=
-          'Safari에서는 홈 화면 추가를 이용해주세요:\n1. 공유 버튼 탭\n2. "홈 화면에 추가" 선택';
-      } else if (window.matchMedia('(display-mode: standalone)').matches) {
-        message += '이미 앱이 설치되어 있습니다.';
-      } else {
-        message +=
-          '다음 조건을 확인해주세요:\n- Chrome, Edge, Samsung Internet 브라우저 사용\n- HTTPS 연결\n- 이미 설치되지 않은 상태';
-      }
-
-      alert(message);
-      return;
-    }
-
-    // 설치 프롬프트 표시
     try {
       await deferredPrompt.prompt();
 
@@ -78,8 +60,8 @@ export function InstallButton({ compact = false, className = '' }: InstallButton
     }
   };
 
-  // 이미 설치된 경우에만 버튼 숨김
-  if (isInstalled) {
+  // 이미 설치되었거나, 설치 프롬프트를 지원하지 않는 환경(PC 브라우저 등)에서는 숨김
+  if (isInstalled || !deferredPrompt) {
     return null;
   }
 

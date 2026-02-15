@@ -178,32 +178,34 @@ export default function StockDetailPage() {
               </div>
               <p className="text-xl text-emerald-400 font-mono mb-4">{stock.ticker}</p>
             </div>
-            {(() => {
-              const latestWithPrice = predictions.find((p) => p.currentPrice != null);
-              if (!latestWithPrice) return null;
-              const price = latestWithPrice.currentPrice!;
-              const upside = latestWithPrice.upsidePercent;
-              return (
-                <div className="text-right">
-                  <p className="text-3xl font-bold text-white font-mono">
-                    $
-                    {price.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+            {stock.currentPrice != null && (
+              <div className="text-right">
+                <p className="text-3xl font-bold text-white font-mono">
+                  $
+                  {stock.currentPrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+                {stock.changePercent != null && (
+                  <p
+                    className={`text-sm font-medium ${stock.changePercent > 0 ? 'text-emerald-400' : stock.changePercent < 0 ? 'text-red-400' : 'text-slate-400'}`}
+                  >
+                    {stock.changePercent > 0 ? '+' : ''}
+                    {stock.changePercent.toFixed(2)}%
+                    {stock.changeAmount != null && (
+                      <span className="ml-1">
+                        ({stock.changeAmount > 0 ? '+' : ''}
+                        {stock.changeAmount.toFixed(2)})
+                      </span>
+                    )}
                   </p>
-                  {upside != null && (
-                    <p
-                      className={`text-sm font-medium ${upside > 0 ? 'text-emerald-400' : upside < 0 ? 'text-red-400' : 'text-slate-400'}`}
-                    >
-                      상승여력 {upside > 0 ? '+' : ''}
-                      {upside.toFixed(1)}%
-                    </p>
-                  )}
-                  <p className="text-xs text-slate-500 mt-1">{latestWithPrice.analysisDate} 기준</p>
-                </div>
-              );
-            })()}
+                )}
+                {stock.priceDate && (
+                  <p className="text-xs text-slate-500 mt-1">{stock.priceDate} 기준</p>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge className="bg-slate-700/50 text-slate-300 border-slate-600">
@@ -252,6 +254,71 @@ export default function StockDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* 시세 정보 카드 */}
+        {stock.currentPrice != null && (
+          <Card className="bg-slate-800/50 border-slate-700 mb-6">
+            <CardHeader>
+              <CardTitle className="text-white text-lg">시세 정보</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">전일 종가</p>
+                  <p className="text-sm text-slate-300 font-mono">
+                    {stock.previousClose != null
+                      ? `$${stock.previousClose.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">시가</p>
+                  <p className="text-sm text-slate-300 font-mono">
+                    {stock.open != null
+                      ? `$${stock.open.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">고가</p>
+                  <p className="text-sm text-slate-300 font-mono">
+                    {stock.high != null
+                      ? `$${stock.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">저가</p>
+                  <p className="text-sm text-slate-300 font-mono">
+                    {stock.low != null
+                      ? `$${stock.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">거래량</p>
+                  <p className="text-sm text-slate-300 font-mono">
+                    {stock.volume != null ? stock.volume.toLocaleString() : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">시가총액</p>
+                  <p className="text-sm text-slate-300 font-mono">
+                    {stock.marketCap != null ? `$${(stock.marketCap / 1e9).toFixed(1)}B` : '-'}
+                  </p>
+                </div>
+              </div>
+              {stock.trailingPE != null && (
+                <div className="mt-3 pt-3 border-t border-slate-700/50">
+                  <span className="text-xs text-slate-500">PER</span>
+                  <span className="text-sm text-slate-300 font-mono ml-2">
+                    {stock.trailingPE.toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* 상태 정보 카드 */}
         <Card className="bg-slate-800/50 border-slate-700 mb-6">
