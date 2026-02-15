@@ -2,19 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, BarChart3, Search, User, TrendingUp, ArrowLeft } from 'lucide-react';
+import { Home, BarChart3, Search, User, TrendingUp, ArrowLeft, Newspaper } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: '홈', icon: Home },
   { href: '/recommendations', label: '분석', icon: TrendingUp },
+  { href: '/news', label: '뉴스', icon: Newspaper },
   { href: '/strategies', label: '전략', icon: BarChart3 },
   { href: '/stocks', label: '종목', icon: Search },
 ] as const;
 
 // 메인 탭 경로 (뒤로가기 미표시)
-const mainPaths = ['/', '/recommendations', '/strategies', '/stocks', '/mypage', '/auth'];
+const mainPaths = ['/', '/recommendations', '/news', '/strategies', '/stocks', '/mypage', '/auth'];
 
 export function BottomNav() {
   const pathname = usePathname();

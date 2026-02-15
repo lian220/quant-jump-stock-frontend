@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,10 +16,12 @@ import {
 import { PageSEO } from '@/components/seo';
 import { getBuySignals, getScoreGrade, TIER_THRESHOLDS } from '@/lib/api/predictions';
 import { getStrategies } from '@/lib/api/strategies';
+import { getNewsByTickers, formatRelativeTime } from '@/lib/api/news';
 import { getCategoryLabel } from '@/lib/strategy-helpers';
 import { Footer } from '@/components/layout/Footer';
 import type { BuySignal } from '@/lib/api/predictions';
 import type { Strategy } from '@/types/strategy';
+import type { NewsArticle } from '@/lib/api/news';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -30,8 +32,8 @@ export default function RecommendationsPage() {
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
 
   // 필터/정렬 상태
-  const defaultDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const [selectedDate, setSelectedDate] = useState<string>(defaultDate);
+  const [selectedDate, setSelectedDate] = useState<string>(''); // 빈값 = 백엔드에서 최신 날짜 자동 조회
+  const [displayDate, setDisplayDate] = useState<string>(''); // 실제 응답된 날짜 (표시용)
   const [sortBy, setSortBy] = useState<string>('compositeScore');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
@@ -41,10 +43,16 @@ export default function RecommendationsPage() {
   // 모바일 필터 토글
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // 관련 뉴스
+  const [tickerNews, setTickerNews] = useState<Record<string, NewsArticle[]>>({});
+
   // 인기 전략 상태
   const [popularStrategies, setPopularStrategies] = useState<Strategy[]>([]);
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
   const [strategiesError, setStrategiesError] = useState<string | null>(null);
+
+  // 초기 날짜 동기화 완료 여부
+  const initialDateSynced = useRef(false);
 
   // 종목 분석 데이터 가져오기 (날짜 변경 시 자동 재조회)
   useEffect(() => {
@@ -57,6 +65,15 @@ export default function RecommendationsPage() {
           minConfidence: 0.1,
         });
         setRecommendations(response.data ?? []);
+        // 백엔드가 실제 조회한 날짜로 표시 업데이트
+        if (response.date) {
+          setDisplayDate(response.date);
+          // 초기 로드 시 날짜 선택기도 동기화 (한 번만)
+          if (!initialDateSynced.current && !selectedDate) {
+            initialDateSynced.current = true;
+            setSelectedDate(response.date);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch recommendations:', error);
         setRecommendationsError('종목 분석 데이터를 불러오는데 실패했습니다.');
@@ -67,6 +84,24 @@ export default function RecommendationsPage() {
 
     fetchRecommendations();
   }, [selectedDate]);
+
+  // 관련 뉴스 로드 (추천 종목 로드 후)
+  useEffect(() => {
+    if (recommendations.length === 0) return;
+    const tickers = Array.from(new Set(recommendations.map((r) => r.ticker)));
+    getNewsByTickers(tickers, 30)
+      .then((res) => {
+        const grouped: Record<string, NewsArticle[]> = {};
+        for (const article of res.news ?? []) {
+          for (const t of article.tickers) {
+            if (!grouped[t]) grouped[t] = [];
+            if (grouped[t].length < 2) grouped[t].push(article);
+          }
+        }
+        setTickerNews(grouped);
+      })
+      .catch(() => {});
+  }, [recommendations]);
 
   // 정렬된 추천 목록
   const sortedRecommendations = useMemo(() => {
@@ -107,7 +142,7 @@ export default function RecommendationsPage() {
   }, [sortBy, sortOrder, selectedDate]);
 
   const handleDateReset = () => {
-    setSelectedDate(defaultDate);
+    setSelectedDate(''); // 빈값으로 리셋 → 백엔드가 최신 날짜 자동 조회
   };
 
   // 인기 전략 가져오기 (구독자순 상위 3개)
@@ -155,12 +190,13 @@ export default function RecommendationsPage() {
                 오늘의 주목 종목
               </h1>
               <p className="text-sm md:text-lg text-slate-500 mb-2 md:mb-6">
-                {new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString('ko-KR', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}{' '}
-                종가 기준 분석
+                {displayDate
+                  ? `${new Date(displayDate + 'T00:00:00').toLocaleDateString('ko-KR', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })} 종가 기준 분석`
+                  : '최신 데이터 로딩 중...'}
               </p>
               <p className="hidden sm:block text-xl text-slate-400 max-w-3xl mx-auto">
                 실시간 데이터 분석 기반 매수 관심 종목
@@ -570,6 +606,41 @@ export default function RecommendationsPage() {
                               </div>
                             )}
 
+                            {/* 관련 뉴스 */}
+                            {tickerNews[stock.ticker] && tickerNews[stock.ticker].length > 0 && (
+                              <div className="mb-4 bg-slate-700/20 rounded-lg p-3">
+                                <p className="text-xs text-slate-400 mb-2">관련 뉴스</p>
+                                <div className="space-y-1.5">
+                                  {tickerNews[stock.ticker].map((news, nIdx) => (
+                                    <div key={news.id || nIdx} className="flex items-start gap-1.5">
+                                      <span className="text-[10px] text-cyan-400 mt-0.5 shrink-0">
+                                        &bull;
+                                      </span>
+                                      <div className="min-w-0 flex-1">
+                                        {news.sourceUrl ? (
+                                          <a
+                                            href={news.sourceUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-xs text-slate-300 hover:text-cyan-400 transition-colors line-clamp-1 block"
+                                          >
+                                            {news.title}
+                                          </a>
+                                        ) : (
+                                          <span className="text-xs text-slate-300 line-clamp-1 block">
+                                            {news.title}
+                                          </span>
+                                        )}
+                                        <span className="text-[10px] text-slate-500">
+                                          {formatRelativeTime(news.createdAt)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
                             {/* CTA 버튼 - Primary/Secondary 위계 */}
                             <div className="flex gap-2">
                               <Button
@@ -673,10 +744,21 @@ export default function RecommendationsPage() {
               sortedRecommendations.length === 0 && (
                 <Card className="bg-slate-800/50 border-slate-700">
                   <CardContent className="pt-6 text-center py-16">
-                    <p className="text-slate-400 text-lg mb-2">오늘은 분석 데이터가 없습니다</p>
-                    <p className="text-slate-500 text-sm">
-                      신뢰도 기준을 충족하는 매수 관심 종목이 발견되지 않았습니다.
+                    <p className="text-slate-400 text-lg mb-2">
+                      {displayDate
+                        ? `${new Date(displayDate + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 분석 데이터가 없습니다`
+                        : '분석 데이터가 없습니다'}
                     </p>
+                    <p className="text-slate-500 text-sm mb-4">
+                      해당 날짜에 신뢰도 기준을 충족하는 매수 관심 종목이 발견되지 않았습니다.
+                    </p>
+                    <Button
+                      onClick={handleDateReset}
+                      variant="outline"
+                      className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                    >
+                      최신 데이터 보기
+                    </Button>
                   </CardContent>
                 </Card>
               )}

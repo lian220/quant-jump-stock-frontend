@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       return result;
     });
 
-    return NextResponse.json({ data: normalized });
+    return NextResponse.json({ data: normalized, date: data.date ?? null });
   } catch (error) {
     console.error('Failed to fetch buy signals from backend:', error);
     const message =
