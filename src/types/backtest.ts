@@ -163,26 +163,42 @@ export interface BacktestTradeResponse {
   taxAmount: number | null;
 }
 
+// 등급 타입 (백엔드: "good"/"caution"/"danger"/"bad" 또는 "A"/"B"/"C"/"D"/"F")
+export type GradeValue = 'good' | 'caution' | 'danger' | 'bad' | 'A' | 'B' | 'C' | 'D' | 'F';
+
+// 등급 객체 (백엔드 응답 형태)
+export interface GradeObject {
+  grade: GradeValue;
+  label: string;
+}
+
 // 등급별 지표
 export interface GradedMetric {
   name: string;
+  nameKo?: string;
   value: number | string | null;
-  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  formattedValue?: string;
+  grade: GradeValue;
+  gradeLabel?: string;
   description: string;
 }
 
 // 용어 사전 항목
 export interface GlossaryItem {
   term: string;
+  termKo?: string;
   definition: string;
-  category: string;
+  category?: string;
+  example?: string;
 }
 
 // 강화 백테스트 결과
 export interface EnhancedBacktestResult {
-  backtestId: string;
-  overallGrade: 'A' | 'B' | 'C' | 'D' | 'F';
-  overallSummary: string;
+  id?: number;
+  backtestId?: string;
+  overallGrade: GradeObject | GradeValue;
+  summary?: string;
+  overallSummary?: string;
   gradedMetrics: GradedMetric[];
   glossary: GlossaryItem[];
 }
