@@ -38,7 +38,7 @@ export default function BacktestPage() {
   const [result, setResult] = useState<BacktestResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [selectedBenchmark, setSelectedBenchmark] = useState<string>('SPY');
+  const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['SPY']);
   const [strategyName, setStrategyName] = useState<string>('');
   const [strategyRiskSettings, setStrategyRiskSettings] = useState<string | undefined>();
   const [strategyPositionSizing, setStrategyPositionSizing] = useState<string | undefined>();
@@ -73,7 +73,7 @@ export default function BacktestPage() {
       // 비로그인 시 mock 데이터로 미리보기 제공 (Soft Gate)
       if (!user) {
         setShowLoginPrompt(false);
-        setSelectedBenchmark(data.benchmark);
+        setSelectedBenchmarks(data.benchmarks ?? [data.benchmark]);
         setIsLoading(true);
         setStatus('RUNNING');
         setResult(null);
@@ -102,7 +102,7 @@ export default function BacktestPage() {
       abortControllerRef.current = abortController;
 
       setShowLoginPrompt(false);
-      setSelectedBenchmark(data.benchmark);
+      setSelectedBenchmarks(data.benchmarks ?? [data.benchmark]);
       setIsLoading(true);
       setStatus('PENDING');
       setResult(null);
@@ -185,7 +185,7 @@ export default function BacktestPage() {
   );
 
   // 벤치마크 라벨
-  const benchmarkLabel = selectedBenchmark;
+  const benchmarkLabels = selectedBenchmarks;
 
   return (
     <>
@@ -331,7 +331,7 @@ export default function BacktestPage() {
                 {/* 수익 곡선 차트 */}
                 <EquityCurveChart
                   equityCurve={result.equityCurve}
-                  benchmarkLabel={benchmarkLabel}
+                  benchmarkLabels={benchmarkLabels}
                 />
 
                 {/* 거래 내역 테이블 */}

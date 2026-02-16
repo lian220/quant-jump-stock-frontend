@@ -27,7 +27,7 @@ import type {
   SlippageType,
 } from '@/types/backtest';
 import { getAvailableBenchmarks } from '@/lib/api/backtest';
-import { MAX_BACKTEST_DAYS } from '@/constants/backtest';
+import { MAX_BACKTEST_DAYS, MAX_BENCHMARKS } from '@/constants/backtest';
 
 const backtestFormSchema = z
   .object({
@@ -162,6 +162,7 @@ export default function BacktestForm({
 }: BacktestFormProps) {
   const [benchmarkOptions, setBenchmarkOptions] =
     useState<BenchmarkOption[]>(defaultBenchmarkOptions);
+  const [additionalBenchmarks, setAdditionalBenchmarks] = useState<string[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // 리스크 설정 상태
@@ -290,12 +291,19 @@ export default function BacktestForm({
   );
 
   const handleFormSubmit = (data: BacktestFormValues) => {
+    // SCRUM-337: 다중 벤치마크 목록 구성 (primary + additional, 중복 제거)
+    const allBenchmarks = [
+      data.benchmark,
+      ...additionalBenchmarks.filter((b) => b !== data.benchmark),
+    ];
+
     const request: BacktestRunRequest = {
       strategyId,
       startDate: data.startDate,
       endDate: data.endDate,
       initialCapital: data.initialCapital,
       benchmark: data.benchmark as BenchmarkType,
+      benchmarks: allBenchmarks.length > 1 ? allBenchmarks : undefined,
       rebalancePeriod: data.rebalancePeriod as RebalancePeriod,
     };
 
@@ -421,8 +429,15 @@ export default function BacktestForm({
 
             {/* 벤치마크 */}
             <div className="space-y-2">
-              <Label className="text-slate-300">벤치마크</Label>
-              <Select value={benchmarkValue} onValueChange={(val) => setValue('benchmark', val)}>
+              <Label className="text-slate-300">주요 벤치마크</Label>
+              <Select
+                value={benchmarkValue}
+                onValueChange={(val) => {
+                  setValue('benchmark', val);
+                  // 주요 벤치마크가 변경되면 추가 벤치마크에서 제거
+                  setAdditionalBenchmarks((prev) => prev.filter((b) => b !== val));
+                }}
+              >
                 <SelectTrigger className="w-full bg-slate-900/50 border-slate-600 text-white">
                   <SelectValue placeholder="벤치마크 선택" />
                 </SelectTrigger>
@@ -436,6 +451,45 @@ export default function BacktestForm({
               </Select>
               {errors.benchmark && (
                 <p className="text-red-400 text-xs">{errors.benchmark.message}</p>
+              )}
+              {/* SCRUM-337: 추가 벤치마크 비교 */}
+              {benchmarkOptions.length > 1 && (
+                <div className="pt-1">
+                  <p className="text-xs text-slate-500 mb-1.5">
+                    비교 벤치마크 추가 (최대 {MAX_BENCHMARKS - 1}개)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {benchmarkOptions
+                      .filter((opt) => opt.value !== benchmarkValue)
+                      .map((opt) => {
+                        const isSelected = additionalBenchmarks.includes(opt.value);
+                        const canAdd = additionalBenchmarks.length < MAX_BENCHMARKS - 1;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            disabled={!isSelected && !canAdd}
+                            onClick={() => {
+                              setAdditionalBenchmarks((prev) =>
+                                isSelected
+                                  ? prev.filter((b) => b !== opt.value)
+                                  : [...prev, opt.value],
+                              );
+                            }}
+                            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                              isSelected
+                                ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-400'
+                                : canAdd
+                                  ? 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
+                                  : 'border-slate-700 text-slate-600 cursor-not-allowed'
+                            }`}
+                          >
+                            {isSelected ? `✕ ${opt.value}` : `+ ${opt.value}`}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
               )}
             </div>
 

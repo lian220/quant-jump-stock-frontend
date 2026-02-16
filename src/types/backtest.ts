@@ -76,6 +76,7 @@ export interface BacktestRunRequest {
   endDate: string;
   initialCapital: number;
   benchmark: BenchmarkType;
+  benchmarks?: string[]; // SCRUM-337: 다중 벤치마크 (최대 3개)
   rebalancePeriod: RebalancePeriod;
   riskSettings?: RiskSettings;
   positionSizing?: PositionSizingConfig;
@@ -134,6 +135,7 @@ export interface BacktestEquityPoint {
   date: string;
   value: number;
   benchmark: number | null;
+  benchmarks?: Record<string, number> | null; // SCRUM-337: 다중 벤치마크
 }
 
 // 거래 청산 사유
@@ -200,7 +202,11 @@ export interface EnhancedBacktestResult {
   summary?: string;
   overallSummary?: string;
   gradedMetrics: GradedMetric[];
+  equityCurve?: BacktestEquityPoint[] | null;
+  trades?: BacktestTradeResponse[] | null;
   glossary: GlossaryItem[];
+  createdAt: string;
+  completedAt: string | null;
 }
 
 // 벤치마크 옵션
@@ -220,6 +226,7 @@ export interface BacktestResultResponse {
   equityCurve: BacktestEquityPoint[];
   benchmarkCurve: BacktestEquityPoint[];
   trades: BacktestTradeResponse[];
+  benchmarks?: string[]; // SCRUM-337: 사용된 벤치마크 목록
   errorMessage?: string;
   createdAt?: string;
   completedAt?: string;
