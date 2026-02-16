@@ -96,6 +96,15 @@ export function Header() {
               전략 마켓플레이스
             </Link>
             <Link
+              href="/news"
+              className={cn(
+                'inline-flex items-center transition-colors font-medium',
+                isActive('/news') ? 'text-emerald-400' : 'text-slate-300 hover:text-emerald-400',
+              )}
+            >
+              뉴스
+            </Link>
+            <Link
               href="/stocks"
               className={cn(
                 'inline-flex items-center transition-colors font-medium',
@@ -184,6 +193,18 @@ export function Header() {
                 )}
               >
                 전략 마켓플레이스
+              </Link>
+              <Link
+                href="/news"
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  'text-base font-semibold transition-all py-3 px-4 rounded-lg',
+                  isActive('/news')
+                    ? 'text-emerald-400 bg-emerald-500/10'
+                    : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800',
+                )}
+              >
+                뉴스
               </Link>
               <Link
                 href="/stocks"
