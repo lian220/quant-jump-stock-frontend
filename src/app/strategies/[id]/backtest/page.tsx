@@ -44,7 +44,9 @@ export default function BacktestPage() {
   const [strategyPositionSizing, setStrategyPositionSizing] = useState<string | undefined>();
   const [strategyTradingCosts, setStrategyTradingCosts] = useState<string | undefined>();
   const [enhancedResult, setEnhancedResult] = useState<EnhancedBacktestResult | null>(null);
+  const [isTimedOut, setIsTimedOut] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 전략 정보 조회 (이름 + 기본 리스크 설정)
   useEffect(() => {
@@ -58,10 +60,11 @@ export default function BacktestPage() {
       .catch(() => setStrategyName(`전략 #${strategyId}`));
   }, [strategyId]);
 
-  // 컴포넌트 unmount 시 진행 중인 폴링 취소
+  // 컴포넌트 unmount 시 진행 중인 폴링 및 타이머 취소
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -105,11 +108,21 @@ export default function BacktestPage() {
       setResult(null);
       setEnhancedResult(null);
       setError(null);
+      setIsTimedOut(false);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
       try {
         // 백엔드에 백테스트 실행 요청
         const runResponse = await runBacktest(data);
         setStatus('RUNNING');
+
+        // 1분 타임아웃: 오래 걸리면 폴링 중단 후 안내
+        timeoutRef.current = setTimeout(() => {
+          abortController.abort();
+          setIsTimedOut(true);
+          setIsLoading(false);
+          setStatus(null);
+        }, 60_000);
 
         // 폴링으로 결과 대기
         const backtestResult = await pollBacktestResult(
@@ -119,6 +132,9 @@ export default function BacktestPage() {
           },
           abortController.signal,
         );
+
+        // 폴링 완료 → 타임아웃 해제
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
         if (backtestResult.status === 'FAILED') {
           setError(backtestResult.errorMessage || '백테스트 실행에 실패했습니다.');
@@ -133,7 +149,7 @@ export default function BacktestPage() {
           }
         }
       } catch (e) {
-        // AbortError는 무시
+        // AbortError는 타임아웃에 의한 것일 수 있으므로 무시
         if (e instanceof DOMException && e.name === 'AbortError') return;
 
         // 네트워크 오류 또는 백엔드 오류(500/503)일 때 mock fallback
@@ -161,6 +177,7 @@ export default function BacktestPage() {
           setStatus('FAILED');
         }
       } finally {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
         setIsLoading(false);
       }
     },
@@ -220,6 +237,40 @@ export default function BacktestPage() {
               <p className="text-slate-500 text-sm mt-2">
                 데이터 양에 따라 수 초에서 수 분이 소요될 수 있습니다
               </p>
+            </div>
+          )}
+
+          {/* 타임아웃 안내 - 1분 초과 시 */}
+          {isTimedOut && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-6 text-center mb-8">
+              <div className="text-3xl mb-3">&#x23F3;</div>
+              <p className="text-amber-400 text-lg font-semibold mb-2">
+                백테스트가 예상보다 오래 걸리고 있습니다
+              </p>
+              <p className="text-slate-400 mb-4">
+                데이터 처리에 시간이 더 필요합니다. 잠시 후 이 페이지를 다시 방문하면 결과를 확인할
+                수 있습니다.
+              </p>
+              <div className="flex justify-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/strategies/${strategyId}`)}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                >
+                  전략 상세로 돌아가기
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setIsTimedOut(false);
+                    setStatus(null);
+                  }}
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  계속 기다리기
+                </Button>
+              </div>
             </div>
           )}
 
