@@ -1,6 +1,6 @@
 // Service Worker for Alpha Foundry PWA
 // 배포 시 이 버전을 변경하면 SW가 자동 업데이트됨
-const SW_VERSION = '3';
+const SW_VERSION = '4';
 const STATIC_CACHE = `alphafoundry-static-v${SW_VERSION}`;
 const DYNAMIC_CACHE = `alphafoundry-dynamic-v${SW_VERSION}`;
 
@@ -15,35 +15,26 @@ self.addEventListener('install', (event) => {
       return cache.addAll(STATIC_ASSETS);
     }),
   );
-  self.skipWaiting();
+  // skipWaiting 제거: iOS Safari에서 무한 새로고침 루프 방지
+  // 새 SW는 기존 탭이 모두 닫힌 후 자연스럽게 활성화됨
 });
 
-// Service Worker 활성화 - 이전 버전 캐시 삭제 후 클라이언트에 리로드 알림
+// Service Worker 활성화 - 이전 버전 캐시 삭제
 self.addEventListener('activate', (event) => {
   console.log(`[SW] Activating v${SW_VERSION}...`);
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => {
-        return Promise.all(
-          keys
-            .filter((key) => key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
-            .map((key) => {
-              console.log(`[SW] Deleting old cache: ${key}`);
-              return caches.delete(key);
-            }),
-        );
-      })
-      .then(() => {
-        // 모든 클라이언트에 리로드 메시지 전송
-        return self.clients.matchAll({ type: 'window' }).then((clients) => {
-          clients.forEach((client) => {
-            client.postMessage({ type: 'SW_UPDATED' });
-          });
-        });
-      }),
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys
+          .filter((key) => key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
+          .map((key) => {
+            console.log(`[SW] Deleting old cache: ${key}`);
+            return caches.delete(key);
+          }),
+      );
+    }),
   );
-  self.clients.claim();
+  // clients.claim() 제거: iOS Safari에서 controllerchange 무한 루프 방지
 });
 
 // 네트워크 요청 가로채기
@@ -98,14 +89,7 @@ self.addEventListener('fetch', (event) => {
           }
           // 404 등 에러 → 새 빌드 배포 후 이전 chunk 요청
           return caches.match(request).then((cached) => {
-            if (cached) return cached;
-            // 캐시에도 없으면 클라이언트에 리로드 알림
-            self.clients.matchAll({ type: 'window' }).then((clients) => {
-              clients.forEach((client) => {
-                client.postMessage({ type: 'CHUNK_LOAD_FAILED' });
-              });
-            });
-            return response;
+            return cached || response;
           });
         })
         .catch(() => {
