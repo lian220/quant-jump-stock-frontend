@@ -98,7 +98,7 @@ export default function EnhancedPerformanceCards({ enhanced }: EnhancedPerforman
               )}
             </div>
             <Badge
-              className={`text-4xl font-bold px-6 py-3 ${gradeColors[overallGradeKey] || gradeColors.C}`}
+              className={`text-xl font-bold px-4 py-2 ${gradeColors[overallGradeKey] || gradeColors.C}`}
             >
               {overallGradeLabel}
             </Badge>
