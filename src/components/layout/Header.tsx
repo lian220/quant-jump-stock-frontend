@@ -3,17 +3,19 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InstallButton } from '@/components/pwa/InstallButton';
 import { cn, isActiveRoute } from '@/lib/utils';
+import { saveAuthReturnUrl } from '@/lib/onboarding';
 
 export function Header() {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => isActiveRoute(pathname, path);
@@ -141,15 +143,17 @@ export function Header() {
               </div>
             ) : (
               <div className="hidden md:flex items-center gap-2">
-                <Link href="/auth">
-                  <Button
-                    variant="outline"
-                    size="default"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                  >
-                    로그인
-                  </Button>
-                </Link>
+                <Button
+                  variant="outline"
+                  size="default"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  onClick={() => {
+                    saveAuthReturnUrl(pathname);
+                    router.push('/auth');
+                  }}
+                >
+                  로그인
+                </Button>
                 <Link href="/signup">
                   <Button size="default" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                     회원가입
@@ -254,15 +258,18 @@ export function Header() {
               ) : (
                 <div className="pt-4 border-t border-slate-700">
                   <div className="space-y-2">
-                    <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                      <Button
-                        variant="outline"
-                        size="default"
-                        className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-emerald-500/50 transition-all"
-                      >
-                        로그인
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="outline"
+                      size="default"
+                      className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-emerald-500/50 transition-all"
+                      onClick={() => {
+                        saveAuthReturnUrl(pathname);
+                        setMobileMenuOpen(false);
+                        router.push('/auth');
+                      }}
+                    >
+                      로그인
+                    </Button>
                     <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
                       <Button
                         size="default"
