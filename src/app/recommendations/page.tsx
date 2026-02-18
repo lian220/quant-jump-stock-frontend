@@ -911,7 +911,7 @@ export default function RecommendationsPage() {
                       전략 둘러보기
                     </Button>
                   </Link>
-                  <Link href="/auth">
+                  <Link href="/auth?returnUrl=/recommendations">
                     <Button
                       size="lg"
                       variant="outline"

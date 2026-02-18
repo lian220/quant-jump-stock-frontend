@@ -4,7 +4,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import BacktestForm from '@/components/backtest/BacktestForm';
+import BacktestForm, { type BacktestFormSavedValues } from '@/components/backtest/BacktestForm';
+import { saveAuthReturnUrl } from '@/lib/onboarding';
 import PerformanceCards from '@/components/backtest/PerformanceCards';
 import EnhancedPerformanceCards from '@/components/backtest/EnhancedPerformanceCards';
 import RiskAnalysisCards from '@/components/backtest/RiskAnalysisCards';
@@ -40,6 +41,8 @@ export default function BacktestPage() {
   const [result, setResult] = useState<BacktestResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  // 로그인 후 폼 복원을 위한 저장 값
+  const [savedFormValues, setSavedFormValues] = useState<BacktestFormSavedValues | null>(null);
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['SPY']);
   const [strategyName, setStrategyName] = useState<string>('');
   const [strategyRiskSettings, setStrategyRiskSettings] = useState<string | undefined>();
@@ -78,6 +81,21 @@ export default function BacktestPage() {
           setRecommendedUniverseType(strategy.recommendedUniverseType);
       })
       .catch(() => setStrategyName(`전략 #${strategyId}`));
+  }, [strategyId]);
+
+  // 로그인 후 돌아왔을 때 저장된 폼 값 복원 (sessionStorage)
+  useEffect(() => {
+    const key = `backtest_form_${strategyId}`;
+    const saved = sessionStorage.getItem(key);
+    if (saved) {
+      try {
+        setSavedFormValues(JSON.parse(saved) as BacktestFormSavedValues);
+      } catch {
+        /* 파싱 실패 무시 */
+      } finally {
+        sessionStorage.removeItem(key);
+      }
+    }
   }, [strategyId]);
 
   // 컴포넌트 unmount 시 진행 중인 폴링 및 타이머 취소
@@ -139,6 +157,18 @@ export default function BacktestPage() {
         setStatus('COMPLETED');
         setShowLoginPrompt(true);
         setIsLoading(false);
+        // 로그인 후 폼 복원을 위해 제출 값을 sessionStorage에 저장
+        sessionStorage.setItem(
+          `backtest_form_${strategyId}`,
+          JSON.stringify({
+            startDate: data.startDate,
+            endDate: data.endDate,
+            initialCapital: data.initialCapital,
+            benchmark: data.benchmark,
+            rebalancePeriod: data.rebalancePeriod,
+            universeType: data.universeType,
+          } satisfies BacktestFormSavedValues),
+        );
         // UX-05: 결과 영역으로 자동 스크롤
         setTimeout(
           () => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
@@ -344,6 +374,7 @@ export default function BacktestPage() {
               defaultTradingCosts={strategyTradingCosts}
               supportedUniverseTypes={supportedUniverseTypes}
               recommendedUniverseType={recommendedUniverseType}
+              initialValues={savedFormValues ?? undefined}
             />
           </div>
 
@@ -444,8 +475,14 @@ export default function BacktestPage() {
             <div className="bg-slate-800/50 border border-emerald-500/30 rounded-lg p-6 text-center mb-8">
               <p className="text-white text-lg mb-2">로그인이 필요합니다</p>
               <p className="text-slate-400 mb-4">백테스트를 실행하려면 먼저 로그인해 주세요.</p>
-              <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
-                <Link href="/auth">로그인하기</Link>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => {
+                  saveAuthReturnUrl(window.location.pathname);
+                  router.push('/auth');
+                }}
+              >
+                로그인하기
               </Button>
             </div>
           )}
@@ -480,8 +517,14 @@ export default function BacktestPage() {
                       로그인하면 상세 성과 지표, 수익 곡선, 거래 내역을 모두 확인할 수 있습니다.
                     </p>
                     {/* GRW-02: CTA 문구 개선 */}
-                    <Button asChild className="bg-emerald-600 hover:bg-emerald-700 w-full mb-2">
-                      <Link href="/auth">로그인하고 실제 결과 확인하기 (무료)</Link>
+                    <Button
+                      className="bg-emerald-600 hover:bg-emerald-700 w-full mb-2"
+                      onClick={() => {
+                        saveAuthReturnUrl(window.location.pathname);
+                        router.push('/auth');
+                      }}
+                    >
+                      로그인하고 실제 결과 확인하기 (무료)
                     </Button>
                   </div>
                 </div>

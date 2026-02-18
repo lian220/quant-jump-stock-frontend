@@ -57,6 +57,16 @@ const backtestFormSchema = z
 
 type BacktestFormValues = z.infer<typeof backtestFormSchema>;
 
+/** 로그인 후 폼 복원을 위한 이전 제출 값 */
+export interface BacktestFormSavedValues {
+  startDate?: string;
+  endDate?: string;
+  initialCapital?: number;
+  benchmark?: string;
+  rebalancePeriod?: string;
+  universeType?: UniverseType;
+}
+
 interface BacktestFormProps {
   strategyId: string;
   onSubmit: (data: BacktestRunRequest) => void;
@@ -71,6 +81,8 @@ interface BacktestFormProps {
   supportedUniverseTypes?: UniverseType[];
   /** SCRUM-344: 전략의 추천 유니버스 타입 */
   recommendedUniverseType?: UniverseType;
+  /** 로그인 후 복원할 이전 폼 값 */
+  initialValues?: BacktestFormSavedValues;
 }
 
 const defaultBenchmarkOptions: BenchmarkOption[] = [
@@ -175,6 +187,7 @@ export default function BacktestForm({
   defaultTradingCosts,
   supportedUniverseTypes,
   recommendedUniverseType,
+  initialValues,
 }: BacktestFormProps) {
   const [benchmarkOptions, setBenchmarkOptions] =
     useState<BenchmarkOption[]>(defaultBenchmarkOptions);
@@ -299,13 +312,21 @@ export default function BacktestForm({
   } = useForm<BacktestFormValues>({
     resolver: zodResolver(backtestFormSchema),
     defaultValues: {
-      startDate: defaultDates.startDate,
-      endDate: defaultDates.endDate,
-      initialCapital: 10000000,
-      benchmark: '^KS11',
-      rebalancePeriod: 'MONTHLY',
+      startDate: initialValues?.startDate ?? defaultDates.startDate,
+      endDate: initialValues?.endDate ?? defaultDates.endDate,
+      initialCapital: initialValues?.initialCapital ?? 10000000,
+      benchmark: initialValues?.benchmark ?? '^KS11',
+      rebalancePeriod: (initialValues?.rebalancePeriod as RebalancePeriod | undefined) ?? 'MONTHLY',
     },
   });
+
+  // initialValues로 universeType 복원
+  useEffect(() => {
+    if (initialValues?.universeType) {
+      setUniverseType(initialValues.universeType);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const benchmarkValue = watch('benchmark');
   const rebalanceValue = watch('rebalancePeriod');

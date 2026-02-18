@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthContextType, AuthUser, LoginResponse, SignUpResponse } from '@/types/auth';
 import { clientApi as api } from '@/lib/api-client';
+import { saveAuthReturnUrl } from '@/lib/onboarding';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
@@ -197,7 +198,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signInWithNaver = async () => {
     try {
-      localStorage.setItem('auth_callback_url', window.location.href);
+      // /auth 페이지 자체가 아닌 경우에만 현재 URL을 returnUrl로 저장
+      saveAuthReturnUrl(window.location.href);
       window.location.href = `${BACKEND_URL}/api/v1/auth/oauth2/authorize/naver`;
       return {};
     } catch (error) {

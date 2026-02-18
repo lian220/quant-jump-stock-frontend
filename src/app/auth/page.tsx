@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPostLoginRedirect } from '@/lib/onboarding';
+import { getPostLoginRedirect, saveAuthReturnUrl } from '@/lib/onboarding';
 import Link from 'next/link';
 import { trackEvent } from '@/lib/analytics';
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, signIn, signInWithNaver } = useAuth();
 
   const [userId, setUserId] = useState('');
@@ -16,7 +17,15 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 이미 로그인된 경우 리다이렉트 (온보딩 미완료 시 /onboarding, 완료 시 /)
+  // query param으로 전달된 returnUrl을 localStorage에 저장
+  useEffect(() => {
+    const returnUrl = searchParams.get('returnUrl');
+    if (returnUrl) {
+      saveAuthReturnUrl(returnUrl);
+    }
+  }, [searchParams]);
+
+  // 이미 로그인된 경우 리다이렉트 (returnUrl 우선, 없으면 onboarding 여부로 결정)
   useEffect(() => {
     if (!authLoading && user) {
       router.push(getPostLoginRedirect());
@@ -197,5 +206,19 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-emerald-500" />
+        </div>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
   );
 }

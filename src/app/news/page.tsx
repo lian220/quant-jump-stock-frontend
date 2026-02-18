@@ -630,7 +630,7 @@ export default function NewsPage() {
                 {/* 구독 안내 (비로그인) */}
                 {!user && (
                   <p className="text-center text-xs text-slate-500 mt-2">
-                    <Link href="/auth" className="text-cyan-400 hover:underline">
+                    <Link href="/auth?returnUrl=/news" className="text-cyan-400 hover:underline">
                       로그인
                     </Link>
                     하면 카테고리별 알림을 받을 수 있습니다
