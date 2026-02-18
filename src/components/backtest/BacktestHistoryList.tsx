@@ -20,6 +20,7 @@ interface BacktestHistoryItem {
   sharpeRatio: number | null;
   universeType: string | null;
   backtestType: string | null;
+  benchmark: string | null;
   createdAt: string;
   completedAt: string | null;
 }
@@ -77,8 +78,24 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
     };
   }, [history]);
 
-  if (isLoading) return null;
-  if (history.length === 0) return null;
+  if (isLoading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto mb-3"></div>
+        <p className="text-slate-500 text-sm">백테스트 기록을 불러오는 중...</p>
+      </div>
+    );
+  }
+
+  if (history.length === 0) {
+    return (
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardContent className="py-10">
+          <p className="text-slate-500 text-center">아직 실행한 커스텀 백테스트가 없습니다.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -165,6 +182,11 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
                         </span>
                       )}
                     </div>
+                    {/* 설정 요약: 자본금 · 벤치마크 */}
+                    <p className="text-xs text-slate-500 mt-1">
+                      {(item.initialCapital / 10000).toLocaleString()}만원
+                      {item.benchmark && ` · ${item.benchmark}`}
+                    </p>
                   </div>
                 </div>
                 {item.status === 'COMPLETED' && (
