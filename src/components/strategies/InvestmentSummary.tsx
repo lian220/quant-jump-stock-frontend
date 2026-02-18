@@ -43,7 +43,7 @@ export function InvestmentSummary({
             <span className={`font-bold text-lg ${profitColor}`}>
               {formatKoreanCurrency(outcome.finalAmount)}원
             </span>
-            이 되었을 것입니다
+            {outcome.isPositive ? '으로 불어났을 것입니다' : '으로 줄었을 것입니다'}
           </p>
           <p className="text-slate-400 text-sm">
             (수익:{' '}
