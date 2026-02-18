@@ -301,17 +301,32 @@ export default function BacktestForm({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<BacktestFormValues>({
     resolver: zodResolver(backtestFormSchema),
     defaultValues: {
-      startDate: initialValues?.startDate ?? defaultDates.startDate,
-      endDate: initialValues?.endDate ?? defaultDates.endDate,
-      initialCapital: initialValues?.initialCapital ?? 10000000,
-      benchmark: initialValues?.benchmark ?? '^KS11',
-      rebalancePeriod: (initialValues?.rebalancePeriod as RebalancePeriod | undefined) ?? 'MONTHLY',
+      startDate: defaultDates.startDate,
+      endDate: defaultDates.endDate,
+      initialCapital: 10000000,
+      benchmark: '^KS11',
+      rebalancePeriod: 'MONTHLY',
     },
   });
+
+  // initialValues가 세팅되면 폼 전체 리셋 (로그인 후 복귀 시 폼 값 복원)
+  useEffect(() => {
+    if (initialValues) {
+      reset({
+        startDate: initialValues.startDate ?? defaultDates.startDate,
+        endDate: initialValues.endDate ?? defaultDates.endDate,
+        initialCapital: initialValues.initialCapital ?? 10000000,
+        benchmark: initialValues.benchmark ?? '^KS11',
+        rebalancePeriod:
+          (initialValues.rebalancePeriod as RebalancePeriod | undefined) ?? 'MONTHLY',
+      });
+    }
+  }, [initialValues]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // initialValues로 universeType 복원
   useEffect(() => {
