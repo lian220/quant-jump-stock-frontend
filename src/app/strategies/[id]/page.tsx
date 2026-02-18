@@ -24,7 +24,6 @@ import {
 } from '@/lib/strategy-helpers';
 import {
   getStrategyById,
-  generateMockStrategyDetail,
   getStrategyDefaultStocks,
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
@@ -46,6 +45,11 @@ export default function StrategyDetailPage() {
 
   useEffect(() => {
     const fetchStrategy = async () => {
+      // 전략 전환 시 이전 데이터 초기화
+      setStrategy(null);
+      setDefaultStocks([]);
+      setDefaultStocksTotalWeight(0);
+      setBenchmarks([]);
       setIsLoading(true);
       setError(null);
 
@@ -105,9 +109,7 @@ export default function StrategyDetailPage() {
         }
       } catch (err) {
         console.error('Failed to fetch strategy:', err);
-        // 백엔드 API가 없으면 mock 데이터 사용
-        const mockData = generateMockStrategyDetail(id);
-        setStrategy(mockData);
+        setError(err instanceof Error ? err.message : '전략 정보를 불러오는데 실패했습니다.');
       } finally {
         setIsLoading(false);
       }
