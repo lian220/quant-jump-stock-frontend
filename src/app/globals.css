@@ -37,6 +37,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-brand-positive: var(--brand-positive);
+  --color-brand-negative: var(--brand-negative);
+  --color-brand-neutral: var(--brand-neutral);
+  --color-brand-ai: var(--brand-ai);
+  --color-brand-warning: var(--brand-warning);
+  --color-metric-surface: var(--metric-surface);
+  --color-card-surface: var(--card-surface);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -76,6 +83,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* 브랜드 시맨틱 토큰 (라이트 모드 - 현재 다크 전용이므로 동일 값) */
+  --brand-positive: oklch(0.765 0.177 163.223);
+  --brand-negative: oklch(0.704 0.191 22.216);
+  --brand-neutral: oklch(0.789 0.154 211.53);
+  --brand-ai: oklch(0.714 0.203 305.504);
+  --brand-warning: oklch(0.852 0.199 91.936);
+  --metric-surface: oklch(0.269 0 0 / 30%);
+  --card-surface: oklch(0.205 0 0 / 50%);
 }
 
 .dark {
@@ -85,8 +101,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.596 0.145 163.225);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -110,6 +126,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* 브랜드 시맨틱 토큰 */
+  --brand-positive: oklch(0.765 0.177 163.223);
+  --brand-negative: oklch(0.704 0.191 22.216);
+  --brand-neutral: oklch(0.789 0.154 211.53);
+  --brand-ai: oklch(0.714 0.203 305.504);
+  --brand-warning: oklch(0.852 0.199 91.936);
+  --metric-surface: oklch(0.269 0 0 / 30%);
+  --card-surface: oklch(0.205 0 0 / 50%);
 }
 
 @layer base {

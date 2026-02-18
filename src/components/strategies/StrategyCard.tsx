@@ -12,38 +12,36 @@ import {
   getUniverseLabel,
   getUniverseColor,
 } from '@/lib/strategy-helpers';
+import { MetricsGrid } from '@/components/ui/metrics-grid';
 import type { Strategy } from '@/types/strategy';
 
 interface StrategyCardProps {
   strategy: Strategy;
 }
 
-function MetricValue({
-  value,
-  className = 'text-lg font-bold text-emerald-400',
-}: {
-  value: string | number | null | undefined;
-  className?: string;
-}) {
-  const isEmpty = value == null || value === '' || value === '-' || value === 'N/A';
-  if (isEmpty) return <p className="text-sm font-medium text-slate-500">데이터 준비중</p>;
-  return <p className={className}>{value}</p>;
+function hasData(v: string | number | null | undefined): boolean {
+  return v != null && v !== '' && v !== '-' && v !== 'N/A';
 }
 
 export function StrategyCard({ strategy }: StrategyCardProps) {
   return (
-    <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
+    <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10 overflow-hidden">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-2 min-w-0">
           <div className="flex-1 min-w-0">
             <CardTitle className="text-lg text-white truncate">{strategy.name}</CardTitle>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <Badge className="bg-slate-700/50 text-slate-300 border-slate-600 text-xs">
                 {getCategoryLabel(strategy.category)}
               </Badge>
               <Badge className={`${getRiskColor(strategy.riskLevel)} text-xs`}>
                 리스크: {getRiskLabel(strategy.riskLevel)}
               </Badge>
+              {strategy.isPremium && (
+                <Badge className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                  프리미엄
+                </Badge>
+              )}
             </div>
             {strategy.recommendedUniverseType && (
               <div className="flex items-center gap-2 mt-1">
@@ -53,11 +51,6 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
               </div>
             )}
           </div>
-          {strategy.isPremium && (
-            <Badge className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border-yellow-500/30 shrink-0">
-              프리미엄
-            </Badge>
-          )}
         </div>
         <CardDescription className="text-slate-400 line-clamp-2 mt-2">
           {strategy.description}
@@ -66,33 +59,34 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
 
       <CardContent className="space-y-4">
         {/* 주요 성과 지표 */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-700/30 p-3 rounded-lg">
-            <p className="text-xs text-slate-400 mb-1">누적 수익률</p>
-            <MetricValue
-              value={strategy.totalReturn}
-              className="text-lg font-bold text-emerald-400"
-            />
-          </div>
-          <div className="bg-slate-700/30 p-3 rounded-lg">
-            <p className="text-xs text-slate-400 mb-1">연환산 수익률</p>
-            <MetricValue
-              value={strategy.annualReturn}
-              className="text-lg font-bold text-cyan-400"
-            />
-          </div>
-          <div className="bg-slate-700/30 p-3 rounded-lg">
-            <p className="text-xs text-slate-400 mb-1">승률</p>
-            <MetricValue value={strategy.winRate} className="text-sm font-semibold text-white" />
-          </div>
-          <div className="bg-slate-700/30 p-3 rounded-lg">
-            <p className="text-xs text-slate-400 mb-1">샤프 비율</p>
-            <MetricValue
-              value={strategy.sharpeRatio}
-              className="text-sm font-semibold text-white"
-            />
-          </div>
-        </div>
+        <MetricsGrid
+          metrics={[
+            {
+              label: '누적 수익률',
+              value: hasData(strategy.totalReturn) ? strategy.totalReturn : '준비중',
+              valueColor: hasData(strategy.totalReturn) ? 'text-emerald-400' : 'text-slate-500',
+              valueSize: 'sm',
+            },
+            {
+              label: '연환산 수익률',
+              value: hasData(strategy.annualReturn) ? strategy.annualReturn : '준비중',
+              valueColor: hasData(strategy.annualReturn) ? 'text-cyan-400' : 'text-slate-500',
+              valueSize: 'sm',
+            },
+            {
+              label: '승률',
+              value: hasData(strategy.winRate) ? strategy.winRate : '준비중',
+              valueColor: hasData(strategy.winRate) ? 'text-white' : 'text-slate-500',
+              valueSize: 'sm',
+            },
+            {
+              label: '샤프 비율',
+              value: hasData(strategy.sharpeRatio) ? strategy.sharpeRatio : '준비중',
+              valueColor: hasData(strategy.sharpeRatio) ? 'text-white' : 'text-slate-500',
+              valueSize: 'sm',
+            },
+          ]}
+        />
 
         {/* 위험 지표 */}
         <div className="flex items-center justify-between text-sm">

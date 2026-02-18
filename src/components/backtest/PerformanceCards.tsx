@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { BacktestMetrics } from '@/types/backtest';
 
@@ -63,7 +62,7 @@ export default function PerformanceCards({ metrics }: PerformanceCardsProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {cards.map((card) => (
-        <Card key={card.label} className="bg-slate-800/50 border-slate-700">
+        <Card key={card.label} className="bg-card-surface border-slate-700">
           <CardContent className="pt-6 text-center">
             <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
             <p className="text-xs text-slate-400 mt-1">{card.label}</p>

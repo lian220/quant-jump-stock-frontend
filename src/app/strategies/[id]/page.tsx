@@ -910,7 +910,6 @@ export default function StrategyDetailPage() {
                       : 'bg-emerald-600 hover:bg-emerald-700'
                   }`}
                   onClick={() => {
-                    // TODO: 실제 구독 API 호출 시 selectedUniverseType 전달
                     setShowUniverseModal(false);
                     router.push(
                       strategy.isPremium

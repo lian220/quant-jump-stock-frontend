@@ -131,9 +131,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-900 select-none`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased select-none`}>
         <CopyProtection />
         <ServiceWorkerRegister />
         <InstallPrompt />
