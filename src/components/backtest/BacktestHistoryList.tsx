@@ -37,10 +37,14 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
     const fetchHistory = async () => {
       try {
         const url = `/api/backtest?strategyId=${strategyId}&size=10&sort=createdAt,desc`;
+        const token = localStorage.getItem('auth_token');
 
         const response = await fetch(url, {
           credentials: 'include',
           cache: 'no-store',
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
         });
 
         if (response.ok) {
