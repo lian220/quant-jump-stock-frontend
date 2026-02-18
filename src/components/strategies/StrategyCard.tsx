@@ -5,7 +5,13 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getRiskColor, getRiskLabel, getCategoryLabel } from '@/lib/strategy-helpers';
+import {
+  getRiskColor,
+  getRiskLabel,
+  getCategoryLabel,
+  getUniverseLabel,
+  getUniverseColor,
+} from '@/lib/strategy-helpers';
 import type { Strategy } from '@/types/strategy';
 
 interface StrategyCardProps {
@@ -20,7 +26,7 @@ function MetricValue({
   className?: string;
 }) {
   const isEmpty = value == null || value === '' || value === '-' || value === 'N/A';
-  if (isEmpty) return <p className="text-lg font-bold text-slate-600">-</p>;
+  if (isEmpty) return <p className="text-sm font-medium text-slate-500">데이터 준비중</p>;
   return <p className={className}>{value}</p>;
 }
 
@@ -39,6 +45,13 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
                 리스크: {getRiskLabel(strategy.riskLevel)}
               </Badge>
             </div>
+            {strategy.recommendedUniverseType && (
+              <div className="flex items-center gap-2 mt-1">
+                <Badge className={`${getUniverseColor(strategy.recommendedUniverseType)} text-xs`}>
+                  {getUniverseLabel(strategy.recommendedUniverseType)}
+                </Badge>
+              </div>
+            )}
           </div>
           {strategy.isPremium && (
             <Badge className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border-yellow-500/30 shrink-0">
@@ -87,7 +100,7 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
           <span className="text-red-400 font-mono">
             {strategy.maxDrawdown && strategy.maxDrawdown !== '-' && strategy.maxDrawdown !== 'N/A'
               ? strategy.maxDrawdown
-              : '-'}
+              : '데이터 준비중'}
           </span>
         </div>
 
