@@ -201,7 +201,7 @@ export interface GlossaryItem {
 
 // 강화 백테스트 결과
 export interface EnhancedBacktestResult {
-  id?: number;
+  id?: string;
   backtestId?: string;
   overallGrade: GradeObject | GradeValue;
   summary?: string;
@@ -210,8 +210,8 @@ export interface EnhancedBacktestResult {
   equityCurve?: BacktestEquityPoint[] | null;
   trades?: BacktestTradeResponse[] | null;
   glossary: GlossaryItem[];
-  createdAt: string;
-  completedAt: string | null;
+  createdAt?: string;
+  completedAt?: string | null;
 }
 
 // 벤치마크 옵션

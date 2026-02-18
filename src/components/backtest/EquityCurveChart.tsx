@@ -19,6 +19,8 @@ interface EquityCurveChartProps {
   equityCurve: BacktestEquityPoint[];
   /** 사용된 벤치마크 목록 (SCRUM-337: 다중 벤치마크) */
   benchmarkLabels?: string[];
+  /** legacy 단일 벤치마크 데이터 fallback용 티커 (benchmarkLabels 미제공 시 사용) */
+  defaultBenchmark?: string;
 }
 
 // 차트 데이터 변환: equity curve의 benchmarks 필드를 flat key로 펼침
@@ -46,7 +48,11 @@ function transformChartData(
   });
 }
 
-export default function EquityCurveChart({ equityCurve, benchmarkLabels }: EquityCurveChartProps) {
+export default function EquityCurveChart({
+  equityCurve,
+  benchmarkLabels,
+  defaultBenchmark,
+}: EquityCurveChartProps) {
   // UX-06: 절대값/수익률(%) 토글
   const [showPercent, setShowPercent] = useState(false);
 
@@ -58,10 +64,12 @@ export default function EquityCurveChart({ equityCurve, benchmarkLabels }: Equit
       (p) => p.benchmarks && Object.keys(p.benchmarks).length > 0,
     );
     if (firstWithBm?.benchmarks) return Object.keys(firstWithBm.benchmarks);
-    // 단일 벤치마크 fallback
-    if (equityCurve.some((p) => p.benchmark != null)) return ['SPY'];
+    // 단일 벤치마크 fallback: defaultBenchmark prop 우선, 없으면 라벨 미표시
+    if (equityCurve.some((p) => p.benchmark != null)) {
+      return defaultBenchmark ? [defaultBenchmark] : [];
+    }
     return [];
-  }, [equityCurve, benchmarkLabels]);
+  }, [equityCurve, benchmarkLabels, defaultBenchmark]);
 
   const isMultiBenchmark = benchmarkTickers.length > 1;
 

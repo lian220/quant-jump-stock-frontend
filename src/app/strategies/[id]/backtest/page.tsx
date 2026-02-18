@@ -514,6 +514,7 @@ export default function BacktestPage() {
                   <EquityCurveChart
                     equityCurve={result.equityCurve}
                     benchmarkLabels={selectedBenchmarks}
+                    defaultBenchmark={selectedBenchmarks[0]}
                   />
 
                   {/* 거래 내역 테이블 */}
