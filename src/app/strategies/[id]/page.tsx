@@ -20,7 +20,10 @@ import {
   getCategoryLabel,
   getRuleTypeLabel,
   getRuleTypeColor,
+  getUniverseLabel,
+  getUniverseColor,
 } from '@/lib/strategy-helpers';
+import type { UniverseType } from '@/types/strategy';
 import {
   getStrategyById,
   getStrategyDefaultStocks,
@@ -41,6 +44,9 @@ export default function StrategyDetailPage() {
   const [benchmarks, setBenchmarks] = useState<BenchmarkSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // SCRUM-350: Universe 선택 모달 상태
+  const [showUniverseModal, setShowUniverseModal] = useState(false);
+  const [selectedUniverseType, setSelectedUniverseType] = useState<UniverseType>('MARKET');
 
   useEffect(() => {
     const fetchStrategy = async () => {
@@ -754,6 +760,10 @@ export default function StrategyDetailPage() {
                       ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
                       : 'bg-emerald-600 hover:bg-emerald-700'
                   }`}
+                  onClick={() => {
+                    setSelectedUniverseType(strategy.recommendedUniverseType ?? 'MARKET');
+                    setShowUniverseModal(true);
+                  }}
                 >
                   {strategy.isPremium ? '프리미엄 구독하기' : '무료로 구독하기'}
                 </Button>
@@ -764,6 +774,88 @@ export default function StrategyDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* SCRUM-350: Universe 선택 모달 */}
+        {showUniverseModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+              <h3 className="text-xl font-bold text-white mb-1">투자 유니버스 선택</h3>
+              <p className="text-slate-400 text-sm mb-5">
+                매매 신호를 적용할 종목 범위를 선택하세요.
+              </p>
+
+              <div className="space-y-3 mb-6">
+                {(strategy.supportedUniverseTypes ?? ['MARKET']).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedUniverseType(type)}
+                    className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-all ${
+                      selectedUniverseType === type
+                        ? 'border-emerald-500 bg-emerald-500/10'
+                        : 'border-slate-600 bg-slate-700/30 hover:border-slate-500'
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        selectedUniverseType === type
+                          ? 'border-emerald-500 bg-emerald-500'
+                          : 'border-slate-500'
+                      }`}
+                    >
+                      {selectedUniverseType === type && (
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${getUniverseColor(type)} text-xs`}>
+                          {getUniverseLabel(type)}
+                        </Badge>
+                        {type === strategy.recommendedUniverseType && (
+                          <span className="text-xs text-emerald-400">추천</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {type === 'MARKET' && '시장 전체 종목 중 신호 발생 종목에 적용'}
+                        {type === 'PORTFOLIO' && '전략 기본 종목 포트폴리오에만 적용'}
+                        {type === 'FIXED' && '지정된 고정 종목 목록에만 적용'}
+                        {type === 'SECTOR' && '특정 섹터 종목에만 적용'}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-slate-600 text-slate-300"
+                  onClick={() => setShowUniverseModal(false)}
+                >
+                  취소
+                </Button>
+                <Button
+                  className={`flex-1 ${
+                    strategy.isPremium
+                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
+                      : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
+                  onClick={() => {
+                    // TODO: 실제 구독 API 호출 시 selectedUniverseType 전달
+                    setShowUniverseModal(false);
+                    router.push(
+                      strategy.isPremium
+                        ? '/payment'
+                        : `/strategies/${id}/subscribe?universe=${selectedUniverseType}`,
+                    );
+                  }}
+                >
+                  {getUniverseLabel(selectedUniverseType)}으로 구독
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 태그 */}
         {strategy.tags.length > 0 && (
