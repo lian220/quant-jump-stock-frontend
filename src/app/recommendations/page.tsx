@@ -21,6 +21,8 @@ import { getCategoryLabel } from '@/lib/strategy-helpers';
 import type { BuySignal } from '@/lib/api/predictions';
 import type { Strategy } from '@/types/strategy';
 import type { NewsArticle } from '@/lib/api/news';
+import { trackEvent } from '@/lib/analytics';
+import { StateMessageCard } from '@/components/common/StateMessageCard';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -52,6 +54,7 @@ export default function RecommendationsPage() {
 
   // 초기 날짜 동기화 완료 여부
   const initialDateSynced = useRef(false);
+  const firstViewTracked = useRef(false);
 
   // 종목 분석 데이터 가져오기 (날짜 변경 시 자동 재조회)
   useEffect(() => {
@@ -83,6 +86,15 @@ export default function RecommendationsPage() {
 
     fetchRecommendations();
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (!isLoadingRecommendations && !firstViewTracked.current) {
+      firstViewTracked.current = true;
+      trackEvent('first_analysis_view', {
+        hasData: recommendations.length > 0,
+      });
+    }
+  }, [isLoadingRecommendations, recommendations.length]);
 
   // 관련 뉴스 로드 (추천 종목 로드 후)
   useEffect(() => {
@@ -374,6 +386,8 @@ export default function RecommendationsPage() {
                 <span>기술적 지표 + AI 분석 기반</span>
                 <span className="text-slate-700">|</span>
                 <span>매일 23:05 KST 업데이트</span>
+                <span className="text-slate-700">|</span>
+                <span>데이터 수집 지연 시 1-2분 내 자동 갱신</span>
               </div>
             </div>
 
@@ -397,17 +411,18 @@ export default function RecommendationsPage() {
 
             {/* 에러 상태 */}
             {recommendationsError && (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardContent className="pt-6 text-center py-12">
-                  <p className="text-xl text-red-400 mb-4">⚠️ {recommendationsError}</p>
-                  <Button
-                    onClick={() => window.location.reload()}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    다시 시도
-                  </Button>
-                </CardContent>
-              </Card>
+              <StateMessageCard
+                tone="error"
+                icon="⚠️"
+                title={recommendationsError}
+                description="잠시 후 다시 시도하거나 기준 날짜를 초기화해 최신 데이터를 확인해주세요."
+                primaryAction={{ label: '다시 시도', onClick: () => window.location.reload() }}
+                secondaryAction={{
+                  label: '날짜 초기화',
+                  onClick: handleDateReset,
+                  variant: 'ghost',
+                }}
+              />
             )}
 
             {/* 추천 종목 카드 */}
@@ -741,25 +756,21 @@ export default function RecommendationsPage() {
             {!isLoadingRecommendations &&
               !recommendationsError &&
               sortedRecommendations.length === 0 && (
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6 text-center py-16">
-                    <p className="text-slate-400 text-lg mb-2">
-                      {displayDate
-                        ? `${new Date(displayDate + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 분석 데이터가 없습니다`
-                        : '분석 데이터가 없습니다'}
-                    </p>
-                    <p className="text-slate-500 text-sm mb-4">
-                      해당 날짜에 신뢰도 기준을 충족하는 매수 관심 종목이 발견되지 않았습니다.
-                    </p>
-                    <Button
-                      onClick={handleDateReset}
-                      variant="outline"
-                      className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
-                    >
-                      최신 데이터 보기
-                    </Button>
-                  </CardContent>
-                </Card>
+                <StateMessageCard
+                  icon="📭"
+                  title={
+                    displayDate
+                      ? `${new Date(displayDate + 'T00:00:00').toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 분석 데이터가 없습니다`
+                      : '분석 데이터가 없습니다'
+                  }
+                  description="현재 기준을 충족하는 종목이 없습니다. 최신 날짜로 전환하거나 종목 탐색에서 직접 확인해보세요."
+                  primaryAction={{ label: '최신 데이터 보기', onClick: handleDateReset }}
+                  secondaryAction={{
+                    label: '종목 탐색으로 이동',
+                    href: '/stocks',
+                    variant: 'ghost',
+                  }}
+                />
               )}
           </section>
 

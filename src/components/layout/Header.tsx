@@ -140,15 +140,22 @@ export function Header() {
                 </Button>
               </div>
             ) : (
-              <Link href="/auth" className="hidden md:block">
-                <Button
-                  variant="outline"
-                  size="default"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  로그인
-                </Button>
-              </Link>
+              <div className="hidden md:flex items-center gap-2">
+                <Link href="/auth">
+                  <Button
+                    variant="outline"
+                    size="default"
+                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    로그인
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button size="default" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    회원가입
+                  </Button>
+                </Link>
+              </div>
             )}
 
             {/* 모바일: 앱 설치 버튼 + 메뉴 버튼 */}
@@ -246,15 +253,25 @@ export function Header() {
                 </div>
               ) : (
                 <div className="pt-4 border-t border-slate-700">
-                  <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-emerald-500/50 transition-all"
-                    >
-                      로그인
-                    </Button>
-                  </Link>
+                  <div className="space-y-2">
+                    <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
+                      <Button
+                        variant="outline"
+                        size="default"
+                        className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-emerald-500/50 transition-all"
+                      >
+                        로그인
+                      </Button>
+                    </Link>
+                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                      <Button
+                        size="default"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        회원가입
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               )}
             </nav>

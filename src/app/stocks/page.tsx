@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { searchStocks, marketLabels, designationLabels } from '@/lib/api/stocks';
 import { PageSEO } from '@/components/seo';
+import { StateMessageCard } from '@/components/common/StateMessageCard';
 import type { StockSummary, Market, StockSearchResponse } from '@/lib/api/stocks';
 
 const marketOptions: { value: '' | Market; label: string }[] = [
@@ -143,7 +144,7 @@ export default function StocksPage() {
           <p className="text-slate-400">
             총{' '}
             <span className="text-white font-semibold">
-              {isLoading ? '-' : totalElements.toLocaleString()}
+              {isLoading ? '집계중' : totalElements.toLocaleString()}
             </span>
             개의 종목
           </p>
@@ -156,14 +157,15 @@ export default function StocksPage() {
 
         {/* 에러 */}
         {error && (
-          <Card className="bg-slate-800/50 border-slate-700 mb-6">
-            <CardContent className="pt-6 text-center">
-              <p className="text-red-400 mb-4">{error}</p>
-              <Button onClick={() => fetchStocks()} className="bg-emerald-600 hover:bg-emerald-700">
-                다시 시도
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="mb-6">
+            <StateMessageCard
+              tone="error"
+              icon="⚠️"
+              title={error}
+              description="네트워크 상태를 확인한 뒤 다시 시도해주세요."
+              primaryAction={{ label: '다시 시도', onClick: fetchStocks }}
+            />
+          </div>
         )}
 
         {/* 로딩 */}
@@ -271,12 +273,25 @@ export default function StocksPage() {
 
         {/* 결과 없음 */}
         {!isLoading && !error && stocks.length === 0 && (
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="pt-6 text-center py-16">
-              <p className="text-slate-400 text-lg mb-2">검색 결과가 없습니다</p>
-              <p className="text-slate-500 text-sm">다른 키워드로 검색해보세요.</p>
-            </CardContent>
-          </Card>
+          <StateMessageCard
+            icon="🔎"
+            title="조건에 맞는 종목이 없습니다"
+            description="검색어를 변경하거나 인기 종목(AAPL, TSLA, 삼성전자)으로 다시 시도해보세요."
+            primaryAction={{
+              label: '전체 시장 다시 보기',
+              onClick: () => {
+                setSearchInput('');
+                setQuery('');
+                setSelectedMarket('');
+                setCurrentPage(0);
+              },
+            }}
+            secondaryAction={{
+              label: 'AI 분석 종목 보기',
+              href: '/recommendations',
+              variant: 'ghost',
+            }}
+          />
         )}
 
         {/* 페이지네이션 */}

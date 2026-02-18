@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageSEO } from '@/components/seo';
 import { useAuth } from '@/hooks/useAuth';
+import { StateMessageCard } from '@/components/common/StateMessageCard';
 import {
   getRecentNews,
   getNewsByTags,
@@ -958,31 +959,36 @@ export default function NewsPage() {
                 ))}
               </div>
             ) : error ? (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardContent className="py-12 text-center">
-                  <p className="text-red-400 mb-4">{error}</p>
-                  <Button
-                    variant="outline"
-                    onClick={() => window.location.reload()}
-                    className="border-slate-600 text-slate-300"
-                  >
-                    다시 시도
-                  </Button>
-                </CardContent>
-              </Card>
+              <StateMessageCard
+                tone="error"
+                icon="⚠️"
+                title={error}
+                description="네트워크 상태를 확인한 뒤 다시 시도해주세요."
+                primaryAction={{ label: '다시 시도', onClick: () => window.location.reload() }}
+                secondaryAction={{ label: '필터 초기화', onClick: handleReset, variant: 'ghost' }}
+              />
             ) : sortedArticles.length === 0 ? (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardContent className="py-12 text-center">
-                  <p className="text-slate-400 text-lg mb-2">뉴스가 없습니다</p>
-                  <p className="text-slate-500 text-sm">
-                    {selectedCategory
-                      ? `"${selectedCategory}" 카테고리에 해당하는 뉴스가 없습니다`
-                      : activeFilter.length > 0
-                        ? '다른 검색어로 시도해보세요'
-                        : '아직 수집된 뉴스가 없습니다'}
-                  </p>
-                </CardContent>
-              </Card>
+              <StateMessageCard
+                icon="📰"
+                title={
+                  selectedCategory
+                    ? `"${selectedCategory}" 뉴스가 아직 없습니다`
+                    : activeFilter.length > 0
+                      ? '검색 조건에 맞는 뉴스가 없습니다'
+                      : '뉴스가 아직 준비되지 않았습니다'
+                }
+                description={
+                  selectedCategory || activeFilter.length > 0
+                    ? '필터를 초기화하고 최신 뉴스 스트림을 확인해보세요.'
+                    : '곧 최신 뉴스가 업데이트됩니다. 로그인하면 카테고리 알림도 받을 수 있습니다.'
+                }
+                primaryAction={{ label: '최신 뉴스 다시 보기', onClick: handleReset }}
+                secondaryAction={{
+                  label: user ? 'AI 분석 종목 보기' : '로그인하고 알림 받기',
+                  href: user ? '/recommendations' : '/auth',
+                  variant: 'ghost',
+                }}
+              />
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">

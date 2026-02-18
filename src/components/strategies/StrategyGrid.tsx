@@ -3,6 +3,7 @@
 import React from 'react';
 import { StrategyCard } from './StrategyCard';
 import type { Strategy } from '@/types/strategy';
+import { StateMessageCard } from '@/components/common/StateMessageCard';
 
 interface StrategyGridProps {
   strategies: Strategy[];
@@ -34,11 +35,11 @@ export function StrategyGrid({ strategies, isLoading = false }: StrategyGridProp
 
   if (strategies.length === 0) {
     return (
-      <div className="text-center py-16">
-        <div className="text-6xl mb-4">🔍</div>
-        <h3 className="text-xl font-semibold text-white mb-2">전략을 찾을 수 없습니다</h3>
-        <p className="text-slate-400">다른 필터 조건으로 검색해보세요.</p>
-      </div>
+      <StateMessageCard
+        icon="🔍"
+        title="조건에 맞는 전략이 없습니다"
+        description="필터를 조정하거나 정렬 기준을 변경해 더 많은 전략을 확인해보세요."
+      />
     );
   }
 

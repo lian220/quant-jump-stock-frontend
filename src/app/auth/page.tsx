@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPostLoginRedirect } from '@/lib/onboarding';
+import Link from 'next/link';
+import { trackEvent } from '@/lib/analytics';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -20,6 +22,12 @@ export default function AuthPage() {
       router.push(getPostLoginRedirect());
     }
   }, [user, authLoading, router]);
+
+  useEffect(() => {
+    trackEvent('auth_view', {
+      source: 'auth_page',
+    });
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,13 +157,16 @@ export default function AuthPage() {
             </svg>
             네이버로 로그인
           </button>
+          <p className="mt-2 text-center text-xs text-slate-500">
+            소셜 로그인에 문제가 있으면 아이디/비밀번호 로그인을 이용해주세요.
+          </p>
 
           {/* Sign Up Link */}
           <p className="mt-4 text-center text-sm text-slate-400">
             계정이 없으신가요?{' '}
-            <a href="#" className="font-medium text-emerald-400 hover:text-emerald-300">
+            <Link href="/signup" className="font-medium text-emerald-400 hover:text-emerald-300">
               회원가입
-            </a>
+            </Link>
           </p>
         </div>
 
