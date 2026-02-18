@@ -81,9 +81,7 @@ export default function Home() {
           page: 0,
           size: 10,
         });
-        setFeaturedStrategies(
-          response.strategies.filter((s) => parseFloat(String(s.annualReturn)) >= 0).slice(0, 3),
-        );
+        setFeaturedStrategies(response.strategies.slice(0, 3));
       } catch (error) {
         console.warn('Failed to fetch featured strategies:', error);
       } finally {
