@@ -41,11 +41,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: '백엔드 서버에 연결할 수 없습니다.',
-        debug: {
-          API_URL: process.env.API_URL || 'not set',
-          NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'not set',
-          attemptedUrl: `${API_URL}/api/v1/marketplace/strategies`,
-        },
+        ...(process.env.NODE_ENV === 'development' && {
+          debug: { attemptedUrl: `${API_URL}/api/v1/marketplace/strategies` },
+        }),
       },
       { status: 503, headers: NO_CACHE_HEADERS },
     );

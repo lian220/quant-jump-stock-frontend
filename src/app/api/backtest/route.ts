@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
         ...(cookie && { Cookie: cookie }),
         ...(authorization && { Authorization: authorization }),
       },
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!response.ok) {
@@ -29,9 +30,15 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'private, no-cache' },
+    });
   } catch (error) {
     console.error('Failed to fetch backtest list:', error);
-    return NextResponse.json({ error: '백엔드 서버에 연결할 수 없습니다.' }, { status: 503 });
+    const message =
+      error instanceof DOMException && error.name === 'TimeoutError'
+        ? '백엔드 서버 응답 시간이 초과되었습니다.'
+        : '백엔드 서버에 연결할 수 없습니다.';
+    return NextResponse.json({ error: message }, { status: 503 });
   }
 }

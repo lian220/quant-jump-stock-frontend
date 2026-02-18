@@ -4,8 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
-
 interface BacktestHistoryItem {
   id: number;
   strategyId: number;
@@ -43,9 +41,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const isBrowser = typeof window !== 'undefined';
-        const baseUrl = isBrowser ? `/api/backtest` : `${API_URL}/api/v1/backtest`;
-        const url = `${baseUrl}?strategyId=${strategyId}&size=10&sort=createdAt,desc`;
+        const url = `/api/backtest?strategyId=${strategyId}&size=10&sort=createdAt,desc`;
 
         const response = await fetch(url, {
           credentials: 'include',
@@ -59,8 +55,8 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
           );
           setHistory(userCustom);
         }
-      } catch {
-        // 조회 실패 시 빈 목록
+      } catch (err) {
+        console.error('백테스트 히스토리 조회 실패:', err);
       } finally {
         setIsLoading(false);
       }

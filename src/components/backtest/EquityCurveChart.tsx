@@ -33,8 +33,8 @@ function transformChartData(
     };
 
     if (benchmarkTickers.length <= 1) {
-      // 단일 벤치마크: 기존 benchmark 필드 사용 (하위호환)
-      row['benchmark'] = point.benchmark;
+      // 단일 벤치마크: 기존 benchmark 필드 우선, 없으면 benchmarks 맵에서 폴백
+      row['benchmark'] = point.benchmark ?? point.benchmarks?.[benchmarkTickers[0]] ?? null;
     } else {
       // 다중 벤치마크: benchmarks 맵에서 추출
       for (const ticker of benchmarkTickers) {
@@ -226,8 +226,8 @@ export default function EquityCurveChart({ equityCurve, benchmarkLabels }: Equit
                 activeDot={{ r: 4 }}
               />
               {/* 벤치마크 라인 */}
-              {!isMultiBenchmark ? (
-                // 단일 벤치마크
+              {!isMultiBenchmark && benchmarkTickers.length > 0 ? (
+                // 단일 벤치마크 (데이터가 있을 때만 렌더)
                 <Line
                   type="monotone"
                   dataKey="benchmark"
@@ -237,7 +237,7 @@ export default function EquityCurveChart({ equityCurve, benchmarkLabels }: Equit
                   activeDot={{ r: 4 }}
                   strokeDasharray="5 5"
                 />
-              ) : (
+              ) : isMultiBenchmark ? (
                 // 다중 벤치마크
                 benchmarkTickers.map((ticker, idx) => (
                   <Line
@@ -251,7 +251,7 @@ export default function EquityCurveChart({ equityCurve, benchmarkLabels }: Equit
                     strokeDasharray="5 5"
                   />
                 ))
-              )}
+              ) : null}
             </LineChart>
           </ResponsiveContainer>
         </div>

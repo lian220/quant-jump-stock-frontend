@@ -142,8 +142,10 @@ export default function RootLayout({
         <AuthProvider>
           <TooltipProvider>
             <Header />
-            <div className="pb-16 md:pb-0">{children}</div>
-            <Footer />
+            <div className="pb-16 md:pb-0">
+              {children}
+              <Footer />
+            </div>
             <BottomNav />
           </TooltipProvider>
         </AuthProvider>

@@ -1,12 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const authorization = request.headers.get('authorization');
+    const cookie = request.headers.get('cookie');
     const response = await fetch(`${API_URL}/api/v1/backtest/benchmarks`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authorization && { Authorization: authorization }),
+        ...(cookie && { Cookie: cookie }),
+      },
       signal: AbortSignal.timeout(10000),
     });
 

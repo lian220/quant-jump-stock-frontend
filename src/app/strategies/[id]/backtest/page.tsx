@@ -26,6 +26,7 @@ import type {
   BacktestResultResponse,
   BacktestStatus,
   EnhancedBacktestResult,
+  UniverseType,
 } from '@/types/backtest';
 
 export default function BacktestPage() {
@@ -48,8 +49,10 @@ export default function BacktestPage() {
   const [isTimedOut, setIsTimedOut] = useState(false);
   const [strategyCategory, setStrategyCategory] = useState<string>('');
   // SCRUM-344: 유니버스 타입
-  const [supportedUniverseTypes, setSupportedUniverseTypes] = useState<string[]>([]);
-  const [recommendedUniverseType, setRecommendedUniverseType] = useState<string | undefined>();
+  const [supportedUniverseTypes, setSupportedUniverseTypes] = useState<UniverseType[]>([]);
+  const [recommendedUniverseType, setRecommendedUniverseType] = useState<
+    UniverseType | undefined
+  >();
   // UX-01: 다단계 로딩 프로그레스
   const [loadingStep, setLoadingStep] = useState(0);
   // UX-09: 타임아웃 시 폴링 재개용 backtestId 저장
@@ -292,8 +295,11 @@ export default function BacktestPage() {
     }
   }, [lastBacktestId, startLoadingSteps, stopLoadingSteps]);
 
-  // 벤치마크 라벨
-  const benchmarkLabels = selectedBenchmarks;
+  // FIN-02: 표본 부족 경고용 변수 (JSX 외부에서 계산)
+  const roundTrips = result?.metrics
+    ? (result.metrics.totalTrades ?? Math.ceil(result.trades.length / 2))
+    : 0;
+  const isSmallSample = roundTrips > 0 && roundTrips < 30;
 
   return (
     <>
@@ -336,12 +342,8 @@ export default function BacktestPage() {
               defaultRiskSettings={strategyRiskSettings}
               defaultPositionSizing={strategyPositionSizing}
               defaultTradingCosts={strategyTradingCosts}
-              supportedUniverseTypes={
-                supportedUniverseTypes as import('@/types/backtest').UniverseType[]
-              }
-              recommendedUniverseType={
-                recommendedUniverseType as import('@/types/backtest').UniverseType
-              }
+              supportedUniverseTypes={supportedUniverseTypes}
+              recommendedUniverseType={recommendedUniverseType}
             />
           </div>
 
@@ -416,11 +418,18 @@ export default function BacktestPage() {
                   size="sm"
                   className="border-slate-600 text-slate-300 hover:bg-slate-700"
                   onClick={async () => {
-                    if ('Notification' in window) {
-                      const perm = await Notification.requestPermission();
-                      if (perm === 'granted') {
-                        handleResumePolling();
-                      }
+                    if (!('Notification' in window)) return;
+                    if (Notification.permission === 'denied') {
+                      alert('브라우저 설정에서 알림을 허용해 주세요.');
+                      return;
+                    }
+                    if (Notification.permission === 'granted') {
+                      handleResumePolling();
+                      return;
+                    }
+                    const perm = await Notification.requestPermission();
+                    if (perm === 'granted') {
+                      handleResumePolling();
                     }
                   }}
                 >
@@ -486,18 +495,12 @@ export default function BacktestPage() {
                   <PerformanceCards metrics={result.metrics} />
                 )}
 
-                {/* FIN-02: 표본 부족 경고 (totalTrades = 매도 청산 기준 라운드트립 수) */}
-                {(() => {
-                  const roundTrips =
-                    result.metrics.totalTrades ?? Math.ceil(result.trades.length / 2);
-                  return roundTrips > 0 && roundTrips < 30 ? roundTrips : null;
-                })() !== null && (
+                {/* FIN-02: 표본 부족 경고 */}
+                {isSmallSample && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
                     <p className="text-xs text-amber-400 font-medium">
-                      표본 부족 (청산 거래{' '}
-                      {result.metrics.totalTrades ?? Math.ceil(result.trades.length / 2)}건) —
-                      통계적 신뢰도가 낮을 수 있습니다. 백테스트 기간을 늘려 30건 이상의 청산 거래를
-                      확보하는 것을 권장합니다.
+                      표본 부족 (청산 거래 {roundTrips}건) — 통계적 신뢰도가 낮을 수 있습니다.
+                      백테스트 기간을 늘려 30건 이상의 청산 거래를 확보하는 것을 권장합니다.
                     </p>
                   </div>
                 )}
@@ -510,7 +513,7 @@ export default function BacktestPage() {
                   {/* 수익 곡선 차트 */}
                   <EquityCurveChart
                     equityCurve={result.equityCurve}
-                    benchmarkLabels={benchmarkLabels}
+                    benchmarkLabels={selectedBenchmarks}
                   />
 
                   {/* 거래 내역 테이블 */}

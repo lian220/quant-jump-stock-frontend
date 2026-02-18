@@ -258,6 +258,9 @@ export default function BacktestForm({
       .then((options) => {
         if (options && options.length > 0) {
           setBenchmarkOptions(options);
+          // 추가 벤치마크 중 유효하지 않은 항목 제거
+          const validValues = new Set(options.map((opt) => opt.value));
+          setAdditionalBenchmarks((prev) => prev.filter((b) => validValues.has(b)));
           // 현재 선택된 벤치마크가 새 옵션에 없으면 첫 번째 옵션으로 변경
           const currentBenchmark = watch('benchmark');
           const hasCurrentBenchmark = options.some((opt) => opt.value === currentBenchmark);
@@ -267,9 +270,16 @@ export default function BacktestForm({
         }
       })
       .catch(() => {
-        // 실패 시 기존 SPY/QQQ fallback 유지
+        // 실패 시 기본 옵션 유지
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // SCRUM-344: recommendedUniverseType prop 변경 시 universeType 동기화
+  useEffect(() => {
+    if (recommendedUniverseType && !universeType) {
+      setUniverseType(recommendedUniverseType);
+    }
+  }, [recommendedUniverseType, universeType]);
 
   // SSR 하이드레이션 불일치 방지: 컴포넌트 내부에서 날짜 계산
   const defaultDates = useMemo(
@@ -527,9 +537,11 @@ export default function BacktestForm({
                             const isSelected = additionalBenchmarks.includes(opt.value);
                             const canAdd = additionalBenchmarks.length < MAX_BENCHMARKS - 1;
                             return (
-                              <button
+                              <Button
                                 key={opt.value}
                                 type="button"
+                                variant="outline"
+                                size="sm"
                                 disabled={!isSelected && !canAdd}
                                 onClick={() => {
                                   setAdditionalBenchmarks((prev) =>
@@ -538,16 +550,16 @@ export default function BacktestForm({
                                       : [...prev, opt.value],
                                   );
                                 }}
-                                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                                className={`text-xs rounded-full border transition-colors ${
                                   isSelected
-                                    ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-400'
+                                    ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30'
                                     : canAdd
                                       ? 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
-                                      : 'border-slate-700 text-slate-600 cursor-not-allowed'
+                                      : 'border-slate-700 text-slate-600 cursor-not-allowed opacity-50'
                                 }`}
                               >
                                 {isSelected ? `✕ ${opt.label}` : `+ ${opt.label}`}
-                              </button>
+                              </Button>
                             );
                           })}
                       </div>

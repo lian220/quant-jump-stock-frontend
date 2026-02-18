@@ -256,7 +256,9 @@ export default function StrategyDetailPage() {
                 <div className="text-center">
                   <p className="text-xs text-slate-400 mb-1">승률</p>
                   <p className="text-lg font-bold text-yellow-400">
-                    {strategy.canonicalBacktest.winRate?.toFixed(1) ?? 'N/A'}%
+                    {strategy.canonicalBacktest.winRate != null
+                      ? `${strategy.canonicalBacktest.winRate.toFixed(1)}%`
+                      : 'N/A'}
                   </p>
                 </div>
                 <div className="text-center">

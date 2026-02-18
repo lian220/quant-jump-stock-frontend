@@ -26,7 +26,6 @@ export function InvestmentSummary({
 
   const profitSign = outcome.isPositive ? '+' : '';
   const profitColor = outcome.isPositive ? 'text-emerald-400' : 'text-red-400';
-  const resultVerb = '되었을 것입니다';
   const bgGradient = outcome.isPositive
     ? 'from-emerald-900/20 to-slate-800/50'
     : 'from-red-900/20 to-slate-800/50';
@@ -44,7 +43,7 @@ export function InvestmentSummary({
             <span className={`font-bold text-lg ${profitColor}`}>
               {formatKoreanCurrency(outcome.finalAmount)}원
             </span>
-            이 {resultVerb}
+            이 되었을 것입니다
           </p>
           <p className="text-slate-400 text-sm">
             (수익:{' '}
