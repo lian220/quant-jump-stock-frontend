@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPostLoginRedirect, saveAuthReturnUrl } from '@/lib/onboarding';
 import Link from 'next/link';
@@ -84,7 +85,13 @@ function AuthPageContent() {
       <div className="w-full max-w-md">
         {/* Logo and Title */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-blue-500" />
+          <Image
+            src="/main_logo.png"
+            alt="Alpha Foundry Logo"
+            width={64}
+            height={64}
+            className="mx-auto mb-4 rounded-2xl"
+          />
           <h1 className="mb-2 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-3xl font-bold text-transparent">
             Alpha Foundry
           </h1>
