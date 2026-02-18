@@ -1,0 +1,215 @@
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
+
+interface BacktestHistoryItem {
+  id: number;
+  strategyId: number;
+  strategyName: string | null;
+  status: string;
+  startDate: string;
+  endDate: string;
+  initialCapital: number;
+  finalValue: number | null;
+  totalReturn: number | null;
+  cagr: number | null;
+  mdd: number | null;
+  sharpeRatio: number | null;
+  universeType: string | null;
+  backtestType: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+interface BacktestHistoryListProps {
+  strategyId: string;
+}
+
+const universeLabels: Record<string, string> = {
+  MARKET: '전체 시장',
+  PORTFOLIO: '기본 종목',
+  SECTOR: '섹터별',
+  FIXED: '지정 종목',
+};
+
+export default function BacktestHistoryList({ strategyId }: BacktestHistoryListProps) {
+  const [history, setHistory] = useState<BacktestHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const isBrowser = typeof window !== 'undefined';
+        const baseUrl = isBrowser ? `/api/backtest` : `${API_URL}/api/v1/backtest`;
+        const url = `${baseUrl}?strategyId=${strategyId}&size=10&sort=createdAt,desc`;
+
+        const response = await fetch(url, {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const userCustom = (data.content || []).filter(
+            (item: BacktestHistoryItem) => item.backtestType !== 'CANONICAL',
+          );
+          setHistory(userCustom);
+        }
+      } catch {
+        // 조회 실패 시 빈 목록
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [strategyId]);
+
+  // 요약 통계 계산 (완료된 백테스트 2건 이상일 때만 표시)
+  const summary = useMemo(() => {
+    const completed = history.filter((item) => item.status === 'COMPLETED');
+    if (completed.length < 2) return null;
+
+    const cagrs = completed.map((i) => i.cagr).filter((v): v is number => v != null);
+    const mdds = completed.map((i) => i.mdd).filter((v): v is number => v != null);
+    const sharpes = completed.map((i) => i.sharpeRatio).filter((v): v is number => v != null);
+
+    return {
+      count: completed.length,
+      bestCagr: cagrs.length > 0 ? Math.max(...cagrs) : null,
+      worstMdd: mdds.length > 0 ? Math.min(...mdds) : null,
+      avgSharpe: sharpes.length > 0 ? sharpes.reduce((a, b) => a + b, 0) / sharpes.length : null,
+      cagrRange: cagrs.length > 0 ? ([Math.min(...cagrs), Math.max(...cagrs)] as const) : null,
+    };
+  }, [history]);
+
+  if (isLoading) return null;
+  if (history.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      {/* 요약 대시보드 (2건 이상) */}
+      {summary && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-white text-base">백테스트 요약</CardTitle>
+            <CardDescription className="text-slate-400 text-xs">
+              최근 {summary.count}회 커스텀 백테스트 결과 요약
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-3 rounded-lg bg-slate-900/50">
+                <p className="text-xs text-slate-400 mb-1">최고 CAGR</p>
+                <p className="text-lg font-bold text-emerald-400">
+                  {summary.bestCagr != null
+                    ? `${summary.bestCagr >= 0 ? '+' : ''}${summary.bestCagr.toFixed(1)}%`
+                    : '-'}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-slate-900/50">
+                <p className="text-xs text-slate-400 mb-1">최저 MDD</p>
+                <p className="text-lg font-bold text-red-400">
+                  {summary.worstMdd != null ? `${summary.worstMdd.toFixed(1)}%` : '-'}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-slate-900/50">
+                <p className="text-xs text-slate-400 mb-1">평균 샤프</p>
+                <p className="text-lg font-bold text-purple-400">
+                  {summary.avgSharpe != null ? summary.avgSharpe.toFixed(2) : '-'}
+                </p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-slate-900/50">
+                <p className="text-xs text-slate-400 mb-1">CAGR 범위</p>
+                <p className="text-sm font-bold text-cyan-400">
+                  {summary.cagrRange
+                    ? `${summary.cagrRange[0].toFixed(1)}% ~ ${summary.cagrRange[1].toFixed(1)}%`
+                    : '-'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 히스토리 목록 */}
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-white text-base">이전 백테스트 기록</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {history.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700/50"
+              >
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400">
+                      {item.startDate} ~ {item.endDate}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge
+                        className={`text-xs ${
+                          item.status === 'COMPLETED'
+                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                            : item.status === 'FAILED'
+                              ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                              : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                        }`}
+                      >
+                        {item.status === 'COMPLETED'
+                          ? '완료'
+                          : item.status === 'FAILED'
+                            ? '실패'
+                            : '진행중'}
+                      </Badge>
+                      {item.universeType && (
+                        <span className="text-xs text-slate-500">
+                          {universeLabels[item.universeType] || item.universeType}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {item.status === 'COMPLETED' && (
+                  <div className="flex items-center gap-4 text-right">
+                    <div>
+                      <p className="text-xs text-slate-500">CAGR</p>
+                      <p
+                        className={`text-sm font-semibold ${
+                          (item.cagr ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
+                        }`}
+                      >
+                        {item.cagr != null
+                          ? `${item.cagr >= 0 ? '+' : ''}${item.cagr.toFixed(1)}%`
+                          : '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">MDD</p>
+                      <p className="text-sm font-semibold text-red-400">
+                        {item.mdd != null ? `${item.mdd.toFixed(1)}%` : '-'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">샤프</p>
+                      <p className="text-sm font-semibold text-purple-400">
+                        {item.sharpeRatio != null ? item.sharpeRatio.toFixed(2) : '-'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -18,7 +18,6 @@ import { getBuySignals, getScoreGrade, TIER_THRESHOLDS } from '@/lib/api/predict
 import { getStrategies } from '@/lib/api/strategies';
 import { getNewsByTickers, formatRelativeTime } from '@/lib/api/news';
 import { getCategoryLabel } from '@/lib/strategy-helpers';
-import { Footer } from '@/components/layout/Footer';
 import type { BuySignal } from '@/lib/api/predictions';
 import type { Strategy } from '@/types/strategy';
 import type { NewsArticle } from '@/lib/api/news';
@@ -915,9 +914,6 @@ export default function RecommendationsPage() {
             </Card>
           </section>
         </main>
-
-        {/* 푸터 */}
-        <Footer />
       </div>
     </>
   );

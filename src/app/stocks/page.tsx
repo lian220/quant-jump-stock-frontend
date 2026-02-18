@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { searchStocks, marketLabels, designationLabels } from '@/lib/api/stocks';
 import { PageSEO } from '@/components/seo';
-import { Footer } from '@/components/layout/Footer';
 import type { StockSummary, Market, StockSearchResponse } from '@/lib/api/stocks';
 
 const marketOptions: { value: '' | Market; label: string }[] = [
@@ -333,9 +332,6 @@ export default function StocksPage() {
           </div>
         )}
       </main>
-
-      {/* 푸터 */}
-      <Footer />
     </div>
   );
 }

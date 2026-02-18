@@ -33,7 +33,9 @@ export async function runBacktest(req: BacktestRunRequest): Promise<BacktestRunR
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const error = new Error(errorData.error || '백테스트 실행에 실패했습니다.');
+    const error = new Error(
+      errorData.message || errorData.error || '백테스트 실행에 실패했습니다.',
+    );
     (error as Error & { status?: number }).status = response.status;
     throw error;
   }

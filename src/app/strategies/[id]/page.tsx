@@ -14,7 +14,6 @@ import {
   EquityCurveChart,
   TermTooltip,
 } from '@/components/strategies';
-import { Footer } from '@/components/layout/Footer';
 import {
   getRiskColor,
   getRiskLabel,
@@ -203,6 +202,76 @@ export default function StrategyDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* SCRUM-344: 대표 백테스트 성과 (canonical) */}
+        {strategy.canonicalBacktest && (
+          <Card className="bg-gradient-to-r from-slate-800/70 to-slate-800/50 border-emerald-500/20 mb-8">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-white text-lg">대표 백테스트 성과</CardTitle>
+                  <CardDescription className="text-slate-400 text-xs">
+                    {strategy.canonicalBacktest.startDate} ~ {strategy.canonicalBacktest.endDate} |
+                    초기자본 {(strategy.canonicalBacktest.initialCapital / 10000).toLocaleString()}
+                    만원
+                  </CardDescription>
+                </div>
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                  자동 산출
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div className="text-center">
+                  <p className="text-xs text-slate-400 mb-1">CAGR</p>
+                  <p
+                    className={`text-lg font-bold ${strategy.canonicalBacktest.cagr >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                  >
+                    {strategy.canonicalBacktest.cagr >= 0 ? '+' : ''}
+                    {strategy.canonicalBacktest.cagr.toFixed(1)}%
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-slate-400 mb-1">MDD</p>
+                  <p className="text-lg font-bold text-red-400">
+                    {strategy.canonicalBacktest.mdd.toFixed(1)}%
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-slate-400 mb-1">샤프 비율</p>
+                  <p className="text-lg font-bold text-purple-400">
+                    {strategy.canonicalBacktest.sharpeRatio?.toFixed(2) ?? 'N/A'}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-slate-400 mb-1">총 수익률</p>
+                  <p
+                    className={`text-lg font-bold ${strategy.canonicalBacktest.totalReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                  >
+                    {strategy.canonicalBacktest.totalReturn >= 0 ? '+' : ''}
+                    {strategy.canonicalBacktest.totalReturn.toFixed(1)}%
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-slate-400 mb-1">승률</p>
+                  <p className="text-lg font-bold text-yellow-400">
+                    {strategy.canonicalBacktest.winRate?.toFixed(1) ?? 'N/A'}%
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-slate-400 mb-1">최종 자산</p>
+                  <p className="text-lg font-bold text-cyan-400">
+                    {(strategy.canonicalBacktest.finalValue / 10000).toLocaleString(undefined, {
+                      maximumFractionDigits: 0,
+                    })}
+                    만원
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 성과 지표 카드 */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -643,13 +712,13 @@ export default function StrategyDetailPage() {
           <CardContent className="py-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-white mb-1">백테스트 실행</h3>
+                <h3 className="text-lg font-bold text-white mb-1">내 설정으로 백테스트</h3>
                 <p className="text-slate-400 text-sm">
-                  이 전략의 과거 성과를 직접 시뮬레이션해 보세요
+                  기간, 자본금, 유니버스를 직접 설정하여 시뮬레이션해 보세요
                 </p>
               </div>
               <Link href={`/strategies/${id}/backtest`}>
-                <Button className="bg-cyan-600 hover:bg-cyan-700 px-6">백테스트 실행 →</Button>
+                <Button className="bg-cyan-600 hover:bg-cyan-700 px-6">커스텀 백테스트 →</Button>
               </Link>
             </div>
           </CardContent>
@@ -710,9 +779,6 @@ export default function StrategyDetailPage() {
           </div>
         )}
       </main>
-
-      {/* 푸터 */}
-      <Footer />
     </div>
   );
 }

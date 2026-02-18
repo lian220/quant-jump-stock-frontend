@@ -80,6 +80,7 @@ function resolveGradeLabel(grade: GradeObject | GradeValue | unknown): string {
 
 export default function EnhancedPerformanceCards({ enhanced }: EnhancedPerformanceCardsProps) {
   const [showGlossary, setShowGlossary] = useState(false);
+  const [showMethodology, setShowMethodology] = useState(false);
 
   const overallGradeKey = resolveGrade(enhanced.overallGrade);
   const overallGradeLabel = resolveGradeLabel(enhanced.overallGrade);
@@ -90,18 +91,18 @@ export default function EnhancedPerformanceCards({ enhanced }: EnhancedPerforman
       {/* 종합 등급 */}
       <Card className="bg-slate-800/50 border-slate-700">
         <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-400 mb-1">종합 등급</p>
-              {summaryText && (
-                <p className="text-slate-300 text-sm whitespace-pre-line">{summaryText}</p>
-              )}
-            </div>
+          <div className="flex flex-col items-center gap-3 text-center">
+            <p className="text-sm text-slate-400">종합 등급</p>
             <Badge
-              className={`text-xl font-bold px-4 py-2 ${gradeColors[overallGradeKey] || gradeColors.C}`}
+              className={`text-xl font-bold px-5 py-2 ${gradeColors[overallGradeKey] || gradeColors.C}`}
             >
               {overallGradeLabel}
             </Badge>
+            {summaryText && (
+              <p className="text-slate-300 text-sm whitespace-pre-line max-w-2xl leading-relaxed mt-1">
+                {summaryText}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -151,28 +152,69 @@ export default function EnhancedPerformanceCards({ enhanced }: EnhancedPerforman
         </CardContent>
       </Card>
 
-      {/* 용어 사전 (접이식) */}
+      {/* FIN-04: 등급 산출 방법 */}
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <button
+            type="button"
+            aria-expanded={showMethodology}
+            className="w-full flex items-center justify-between cursor-pointer"
+            onClick={() => setShowMethodology(!showMethodology)}
+          >
+            <CardTitle className="text-white text-lg">등급 산출 방법</CardTitle>
+            <span className="text-slate-400 text-sm font-normal">
+              {showMethodology ? '접기' : '보기'}
+            </span>
+          </button>
+        </CardHeader>
+        {showMethodology && (
+          <CardContent>
+            <div className="space-y-2 text-xs text-slate-400 leading-relaxed">
+              <p>
+                종합 등급은 아래 지표의 가중 평균으로 산출됩니다. 각 지표는 A~F 등급으로 개별 평가된
+                후, 가중치를 적용하여 최종 등급이 결정됩니다.
+              </p>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="p-2 bg-slate-700/30 rounded">
+                  <span className="text-slate-300 font-medium">CAGR (연수익률)</span>
+                  <span className="float-right text-emerald-400">30%</span>
+                </div>
+                <div className="p-2 bg-slate-700/30 rounded">
+                  <span className="text-slate-300 font-medium">샤프 비율</span>
+                  <span className="float-right text-emerald-400">25%</span>
+                </div>
+                <div className="p-2 bg-slate-700/30 rounded">
+                  <span className="text-slate-300 font-medium">MDD (최대낙폭)</span>
+                  <span className="float-right text-emerald-400">25%</span>
+                </div>
+                <div className="p-2 bg-slate-700/30 rounded">
+                  <span className="text-slate-300 font-medium">승률</span>
+                  <span className="float-right text-emerald-400">20%</span>
+                </div>
+              </div>
+              <p className="text-slate-500 mt-1">
+                등급 기준: A (상위 10%) / B (상위 30%) / C (상위 60%) / D (상위 90%) / F (하위 10%)
+              </p>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* UX-10: 용어 사전 (접이식) - native button으로 접근성 개선 */}
       {enhanced.glossary.length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader
-            role="button"
-            tabIndex={0}
-            aria-expanded={showGlossary}
-            className="cursor-pointer"
-            onClick={() => setShowGlossary(!showGlossary)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setShowGlossary(!showGlossary);
-              }
-            }}
-          >
-            <CardTitle className="text-white text-lg flex items-center justify-between">
-              <span>투자 용어 사전</span>
+          <CardHeader>
+            <button
+              type="button"
+              aria-expanded={showGlossary}
+              className="w-full flex items-center justify-between cursor-pointer"
+              onClick={() => setShowGlossary(!showGlossary)}
+            >
+              <CardTitle className="text-white text-lg">투자 용어 사전</CardTitle>
               <span className="text-slate-400 text-sm font-normal">
                 {showGlossary ? '접기' : `${enhanced.glossary.length}개 용어 보기`}
               </span>
-            </CardTitle>
+            </button>
           </CardHeader>
           {showGlossary && (
             <CardContent>

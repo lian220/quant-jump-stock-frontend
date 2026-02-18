@@ -10,6 +10,8 @@ import type {
   StrategyDetail,
   EquityCurveData,
   BenchmarkResponse,
+  UniverseType,
+  CanonicalBacktestSummary,
 } from '@/types/strategy';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
@@ -347,6 +349,38 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
     riskSettings: backend.riskSettings,
     positionSizing: backend.positionSizing,
     tradingCosts: backend.tradingCosts,
+
+    // SCRUM-344: 유니버스 + 대표 백테스트
+    recommendedUniverseType: (backend.recommendedUniverseType as UniverseType) || 'MARKET',
+    supportedUniverseTypes: (backend.supportedUniverseTypes as UniverseType[]) || ['MARKET'],
+    canonicalBacktest: backend.canonicalBacktest
+      ? mapCanonicalBacktest(backend.canonicalBacktest)
+      : null,
+  };
+}
+
+/**
+ * SCRUM-344: 대표 백테스트 매핑
+ */
+function mapCanonicalBacktest(
+  cb: NonNullable<BackendStrategyDetail['canonicalBacktest']>,
+): CanonicalBacktestSummary {
+  return {
+    backtestId: cb.backtestId,
+    cagr: cb.cagr,
+    mdd: cb.mdd,
+    sharpeRatio: cb.sharpeRatio,
+    totalReturn: cb.totalReturn,
+    volatility: cb.volatility,
+    winRate: cb.winRate,
+    totalTrades: cb.totalTrades,
+    startDate: cb.startDate,
+    endDate: cb.endDate,
+    initialCapital: cb.initialCapital,
+    finalValue: cb.finalValue,
+    equityCurve: (cb.equityCurve || []).map(
+      (p): EquityCurveData => ({ date: p.date, value: p.value }),
+    ),
   };
 }
 

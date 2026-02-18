@@ -69,6 +69,9 @@ export interface TradingCostsConfig {
   };
 }
 
+// SCRUM-344: 유니버스 타입
+export type UniverseType = 'MARKET' | 'PORTFOLIO' | 'SECTOR' | 'FIXED';
+
 // 백테스트 실행 요청
 export interface BacktestRunRequest {
   strategyId: string;
@@ -78,6 +81,8 @@ export interface BacktestRunRequest {
   benchmark: BenchmarkType;
   benchmarks?: string[]; // SCRUM-337: 다중 벤치마크 (최대 3개)
   rebalancePeriod: RebalancePeriod;
+  // SCRUM-344: 유니버스 타입 (null이면 전략의 recommended 사용)
+  universeType?: UniverseType;
   riskSettings?: RiskSettings;
   positionSizing?: PositionSizingConfig;
   tradingCosts?: TradingCostsConfig;

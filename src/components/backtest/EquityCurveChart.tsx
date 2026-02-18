@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -47,6 +47,9 @@ function transformChartData(
 }
 
 export default function EquityCurveChart({ equityCurve, benchmarkLabels }: EquityCurveChartProps) {
+  // UX-06: 절대값/수익률(%) 토글
+  const [showPercent, setShowPercent] = useState(false);
+
   // 벤치마크 티커 목록 결정
   const benchmarkTickers = useMemo(() => {
     if (benchmarkLabels && benchmarkLabels.length > 0) return benchmarkLabels;
@@ -62,10 +65,58 @@ export default function EquityCurveChart({ equityCurve, benchmarkLabels }: Equit
 
   const isMultiBenchmark = benchmarkTickers.length > 1;
 
-  const chartData = useMemo(
+  const rawChartData = useMemo(
     () => transformChartData(equityCurve, benchmarkTickers),
     [equityCurve, benchmarkTickers],
   );
+
+  // UX-06: 수익률(%) 모드 데이터 변환 (첫 유효값 기준 정규화)
+  const chartData = useMemo(() => {
+    if (!showPercent || rawChartData.length === 0) return rawChartData;
+    const first = rawChartData[0];
+    const baseValue = (first.value as number) || 1;
+
+    // 첫 유효 벤치마크 값 찾기 (null/0 방지)
+    const findBase = (key: string) => {
+      for (const row of rawChartData) {
+        const v = row[key] as number;
+        if (v != null && v > 0) return v;
+      }
+      return null;
+    };
+
+    const baseBmSingle = !isMultiBenchmark ? findBase('benchmark') : null;
+    const baseBmMulti: Record<string, number | null> = {};
+    if (isMultiBenchmark) {
+      for (const ticker of benchmarkTickers) {
+        baseBmMulti[`bm_${ticker}`] = findBase(`bm_${ticker}`);
+      }
+    }
+
+    return rawChartData.map((row) => {
+      const normalized: Record<string, unknown> = { date: row.date };
+      normalized.value =
+        row.value != null ? (((row.value as number) - baseValue) / baseValue) * 100 : null;
+      if (!isMultiBenchmark) {
+        if (baseBmSingle != null) {
+          normalized.benchmark =
+            row.benchmark != null
+              ? (((row.benchmark as number) - baseBmSingle) / baseBmSingle) * 100
+              : null;
+        } else {
+          normalized.benchmark = null;
+        }
+      } else {
+        for (const ticker of benchmarkTickers) {
+          const key = `bm_${ticker}`;
+          const base = baseBmMulti[key];
+          normalized[key] =
+            base != null && row[key] != null ? (((row[key] as number) - base) / base) * 100 : null;
+        }
+      }
+      return normalized;
+    });
+  }, [rawChartData, showPercent, isMultiBenchmark, benchmarkTickers]);
 
   const benchmarkDescription =
     benchmarkTickers.length > 0
@@ -86,8 +137,33 @@ export default function EquityCurveChart({ equityCurve, benchmarkLabels }: Equit
   return (
     <Card className="bg-slate-800/50 border-slate-700">
       <CardHeader>
-        <CardTitle className="text-white">수익 곡선</CardTitle>
-        <CardDescription className="text-slate-400">{benchmarkDescription}</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-white">수익 곡선</CardTitle>
+            <CardDescription className="text-slate-400">{benchmarkDescription}</CardDescription>
+          </div>
+          {/* UX-06: 절대값/수익률 토글 */}
+          <div className="flex gap-1 bg-slate-700/50 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => setShowPercent(false)}
+              className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+                !showPercent ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              절대값
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPercent(true)}
+              className={`text-xs px-3 py-1.5 rounded-md transition-colors ${
+                showPercent ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              수익률(%)
+            </button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[400px]">
@@ -107,6 +183,7 @@ export default function EquityCurveChart({ equityCurve, benchmarkLabels }: Equit
                 stroke="#94a3b8"
                 tick={{ fill: '#94a3b8', fontSize: 12 }}
                 tickFormatter={(value) => {
+                  if (showPercent) return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
                   if (value >= 100000000) return `${(value / 100000000).toFixed(1)}억`;
                   if (value >= 10000) return `${(value / 10000).toFixed(0)}만`;
                   return value.toLocaleString();
@@ -122,6 +199,12 @@ export default function EquityCurveChart({ equityCurve, benchmarkLabels }: Equit
                 formatter={(value, name) => {
                   if (value == null) return ['-', getLineName(name as string, benchmarkTickers)];
                   const numValue = typeof value === 'number' ? value : 0;
+                  if (showPercent) {
+                    return [
+                      `${numValue >= 0 ? '+' : ''}${numValue.toFixed(2)}%`,
+                      getLineName(name as string, benchmarkTickers),
+                    ];
+                  }
                   return [
                     `${numValue.toLocaleString()}원`,
                     getLineName(name as string, benchmarkTickers),

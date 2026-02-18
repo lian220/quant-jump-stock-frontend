@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PageSEO } from '@/components/seo';
-import { Footer } from '@/components/layout/Footer';
 import { useAuth } from '@/hooks/useAuth';
 import {
   getRecentNews,
@@ -1119,8 +1118,6 @@ export default function NewsPage() {
             )}
           </section>
         </main>
-
-        <Footer />
       </div>
 
       {/* 알림 패널 배경 클릭 닫기 */}

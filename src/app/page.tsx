@@ -19,7 +19,6 @@ import {
   type BuySignal,
   type PredictionStatsResponse,
 } from '@/lib/api/predictions';
-import { Footer } from '@/components/layout/Footer';
 import type { Strategy } from '@/types/strategy';
 
 /** recommendationReason에서 기술 지표 키워드를 파싱하여 배지 라벨 배열 반환 */
@@ -798,9 +797,6 @@ export default function Home() {
             </CardContent>
           </Card>
         </main>
-
-        {/* 푸터 */}
-        <Footer />
       </div>
     </>
   );

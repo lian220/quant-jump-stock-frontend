@@ -9,14 +9,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InstallButton } from '@/components/pwa/InstallButton';
-import { cn } from '@/lib/utils';
+import { cn, isActiveRoute } from '@/lib/utils';
 
 export function Header() {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => isActiveRoute(pathname, path);
 
   // 모바일 메뉴 열렸을 때 body 스크롤 및 텍스트 선택 막기
   useEffect(() => {

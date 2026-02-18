@@ -125,6 +125,27 @@ export interface BackendStrategyDetail {
   positionSizing?: string;
   tradingCosts?: string;
   createdAt: string;
+  // SCRUM-344: 유니버스 + 대표 백테스트
+  recommendedUniverseType?: string;
+  supportedUniverseTypes?: string[];
+  canonicalBacktest?: BackendCanonicalBacktest | null;
+}
+
+// SCRUM-344: 대표 백테스트 요약
+export interface BackendCanonicalBacktest {
+  backtestId: number;
+  cagr: number;
+  mdd: number;
+  sharpeRatio: number | null;
+  totalReturn: number;
+  volatility: number | null;
+  winRate: number | null;
+  totalTrades: number;
+  startDate: string;
+  endDate: string;
+  initialCapital: number;
+  finalValue: number;
+  equityCurve: EquityCurvePoint[];
 }
 
 export interface EquityCurvePoint {

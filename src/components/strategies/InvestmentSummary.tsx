@@ -26,7 +26,7 @@ export function InvestmentSummary({
 
   const profitSign = outcome.isPositive ? '+' : '';
   const profitColor = outcome.isPositive ? 'text-emerald-400' : 'text-red-400';
-  const resultVerb = outcome.isPositive ? '되었을 것입니다' : '줄었을 것입니다';
+  const resultVerb = '되었을 것입니다';
   const bgGradient = outcome.isPositive
     ? 'from-emerald-900/20 to-slate-800/50'
     : 'from-red-900/20 to-slate-800/50';

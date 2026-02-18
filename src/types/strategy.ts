@@ -1,3 +1,7 @@
+// SCRUM-344: 유니버스 타입 (backtest.ts에서 정의, re-export)
+import type { UniverseType } from '@/types/backtest';
+export type { UniverseType };
+
 // 전략 카테고리 (백엔드 V17 마이그레이션 기준)
 export type StrategyCategory =
   | 'value' // 가치투자
@@ -47,6 +51,9 @@ export interface Strategy {
   updatedAt: string; // 마지막 업데이트
   isPremium: boolean; // 프리미엄 전략 여부
   stockSelectionType?: 'SCREENING' | 'PORTFOLIO'; // 종목선정 방식
+  // SCRUM-344: 유니버스 설정
+  recommendedUniverseType?: UniverseType;
+  supportedUniverseTypes?: UniverseType[];
 
   // 태그
   tags: string[];
@@ -103,6 +110,25 @@ export interface StrategyDetail extends Strategy {
   riskSettings?: string;
   positionSizing?: string;
   tradingCosts?: string;
+  // SCRUM-344: 대표 백테스트
+  canonicalBacktest?: CanonicalBacktestSummary | null;
+}
+
+// SCRUM-344: 대표 백테스트 요약
+export interface CanonicalBacktestSummary {
+  backtestId: number;
+  cagr: number;
+  mdd: number;
+  sharpeRatio: number | null;
+  totalReturn: number;
+  volatility: number | null;
+  winRate: number | null;
+  totalTrades: number;
+  startDate: string;
+  endDate: string;
+  initialCapital: number;
+  finalValue: number;
+  equityCurve: EquityCurveData[];
 }
 
 export interface StrategyRuleItem {

@@ -8,7 +8,6 @@ import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { getStrategies } from '@/lib/api/strategies';
-import { Footer } from '@/components/layout/Footer';
 import type {
   Strategy,
   StrategyCategory,
@@ -284,9 +283,6 @@ export default function StrategiesPage() {
           </div>
         </div>
       </main>
-
-      {/* 푸터 */}
-      <Footer />
     </div>
   );
 }
