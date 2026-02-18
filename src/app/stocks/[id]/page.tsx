@@ -15,7 +15,6 @@ import {
 } from '@/lib/api/predictions';
 import { PageSEO } from '@/components/seo';
 import type { StockDetailResponse } from '@/lib/api/stocks';
-import { Footer } from '@/components/layout/Footer';
 
 const designationColors: Record<string, string> = {
   NORMAL: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -457,9 +456,6 @@ export default function StockDetailPage() {
           </Link>
         </div>
       </main>
-
-      {/* 푸터 */}
-      <Footer />
     </div>
   );
 }

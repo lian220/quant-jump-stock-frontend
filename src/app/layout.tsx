@@ -8,6 +8,7 @@ import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { Footer } from '@/components/layout/Footer';
 import { CopyProtection } from '@/components/CopyProtection';
 import { Toaster } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -141,7 +142,10 @@ export default function RootLayout({
         <AuthProvider>
           <TooltipProvider>
             <Header />
-            <div className="pb-16 md:pb-0">{children}</div>
+            <div className="pb-16 md:pb-0">
+              {children}
+              <Footer />
+            </div>
             <BottomNav />
           </TooltipProvider>
         </AuthProvider>

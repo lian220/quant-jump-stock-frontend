@@ -23,11 +23,15 @@ import type {
   RebalancePeriod,
   BenchmarkOption,
   RiskSettings,
+  PositionSizingConfig,
+  TradingCostsConfig,
   PositionSizingMethod,
   SlippageType,
+  UniverseType,
 } from '@/types/backtest';
 import { getAvailableBenchmarks } from '@/lib/api/backtest';
-import { MAX_BACKTEST_DAYS } from '@/constants/backtest';
+import { MAX_BACKTEST_DAYS, MAX_BENCHMARKS } from '@/constants/backtest';
+import { UNIVERSE_LABELS } from '@/lib/strategy-helpers';
 
 const backtestFormSchema = z
   .object({
@@ -56,6 +60,20 @@ const backtestFormSchema = z
 
 type BacktestFormValues = z.infer<typeof backtestFormSchema>;
 
+/** 로그인 후 폼 복원을 위한 이전 제출 값 */
+export interface BacktestFormSavedValues {
+  startDate?: string;
+  endDate?: string;
+  initialCapital?: number;
+  benchmark?: string;
+  additionalBenchmarks?: string[];
+  rebalancePeriod?: string;
+  universeType?: UniverseType;
+  riskSettings?: RiskSettings;
+  positionSizing?: PositionSizingConfig;
+  tradingCosts?: TradingCostsConfig;
+}
+
 interface BacktestFormProps {
   strategyId: string;
   onSubmit: (data: BacktestRunRequest) => void;
@@ -66,9 +84,16 @@ interface BacktestFormProps {
   defaultPositionSizing?: string;
   /** 전략에 저장된 기본 거래 비용 설정 (JSON string) */
   defaultTradingCosts?: string;
+  /** SCRUM-344: 전략이 지원하는 유니버스 타입 목록 */
+  supportedUniverseTypes?: UniverseType[];
+  /** SCRUM-344: 전략의 추천 유니버스 타입 */
+  recommendedUniverseType?: UniverseType;
+  /** 로그인 후 복원할 이전 폼 값 */
+  initialValues?: BacktestFormSavedValues;
 }
 
 const defaultBenchmarkOptions: BenchmarkOption[] = [
+  { value: '^KS11', label: 'KOSPI (^KS11)' },
   { value: 'SPY', label: 'S&P 500 (SPY)' },
   { value: 'QQQ', label: 'NASDAQ 100 (QQQ)' },
 ];
@@ -159,10 +184,19 @@ export default function BacktestForm({
   defaultRiskSettings,
   defaultPositionSizing,
   defaultTradingCosts,
+  supportedUniverseTypes,
+  recommendedUniverseType,
+  initialValues,
 }: BacktestFormProps) {
   const [benchmarkOptions, setBenchmarkOptions] =
     useState<BenchmarkOption[]>(defaultBenchmarkOptions);
+  const [additionalBenchmarks, setAdditionalBenchmarks] = useState<string[]>([]);
+  const [showBenchmarkCompare, setShowBenchmarkCompare] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  // SCRUM-344: 유니버스 타입 선택
+  const [universeType, setUniverseType] = useState<UniverseType | undefined>(
+    recommendedUniverseType,
+  );
 
   // 리스크 설정 상태
   const [stopLossEnabled, setStopLossEnabled] = useState(false);
@@ -236,6 +270,9 @@ export default function BacktestForm({
       .then((options) => {
         if (options && options.length > 0) {
           setBenchmarkOptions(options);
+          // 추가 벤치마크 중 유효하지 않은 항목 제거
+          const validValues = new Set(options.map((opt) => opt.value));
+          setAdditionalBenchmarks((prev) => prev.filter((b) => validValues.has(b)));
           // 현재 선택된 벤치마크가 새 옵션에 없으면 첫 번째 옵션으로 변경
           const currentBenchmark = watch('benchmark');
           const hasCurrentBenchmark = options.some((opt) => opt.value === currentBenchmark);
@@ -245,9 +282,16 @@ export default function BacktestForm({
         }
       })
       .catch(() => {
-        // 실패 시 기존 SPY/QQQ fallback 유지
+        // 실패 시 기본 옵션 유지
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // SCRUM-344: recommendedUniverseType prop 변경 시 universeType 동기화
+  useEffect(() => {
+    if (recommendedUniverseType && !universeType) {
+      setUniverseType(recommendedUniverseType);
+    }
+  }, [recommendedUniverseType, universeType]);
 
   // SSR 하이드레이션 불일치 방지: 컴포넌트 내부에서 날짜 계산
   const defaultDates = useMemo(
@@ -263,6 +307,7 @@ export default function BacktestForm({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm<BacktestFormValues>({
     resolver: zodResolver(backtestFormSchema),
@@ -270,13 +315,89 @@ export default function BacktestForm({
       startDate: defaultDates.startDate,
       endDate: defaultDates.endDate,
       initialCapital: 10000000,
-      benchmark: 'SPY',
+      benchmark: '^KS11',
       rebalancePeriod: 'MONTHLY',
     },
   });
 
+  // initialValues가 세팅되면 폼 전체 리셋 (로그인 후 복귀 시 폼 값 복원)
+  useEffect(() => {
+    if (!initialValues) return;
+
+    // 기본 폼 필드 복원
+    reset({
+      startDate: initialValues.startDate ?? defaultDates.startDate,
+      endDate: initialValues.endDate ?? defaultDates.endDate,
+      initialCapital: initialValues.initialCapital ?? 10000000,
+      benchmark: initialValues.benchmark ?? '^KS11',
+      rebalancePeriod: (initialValues.rebalancePeriod as RebalancePeriod | undefined) ?? 'MONTHLY',
+    });
+
+    // 유니버스 타입 복원
+    if (initialValues.universeType) {
+      setUniverseType(initialValues.universeType);
+    }
+
+    // 비교 벤치마크 복원
+    if (initialValues.additionalBenchmarks?.length) {
+      setAdditionalBenchmarks(initialValues.additionalBenchmarks);
+      setShowBenchmarkCompare(true);
+    }
+
+    // 리스크 설정 복원
+    if (initialValues.riskSettings) {
+      const rs = initialValues.riskSettings;
+      if (rs.stopLoss?.enabled) {
+        setStopLossEnabled(true);
+        setStopLossValue(rs.stopLoss.value ?? 5);
+      }
+      if (rs.takeProfit?.enabled) {
+        setTakeProfitEnabled(true);
+        setTakeProfitValue(rs.takeProfit.value ?? 10);
+      }
+      if (rs.trailingStop?.enabled) {
+        setTrailingStopEnabled(true);
+        setTrailingStopValue(rs.trailingStop.value ?? 3);
+      }
+      setShowAdvanced(true);
+    }
+
+    // 포지션 사이징 복원
+    if (initialValues.positionSizing) {
+      const ps = initialValues.positionSizing;
+      if (ps.method) setPositionMethod(ps.method);
+      if (ps.maxPositionPct != null) setMaxPositionPct(ps.maxPositionPct);
+      if (ps.maxPositions != null) setMaxPositions(ps.maxPositions);
+      setShowAdvanced(true);
+    }
+
+    // 거래 비용 복원 (저장 시 /100 적용했으므로 *100으로 역변환)
+    if (initialValues.tradingCosts) {
+      const tc = initialValues.tradingCosts;
+      if (tc.commission != null) setCommissionRate(tc.commission * 100);
+      if (tc.tax != null) setTaxRate(tc.tax * 100);
+      if (tc.slippageModel) {
+        setSlippageModel(tc.slippageModel.type);
+        if (tc.slippageModel.baseSlippage != null)
+          setBaseSlippage(tc.slippageModel.baseSlippage * 100);
+      }
+      setShowAdvanced(true);
+    }
+  }, [initialValues]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const benchmarkValue = watch('benchmark');
   const rebalanceValue = watch('rebalancePeriod');
+  const watchStartDate = watch('startDate');
+  const watchEndDate = watch('endDate');
+
+  // UX-02: 선택 기간 일수 계산
+  const selectedDays = useMemo(() => {
+    if (!watchStartDate || !watchEndDate) return 0;
+    const start = new Date(watchStartDate);
+    const end = new Date(watchEndDate);
+    const diff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diff);
+  }, [watchStartDate, watchEndDate]);
 
   // 빠른 기간 선택 핸들러
   const handlePeriodPreset = useCallback(
@@ -290,13 +411,22 @@ export default function BacktestForm({
   );
 
   const handleFormSubmit = (data: BacktestFormValues) => {
+    // SCRUM-337: 다중 벤치마크 목록 구성 (primary + additional, 중복 제거)
+    const allBenchmarks = [
+      data.benchmark,
+      ...additionalBenchmarks.filter((b) => b !== data.benchmark),
+    ];
+
     const request: BacktestRunRequest = {
       strategyId,
       startDate: data.startDate,
       endDate: data.endDate,
       initialCapital: data.initialCapital,
       benchmark: data.benchmark as BenchmarkType,
+      benchmarks: allBenchmarks.length > 1 ? allBenchmarks : undefined,
       rebalancePeriod: data.rebalancePeriod as RebalancePeriod,
+      // SCRUM-344: 유니버스 타입
+      universeType,
     };
 
     // 고급 설정이 한번이라도 열렸고 값이 설정되어 있으면 리스크 파라미터 추가
@@ -403,6 +533,14 @@ export default function BacktestForm({
                 className="bg-slate-900/50 border-slate-600 text-white"
               />
               {errors.endDate && <p className="text-red-400 text-xs">{errors.endDate.message}</p>}
+              {/* UX-02: 선택 기간 일수 카운터 */}
+              {selectedDays > 0 && (
+                <p
+                  className={`text-xs ${selectedDays > MAX_BACKTEST_DAYS ? 'text-red-400' : 'text-slate-500'}`}
+                >
+                  선택 기간: {selectedDays}일 / 최대 {MAX_BACKTEST_DAYS}일
+                </p>
+              )}
             </div>
 
             {/* 초기 자본금 */}
@@ -421,8 +559,15 @@ export default function BacktestForm({
 
             {/* 벤치마크 */}
             <div className="space-y-2">
-              <Label className="text-slate-300">벤치마크</Label>
-              <Select value={benchmarkValue} onValueChange={(val) => setValue('benchmark', val)}>
+              <Label className="text-slate-300">주요 벤치마크</Label>
+              <Select
+                value={benchmarkValue}
+                onValueChange={(val) => {
+                  setValue('benchmark', val);
+                  // 주요 벤치마크가 변경되면 추가 벤치마크에서 제거
+                  setAdditionalBenchmarks((prev) => prev.filter((b) => b !== val));
+                }}
+              >
                 <SelectTrigger className="w-full bg-slate-900/50 border-slate-600 text-white">
                   <SelectValue placeholder="벤치마크 선택" />
                 </SelectTrigger>
@@ -436,6 +581,69 @@ export default function BacktestForm({
               </Select>
               {errors.benchmark && (
                 <p className="text-red-400 text-xs">{errors.benchmark.message}</p>
+              )}
+              {/* SCRUM-337: 추가 벤치마크 비교 (접기/펼치기) */}
+              {benchmarkOptions.length > 1 && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowBenchmarkCompare(!showBenchmarkCompare)}
+                    className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-400 transition-colors"
+                    aria-expanded={showBenchmarkCompare}
+                  >
+                    <span
+                      className={`transform transition-transform ${showBenchmarkCompare ? 'rotate-90' : ''}`}
+                    >
+                      ▶
+                    </span>
+                    <span>비교 벤치마크 추가</span>
+                    {additionalBenchmarks.length > 0 && (
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full px-1.5 py-0.5">
+                        {additionalBenchmarks.length}개 선택됨
+                      </span>
+                    )}
+                  </button>
+                  {showBenchmarkCompare && (
+                    <div className="mt-1.5">
+                      <p className="text-xs text-slate-500 mb-1.5">
+                        최대 {MAX_BENCHMARKS - 1}개 선택 가능
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {benchmarkOptions
+                          .filter((opt) => opt.value !== benchmarkValue)
+                          .map((opt) => {
+                            const isSelected = additionalBenchmarks.includes(opt.value);
+                            const canAdd = additionalBenchmarks.length < MAX_BENCHMARKS - 1;
+                            return (
+                              <Button
+                                key={opt.value}
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={!isSelected && !canAdd}
+                                onClick={() => {
+                                  setAdditionalBenchmarks((prev) =>
+                                    isSelected
+                                      ? prev.filter((b) => b !== opt.value)
+                                      : [...prev, opt.value],
+                                  );
+                                }}
+                                className={`text-xs rounded-full border transition-colors ${
+                                  isSelected
+                                    ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30'
+                                    : canAdd
+                                      ? 'border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-300'
+                                      : 'border-slate-700 text-slate-600 cursor-not-allowed opacity-50'
+                                }`}
+                              >
+                                {isSelected ? `✕ ${opt.label}` : `+ ${opt.label}`}
+                              </Button>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -461,21 +669,75 @@ export default function BacktestForm({
                 <p className="text-red-400 text-xs">{errors.rebalancePeriod.message}</p>
               )}
             </div>
+
+            {/* SCRUM-344: 유니버스 타입 */}
+            {supportedUniverseTypes && supportedUniverseTypes.length > 1 && (
+              <div className="space-y-2">
+                <Label className="text-slate-300 flex items-center">
+                  백테스트 대상
+                  <InfoTip text="백테스트에 사용할 종목 범위를 선택합니다. 전체 시장: 등록된 모든 종목, 전략 기본 종목: 전략에 설정된 포트폴리오 종목" />
+                </Label>
+                <Select
+                  value={universeType || recommendedUniverseType || 'MARKET'}
+                  onValueChange={(val) => setUniverseType(val as UniverseType)}
+                >
+                  <SelectTrigger className="w-full bg-slate-900/50 border-slate-600 text-white">
+                    <SelectValue placeholder="대상 선택" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600">
+                    {supportedUniverseTypes.map((ut) => (
+                      <SelectItem key={ut} value={ut} className="text-slate-200">
+                        {UNIVERSE_LABELS[ut] ?? ut}
+                        {ut === recommendedUniverseType && ' (추천)'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* 고급 설정 토글 */}
           <div className="border-t border-slate-700 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
-              aria-expanded={showAdvanced}
-            >
-              <span className={`transform transition-transform ${showAdvanced ? 'rotate-90' : ''}`}>
-                ▶
-              </span>
-              고급 설정 (리스크 관리, 포지션 사이징, 거래 비용)
-            </button>
+            {/* UX-03: 고급 설정 토글 개선 */}
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-2 text-sm text-slate-400 hover:text-emerald-400 transition-colors"
+                aria-expanded={showAdvanced}
+              >
+                <span
+                  className={`transform transition-transform ${showAdvanced ? 'rotate-90' : ''}`}
+                >
+                  ▶
+                </span>
+                <span>전문가 설정</span>
+                <span className="text-xs text-slate-500 font-normal">
+                  (선택사항 - 초보자는 기본값 권장)
+                </span>
+              </button>
+              {showAdvanced && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStopLossEnabled(false);
+                    setTakeProfitEnabled(false);
+                    setTrailingStopEnabled(false);
+                    setPositionMethod('FIXED_PERCENTAGE');
+                    setMaxPositionPct(20);
+                    setMaxPositions(10);
+                    setCommissionRate(0.015);
+                    setTaxRate(0.23);
+                    setSlippageModel('FIXED');
+                    setBaseSlippage(0.1);
+                  }}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  권장값으로 초기화
+                </button>
+              )}
+            </div>
 
             {showAdvanced && (
               <div className="mt-4 space-y-6">

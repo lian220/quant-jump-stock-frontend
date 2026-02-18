@@ -68,3 +68,24 @@ export const getRuleTypeColor = (type: string) => {
       return 'bg-slate-500/20 text-slate-400 border-slate-500/30';
   }
 };
+
+// SCRUM-351: Universe 타입 한글 레이블 (공유 상수)
+export const UNIVERSE_LABELS: Record<string, string> = {
+  MARKET: '전체 시장',
+  PORTFOLIO: '전략 기본 종목',
+  SECTOR: '섹터별',
+  FIXED: '지정 종목',
+};
+
+// SCRUM-351: Universe 타입 색상 클래스 (공유 상수)
+export const UNIVERSE_COLOR_CLASSES: Record<string, string> = {
+  MARKET: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+  PORTFOLIO: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+  SECTOR: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  FIXED: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+};
+
+export const getUniverseLabel = (type: string): string => UNIVERSE_LABELS[type] ?? type;
+
+export const getUniverseColor = (type: string): string =>
+  UNIVERSE_COLOR_CLASSES[type] ?? 'bg-slate-500/20 text-slate-400 border-slate-500/30';

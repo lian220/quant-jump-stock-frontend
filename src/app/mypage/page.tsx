@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { saveAuthReturnUrl } from '@/lib/onboarding';
 
 export default function MyPage() {
   const { user, loading, signOut } = useAuth();
@@ -12,6 +13,7 @@ export default function MyPage() {
 
   React.useEffect(() => {
     if (!loading && !user) {
+      saveAuthReturnUrl('/mypage');
       router.push('/auth');
     }
   }, [user, loading, router]);

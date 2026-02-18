@@ -69,6 +69,9 @@ export interface TradingCostsConfig {
   };
 }
 
+// SCRUM-344: 유니버스 타입
+export type UniverseType = 'MARKET' | 'PORTFOLIO' | 'SECTOR' | 'FIXED';
+
 // 백테스트 실행 요청
 export interface BacktestRunRequest {
   strategyId: string;
@@ -76,7 +79,10 @@ export interface BacktestRunRequest {
   endDate: string;
   initialCapital: number;
   benchmark: BenchmarkType;
+  benchmarks?: string[]; // SCRUM-337: 다중 벤치마크 (최대 3개)
   rebalancePeriod: RebalancePeriod;
+  // SCRUM-344: 유니버스 타입 (null이면 전략의 recommended 사용)
+  universeType?: UniverseType;
   riskSettings?: RiskSettings;
   positionSizing?: PositionSizingConfig;
   tradingCosts?: TradingCostsConfig;
@@ -134,6 +140,7 @@ export interface BacktestEquityPoint {
   date: string;
   value: number;
   benchmark: number | null;
+  benchmarks?: Record<string, number> | null; // SCRUM-337: 다중 벤치마크
 }
 
 // 거래 청산 사유
@@ -194,13 +201,17 @@ export interface GlossaryItem {
 
 // 강화 백테스트 결과
 export interface EnhancedBacktestResult {
-  id?: number;
+  id?: string;
   backtestId?: string;
   overallGrade: GradeObject | GradeValue;
   summary?: string;
   overallSummary?: string;
   gradedMetrics: GradedMetric[];
+  equityCurve?: BacktestEquityPoint[] | null;
+  trades?: BacktestTradeResponse[] | null;
   glossary: GlossaryItem[];
+  createdAt?: string;
+  completedAt?: string | null;
 }
 
 // 벤치마크 옵션
@@ -220,6 +231,7 @@ export interface BacktestResultResponse {
   equityCurve: BacktestEquityPoint[];
   benchmarkCurve: BacktestEquityPoint[];
   trades: BacktestTradeResponse[];
+  benchmarks?: string[]; // SCRUM-337: 사용된 벤치마크 목록
   errorMessage?: string;
   createdAt?: string;
   completedAt?: string;

@@ -3,20 +3,22 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InstallButton } from '@/components/pwa/InstallButton';
-import { cn } from '@/lib/utils';
+import { cn, isActiveRoute } from '@/lib/utils';
+import { saveAuthReturnUrl } from '@/lib/onboarding';
 
 export function Header() {
   const { user, signOut } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => isActiveRoute(pathname, path);
 
   // 모바일 메뉴 열렸을 때 body 스크롤 및 텍스트 선택 막기
   useEffect(() => {
@@ -140,15 +142,24 @@ export function Header() {
                 </Button>
               </div>
             ) : (
-              <Link href="/auth" className="hidden md:block">
+              <div className="hidden md:flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="default"
                   className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  onClick={() => {
+                    saveAuthReturnUrl(pathname);
+                    router.push('/auth');
+                  }}
                 >
                   로그인
                 </Button>
-              </Link>
+                <Link href="/signup">
+                  <Button size="default" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    회원가입
+                  </Button>
+                </Link>
+              </div>
             )}
 
             {/* 모바일: 앱 설치 버튼 + 메뉴 버튼 */}
@@ -246,15 +257,28 @@ export function Header() {
                 </div>
               ) : (
                 <div className="pt-4 border-t border-slate-700">
-                  <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
+                  <div className="space-y-2">
                     <Button
                       variant="outline"
                       size="default"
                       className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:border-emerald-500/50 transition-all"
+                      onClick={() => {
+                        saveAuthReturnUrl(pathname);
+                        setMobileMenuOpen(false);
+                        router.push('/auth');
+                      }}
                     >
                       로그인
                     </Button>
-                  </Link>
+                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                      <Button
+                        size="default"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        회원가입
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               )}
             </nav>

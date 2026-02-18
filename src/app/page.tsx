@@ -19,8 +19,8 @@ import {
   type BuySignal,
   type PredictionStatsResponse,
 } from '@/lib/api/predictions';
-import { Footer } from '@/components/layout/Footer';
 import type { Strategy } from '@/types/strategy';
+import { trackEvent } from '@/lib/analytics';
 
 /** recommendationReason에서 기술 지표 키워드를 파싱하여 배지 라벨 배열 반환 */
 function parseIndicatorBadges(reason?: string): string[] {
@@ -81,9 +81,7 @@ export default function Home() {
           page: 0,
           size: 10,
         });
-        setFeaturedStrategies(
-          response.strategies.filter((s) => parseFloat(String(s.annualReturn)) >= 0).slice(0, 3),
-        );
+        setFeaturedStrategies(response.strategies.slice(0, 3));
       } catch (error) {
         console.warn('Failed to fetch featured strategies:', error);
       } finally {
@@ -167,7 +165,7 @@ export default function Home() {
       value:
         predictionStats?.avgCompositeScore != null
           ? predictionStats.avgCompositeScore.toFixed(2)
-          : '-',
+          : '집계중',
       basis: '기술+AI+감정 분석 기준',
     },
   ];
@@ -207,12 +205,28 @@ export default function Home() {
               AI 분석 + 퀀트 전략, 발굴에서 실행까지
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/strategies">
+              <Link
+                href="/signup"
+                onClick={() =>
+                  trackEvent('landing_cta_click', {
+                    cta: 'hero_primary_signup',
+                    location: 'hero',
+                  })
+                }
+              >
                 <Button size="lg" className="min-w-[200px] bg-emerald-600 hover:bg-emerald-700">
-                  전략 마켓플레이스 보기
+                  무료 회원가입
                 </Button>
               </Link>
-              <Link href="/recommendations">
+              <Link
+                href="/recommendations"
+                onClick={() =>
+                  trackEvent('landing_cta_click', {
+                    cta: 'hero_secondary_recommendations',
+                    location: 'hero',
+                  })
+                }
+              >
                 <Button
                   variant="outline"
                   size="lg"
@@ -221,6 +235,44 @@ export default function Home() {
                   AI 분석 종목 보기
                 </Button>
               </Link>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-400">
+              <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">베타 서비스</Badge>
+              {predictionStats?.totalPredictions ? (
+                <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
+                  최근 30일 분석 {predictionStats.totalPredictions.toLocaleString()}건
+                </Badge>
+              ) : (
+                <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
+                  매일 데이터 업데이트
+                </Badge>
+              )}
+              <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
+                투자 자문이 아닌 정보 제공 서비스
+              </Badge>
+            </div>
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-3xl mx-auto text-left">
+              <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
+                <p className="text-[11px] text-slate-500">신뢰 신호</p>
+                <p className="text-sm text-slate-200 font-medium">
+                  {predictionStats?.totalPredictions
+                    ? `최근 30일 ${predictionStats.totalPredictions.toLocaleString()}건 분석`
+                    : '최근 30일 분석 데이터 누적 공개'}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
+                <p className="text-[11px] text-slate-500">업데이트 주기</p>
+                <p className="text-sm text-slate-200 font-medium">영업일 기준 매일 자동 업데이트</p>
+              </div>
+              <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
+                <p className="text-[11px] text-slate-500">가입 전 체험</p>
+                <Link
+                  href="/recommendations"
+                  className="text-sm text-cyan-300 hover:text-cyan-200 font-medium"
+                >
+                  샘플 분석 리포트 보기 →
+                </Link>
+              </div>
             </div>
 
             {/* 라이브 AI 분석 요약 미니 대시보드 */}
@@ -233,7 +285,7 @@ export default function Home() {
                   <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-3 sm:mb-4">
                     <div className="text-center">
                       <p className="text-lg sm:text-2xl font-bold text-white tabular-nums">
-                        {predictionStats?.uniqueTickers ?? '-'}
+                        {predictionStats?.uniqueTickers ?? '집계중'}
                       </p>
                       <p className="text-[10px] sm:text-xs text-slate-400">분석 종목</p>
                     </div>
@@ -245,7 +297,7 @@ export default function Home() {
                     </div>
                     <div className="text-center">
                       <p className="text-lg sm:text-2xl font-bold text-cyan-400 tabular-nums">
-                        {aGradeRatio !== null ? `${aGradeRatio}%` : '-'}
+                        {aGradeRatio !== null ? `${aGradeRatio}%` : '집계중'}
                       </p>
                       <p className="text-[10px] sm:text-xs text-slate-400">양호 이상</p>
                     </div>
@@ -253,7 +305,7 @@ export default function Home() {
                       <p className="text-lg sm:text-2xl font-bold text-purple-400 tabular-nums">
                         {predictionStats?.avgCompositeScore != null
                           ? predictionStats.avgCompositeScore.toFixed(2)
-                          : '-'}
+                          : '집계중'}
                       </p>
                       <p className="text-[10px] sm:text-xs text-slate-400">평균 점수</p>
                     </div>
@@ -790,7 +842,15 @@ export default function Home() {
               <p className="text-xl mb-8 text-emerald-100">
                 무료 체험으로 AI 기반 투자 분석을 경험해보세요.
               </p>
-              <Link href="/auth">
+              <Link
+                href="/signup"
+                onClick={() =>
+                  trackEvent('landing_cta_click', {
+                    cta: 'bottom_primary_signup',
+                    location: 'bottom_cta',
+                  })
+                }
+              >
                 <Button size="lg" className="bg-white text-emerald-700 hover:bg-slate-100">
                   무료 회원가입
                 </Button>
@@ -798,9 +858,6 @@ export default function Home() {
             </CardContent>
           </Card>
         </main>
-
-        {/* 푸터 */}
-        <Footer />
       </div>
     </>
   );

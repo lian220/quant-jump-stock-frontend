@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { trackEvent } from '@/lib/analytics';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -58,6 +59,9 @@ export const SignUpForm = ({ onSuccess, onSwitchToLogin }: SignUpFormProps) => {
     if (result.error) {
       setError(result.error);
     } else {
+      trackEvent('signup_complete', {
+        source: 'signup_form',
+      });
       setSuccess('회원가입이 완료되었습니다! 로그인해주세요.');
       onSuccess?.();
     }

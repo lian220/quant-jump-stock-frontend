@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPostLoginRedirect } from '@/lib/onboarding';
+import { getPostLoginRedirect, saveAuthReturnUrl } from '@/lib/onboarding';
+import Link from 'next/link';
+import { trackEvent } from '@/lib/analytics';
 
-export default function AuthPage() {
+function AuthPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading, signIn, signInWithNaver } = useAuth();
 
   const [userId, setUserId] = useState('');
@@ -14,12 +18,26 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 이미 로그인된 경우 리다이렉트 (온보딩 미완료 시 /onboarding, 완료 시 /)
+  // query param으로 전달된 returnUrl을 localStorage에 저장
+  useEffect(() => {
+    const returnUrl = searchParams.get('returnUrl');
+    if (returnUrl) {
+      saveAuthReturnUrl(returnUrl);
+    }
+  }, [searchParams]);
+
+  // 이미 로그인된 경우 리다이렉트 (returnUrl 우선, 없으면 onboarding 여부로 결정)
   useEffect(() => {
     if (!authLoading && user) {
       router.push(getPostLoginRedirect());
     }
   }, [user, authLoading, router]);
+
+  useEffect(() => {
+    trackEvent('auth_view', {
+      source: 'auth_page',
+    });
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +85,13 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         {/* Logo and Title */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 h-16 w-16 rounded-2xl bg-blue-500" />
+          <Image
+            src="/main_logo.png"
+            alt="Alpha Foundry Logo"
+            width={64}
+            height={64}
+            className="mx-auto mb-4 rounded-2xl"
+          />
           <h1 className="mb-2 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-3xl font-bold text-transparent">
             Alpha Foundry
           </h1>
@@ -149,13 +173,16 @@ export default function AuthPage() {
             </svg>
             네이버로 로그인
           </button>
+          <p className="mt-2 text-center text-xs text-slate-500">
+            소셜 로그인에 문제가 있으면 아이디/비밀번호 로그인을 이용해주세요.
+          </p>
 
           {/* Sign Up Link */}
           <p className="mt-4 text-center text-sm text-slate-400">
             계정이 없으신가요?{' '}
-            <a href="#" className="font-medium text-emerald-400 hover:text-emerald-300">
+            <Link href="/signup" className="font-medium text-emerald-400 hover:text-emerald-300">
               회원가입
-            </a>
+            </Link>
           </p>
         </div>
 
@@ -186,5 +213,19 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-emerald-500" />
+        </div>
+      }
+    >
+      <AuthPageContent />
+    </Suspense>
   );
 }

@@ -8,6 +8,7 @@ import type {
 // localStorage 키
 const ONBOARDING_KEY = 'onboarding_completed';
 const PREFERENCES_KEY = 'user_preferences';
+const AUTH_RETURN_URL_KEY = 'auth_return_url';
 
 // --- localStorage 헬퍼 ---
 
@@ -44,8 +45,31 @@ export function setUserPreferences(prefs: UserPreferences): void {
   localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
 }
 
-/** 로그인 후 리다이렉트 경로 반환 */
+/**
+ * 로그인 후 돌아갈 URL을 저장합니다.
+ * /auth로 시작하는 URL은 저장하지 않습니다.
+ */
+export function saveAuthReturnUrl(url: string): void {
+  if (typeof window === 'undefined') return;
+  // 절대 URL이면 pathname만 추출
+  const path = url.startsWith('http') ? new URL(url).pathname + new URL(url).search : url;
+  if (path && !path.startsWith('/auth') && path !== '/') {
+    localStorage.setItem(AUTH_RETURN_URL_KEY, path);
+  }
+}
+
+/** 저장된 returnUrl을 읽고 삭제합니다. */
+export function getAndClearAuthReturnUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  const url = localStorage.getItem(AUTH_RETURN_URL_KEY);
+  if (url) localStorage.removeItem(AUTH_RETURN_URL_KEY);
+  return url;
+}
+
+/** 로그인 후 리다이렉트 경로 반환 — returnUrl 우선, 없으면 onboarding 여부로 결정 */
 export function getPostLoginRedirect(): string {
+  const returnUrl = getAndClearAuthReturnUrl();
+  if (returnUrl) return returnUrl;
   return isOnboardingCompleted() ? '/' : '/onboarding';
 }
 

@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
+import { StateMessageCard } from '@/components/common/StateMessageCard';
 import { getStrategies } from '@/lib/api/strategies';
-import { Footer } from '@/components/layout/Footer';
 import type {
   Strategy,
   StrategyCategory,
@@ -142,7 +141,7 @@ export default function StrategiesPage() {
           <Card className="bg-slate-800/50 border-slate-700">
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-emerald-400">
-                {isLoading ? '-' : paginationInfo.totalItems}
+                {isLoading ? '집계중' : paginationInfo.totalItems.toLocaleString()}
               </p>
               <p className="text-sm text-slate-400 mt-1">전략 수</p>
             </CardContent>
@@ -151,13 +150,13 @@ export default function StrategiesPage() {
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-cyan-400">
                 {isLoading
-                  ? '-'
+                  ? '집계중'
                   : (() => {
-                      if (strategies.length === 0) return '-';
+                      if (strategies.length === 0) return '0';
                       const avg = Math.round(
                         strategies.reduce((sum, s) => sum + s.subscribers, 0) / strategies.length,
                       );
-                      return avg > 0 ? avg.toLocaleString() : '-';
+                      return avg.toLocaleString();
                     })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 구독자</p>
@@ -167,12 +166,12 @@ export default function StrategiesPage() {
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-yellow-400">
                 {isLoading
-                  ? '-'
+                  ? '집계중'
                   : (() => {
-                      if (strategies.length === 0) return '-';
+                      if (strategies.length === 0) return '0.0';
                       const avg =
                         strategies.reduce((sum, s) => sum + s.rating, 0) / strategies.length;
-                      return avg > 0 ? avg.toFixed(1) : '-';
+                      return avg.toFixed(1);
                     })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">평균 평점</p>
@@ -182,10 +181,10 @@ export default function StrategiesPage() {
             <CardContent className="pt-6 text-center">
               <p className="text-3xl font-bold text-purple-400">
                 {isLoading
-                  ? '-'
+                  ? '집계중'
                   : (() => {
                       const count = strategies.filter((s) => s.isPremium).length;
-                      return count > 0 ? count : '-';
+                      return count.toString();
                     })()}
               </p>
               <p className="text-sm text-slate-400 mt-1">프리미엄 전략</p>
@@ -248,29 +247,34 @@ export default function StrategiesPage() {
               <p className="text-slate-400">
                 총{' '}
                 <span className="text-white font-semibold">
-                  {isLoading ? '-' : paginationInfo.totalItems}
+                  {isLoading ? '집계중' : paginationInfo.totalItems.toLocaleString()}
                 </span>
                 개의 전략
               </p>
               <Badge className="bg-slate-700/50 text-slate-300 border-slate-600">
-                {isLoading ? '-' : currentPage} / {isLoading ? '-' : paginationInfo.totalPages}{' '}
-                페이지
+                {isLoading ? '로딩중' : `${currentPage} / ${paginationInfo.totalPages} 페이지`}
               </Badge>
             </div>
 
             {/* 전략 목록 */}
             {error ? (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardContent className="pt-6 text-center py-12">
-                  <p className="text-red-400 mb-4">⚠️ {error}</p>
-                  <Button
-                    onClick={() => window.location.reload()}
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    다시 시도
-                  </Button>
-                </CardContent>
-              </Card>
+              <StateMessageCard
+                tone="error"
+                icon="⚠️"
+                title={error}
+                description="잠시 후 다시 시도하거나 필터 조건을 기본값으로 되돌려주세요."
+                primaryAction={{ label: '다시 시도', onClick: () => window.location.reload() }}
+                secondaryAction={{
+                  label: '필터 초기화',
+                  onClick: () => {
+                    setSelectedCategory('all');
+                    setSelectedRiskLevel('all');
+                    setSelectedSort('popularity');
+                    setCurrentPage(1);
+                  },
+                  variant: 'ghost',
+                }}
+              />
             ) : (
               <>
                 <StrategyGrid strategies={strategies} isLoading={isLoading} />
@@ -284,9 +288,6 @@ export default function StrategiesPage() {
           </div>
         </div>
       </main>
-
-      {/* 푸터 */}
-      <Footer />
     </div>
   );
 }

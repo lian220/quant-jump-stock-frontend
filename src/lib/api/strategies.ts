@@ -10,6 +10,8 @@ import type {
   StrategyDetail,
   EquityCurveData,
   BenchmarkResponse,
+  UniverseType,
+  CanonicalBacktestSummary,
 } from '@/types/strategy';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
@@ -194,6 +196,7 @@ export async function getStrategies(
       'Content-Type': 'application/json',
     },
     credentials: 'include',
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -241,6 +244,7 @@ export async function getStrategyById(id: string): Promise<StrategyDetail> {
       'Content-Type': 'application/json',
     },
     credentials: 'include',
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -345,6 +349,38 @@ function mapBackendStrategyDetailToFrontend(backend: BackendStrategyDetail): Str
     riskSettings: backend.riskSettings,
     positionSizing: backend.positionSizing,
     tradingCosts: backend.tradingCosts,
+
+    // SCRUM-344: 유니버스 + 대표 백테스트
+    recommendedUniverseType: (backend.recommendedUniverseType as UniverseType) || 'MARKET',
+    supportedUniverseTypes: (backend.supportedUniverseTypes as UniverseType[]) || ['MARKET'],
+    canonicalBacktest: backend.canonicalBacktest
+      ? mapCanonicalBacktest(backend.canonicalBacktest)
+      : null,
+  };
+}
+
+/**
+ * SCRUM-344: 대표 백테스트 매핑
+ */
+function mapCanonicalBacktest(
+  cb: NonNullable<BackendStrategyDetail['canonicalBacktest']>,
+): CanonicalBacktestSummary {
+  return {
+    backtestId: cb.backtestId,
+    cagr: cb.cagr,
+    mdd: cb.mdd,
+    sharpeRatio: cb.sharpeRatio,
+    totalReturn: cb.totalReturn,
+    volatility: cb.volatility,
+    winRate: cb.winRate,
+    totalTrades: cb.totalTrades,
+    startDate: cb.startDate,
+    endDate: cb.endDate,
+    initialCapital: cb.initialCapital,
+    finalValue: cb.finalValue,
+    equityCurve: (cb.equityCurve || []).map(
+      (p): EquityCurveData => ({ date: p.date, value: p.value }),
+    ),
   };
 }
 
@@ -363,6 +399,7 @@ export async function getStrategyDefaultStocks(
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -397,6 +434,7 @@ export async function getBenchmarkSeries(params: {
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
   });
 
   if (!response.ok) {
@@ -405,107 +443,4 @@ export async function getBenchmarkSeries(params: {
   }
 
   return response.json();
-}
-
-/**
- * Mock 데이터 생성 (백엔드 API 미구현 시 사용)
- */
-export function generateMockStrategyDetail(id: string): StrategyDetail {
-  // 수익 곡선 mock 데이터 생성 (2020-2024)
-  const equityCurve: EquityCurveData[] = [];
-  let strategyValue = 10000;
-
-  const startDate = new Date('2020-01-01');
-  const endDate = new Date('2024-12-31');
-
-  for (let d = new Date(startDate); d <= endDate; d.setMonth(d.getMonth() + 1)) {
-    const strategyReturn = 1 + (Math.random() * 0.03 + 0.005);
-
-    if (Math.random() < 0.2) {
-      strategyValue *= 1 - Math.random() * 0.08;
-    } else {
-      strategyValue *= strategyReturn;
-    }
-
-    equityCurve.push({
-      date: d.toISOString().split('T')[0],
-      value: Math.round(strategyValue),
-    });
-  }
-
-  // 월별 수익률 mock 데이터
-  const monthlyReturns = [];
-  for (let year = 2020; year <= 2024; year++) {
-    for (let month = 1; month <= 12; month++) {
-      if (year === 2024 && month > 12) break;
-      monthlyReturns.push({
-        year,
-        month,
-        return: Math.round((Math.random() * 20 - 5) * 10) / 10,
-      });
-    }
-  }
-
-  return {
-    id,
-    name: '모멘텀 듀얼 전략',
-    description:
-      '상대 모멘텀과 절대 모멘텀을 결합한 듀얼 모멘텀 전략입니다. 시장 상황에 따라 자동으로 주식과 채권 비중을 조절합니다.',
-    category: 'momentum',
-    author: 'Alpha Foundry',
-    authorAvatar: '',
-
-    totalReturn: '+156.3%',
-    annualReturn: '+26.2%',
-    maxDrawdown: '-18.5%',
-    winRate: '62%',
-    sharpeRatio: '1.85',
-
-    riskLevel: 'medium',
-    minInvestment: 1000000,
-    subscribers: 1234,
-    rating: 4.5,
-    reviewCount: 89,
-
-    backtestPeriod: '2020-2024',
-    updatedAt: '2024-12-15',
-    isPremium: true,
-
-    tags: ['모멘텀', '듀얼모멘텀', 'AI'],
-
-    rules: [
-      {
-        id: 1,
-        name: '상대 모멘텀 필터',
-        description: '최근 12개월 수익률 상위 30% 종목만 편입',
-        type: 'filter',
-        parameters: { lookbackPeriod: 12, percentile: 30 },
-      },
-      {
-        id: 2,
-        name: '절대 모멘텀 체크',
-        description: '12개월 수익률이 무위험 이자율보다 높은 경우만 투자',
-        type: 'entry',
-        parameters: { lookbackPeriod: 12, riskFreeRate: 3.5 },
-      },
-      {
-        id: 3,
-        name: '월간 리밸런싱',
-        description: '매월 말 포트폴리오 재조정',
-        type: 'rebalance',
-        parameters: { frequency: 'monthly' },
-      },
-      {
-        id: 4,
-        name: '손절 조건',
-        description: '개별 종목 -15% 하락 시 매도',
-        type: 'exit',
-        parameters: { stopLoss: -15 },
-      },
-    ],
-
-    equityCurve,
-    monthlyReturns,
-    trades: [],
-  };
 }

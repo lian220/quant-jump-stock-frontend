@@ -33,7 +33,9 @@ export async function runBacktest(req: BacktestRunRequest): Promise<BacktestRunR
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const error = new Error(errorData.error || '백테스트 실행에 실패했습니다.');
+    const error = new Error(
+      errorData.message || errorData.error || '백테스트 실행에 실패했습니다.',
+    );
     (error as Error & { status?: number }).status = response.status;
     throw error;
   }
@@ -61,7 +63,7 @@ export async function getBacktestResult(
     if (data.status === 'FAILED') {
       return data as BacktestResultResponse;
     }
-    const error = new Error(data.error || '백테스트 결과 조회에 실패했습니다.');
+    const error = new Error(data.message || data.error || '백테스트 결과 조회에 실패했습니다.');
     (error as Error & { status?: number }).status = response.status;
     throw error;
   }
@@ -71,7 +73,7 @@ export async function getBacktestResult(
 
 /**
  * 백테스트 결과 폴링
- * 2초 간격으로 COMPLETED 또는 FAILED가 될 때까지 폴링
+ * 5초 간격으로 COMPLETED 또는 FAILED가 될 때까지 폴링
  */
 export async function pollBacktestResult(
   id: string,
@@ -99,9 +101,9 @@ export async function pollBacktestResult(
     } catch (e) {
       // AbortError는 그대로 throw
       if (e instanceof DOMException && e.name === 'AbortError') throw e;
-      // 404 등 결과가 아직 없는 경우는 계속 폴링
+      // 404만 계속 폴링 (결과가 아직 없는 경우), 그 외 모든 오류(네트워크 포함) 즉시 throw
       const status = (e as Error & { status?: number }).status;
-      if (status && status !== 404) throw e;
+      if (status !== 404) throw e;
     }
 
     await new Promise<void>((resolve, reject) => {
@@ -143,7 +145,8 @@ export async function getEnhancedBacktestResult(id: string): Promise<EnhancedBac
 export async function getAvailableBenchmarks(): Promise<BenchmarkOption[]> {
   const response = await fetch('/api/backtest/benchmarks', {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
+    credentials: 'include',
   });
 
   if (!response.ok) {

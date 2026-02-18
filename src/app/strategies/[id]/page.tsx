@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,17 +16,18 @@ import {
   EquityCurveChart,
   TermTooltip,
 } from '@/components/strategies';
-import { Footer } from '@/components/layout/Footer';
 import {
   getRiskColor,
   getRiskLabel,
   getCategoryLabel,
   getRuleTypeLabel,
   getRuleTypeColor,
+  getUniverseLabel,
+  getUniverseColor,
 } from '@/lib/strategy-helpers';
+import type { UniverseType } from '@/types/strategy';
 import {
   getStrategyById,
-  generateMockStrategyDetail,
   getStrategyDefaultStocks,
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
@@ -32,9 +35,14 @@ import { PageSEO } from '@/components/seo';
 import type { StrategyDetail, BenchmarkSeries } from '@/types/strategy';
 import type { DefaultStockResponse } from '@/types/api';
 
+const BacktestHistoryList = dynamic(() => import('@/components/backtest/BacktestHistoryList'), {
+  ssr: false,
+});
+
 export default function StrategyDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const id = params.id as string;
 
   const [strategy, setStrategy] = useState<StrategyDetail | null>(null);
@@ -43,9 +51,17 @@ export default function StrategyDetailPage() {
   const [benchmarks, setBenchmarks] = useState<BenchmarkSeries[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // SCRUM-350: Universe 선택 모달 상태
+  const [showUniverseModal, setShowUniverseModal] = useState(false);
+  const [selectedUniverseType, setSelectedUniverseType] = useState<UniverseType>('MARKET');
 
   useEffect(() => {
     const fetchStrategy = async () => {
+      // 전략 전환 시 이전 데이터 초기화
+      setStrategy(null);
+      setDefaultStocks([]);
+      setDefaultStocksTotalWeight(0);
+      setBenchmarks([]);
       setIsLoading(true);
       setError(null);
 
@@ -105,9 +121,7 @@ export default function StrategyDetailPage() {
         }
       } catch (err) {
         console.error('Failed to fetch strategy:', err);
-        // 백엔드 API가 없으면 mock 데이터 사용
-        const mockData = generateMockStrategyDetail(id);
-        setStrategy(mockData);
+        setError(err instanceof Error ? err.message : '전략 정보를 불러오는데 실패했습니다.');
       } finally {
         setIsLoading(false);
       }
@@ -202,50 +216,184 @@ export default function StrategyDetailPage() {
           </div>
         </div>
 
-        {/* 성과 지표 카드 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <MetricCard
-            value={strategy.totalReturn}
-            label="누적 수익률"
-            termKey="totalReturn"
-            metricKey="totalReturn"
-            valueColor="text-emerald-400"
-          />
-          <MetricCard
-            value={strategy.annualReturn}
-            label="연환산 수익률 (CAGR)"
-            termKey="cagr"
-            metricKey="cagr"
-            valueColor="text-cyan-400"
-          />
-          <MetricCard
-            value={strategy.maxDrawdown}
-            label="최대 낙폭 (MDD)"
-            termKey="mdd"
-            metricKey="mdd"
-            valueColor="text-red-400"
-          />
-          <MetricCard
-            value={strategy.sharpeRatio}
-            label="샤프 비율"
-            termKey="sharpeRatio"
-            metricKey="sharpeRatio"
-            valueColor="text-purple-400"
-          />
-          <MetricCard
-            value={strategy.winRate}
-            label="승률"
-            termKey="winRate"
-            metricKey="winRate"
-            valueColor="text-yellow-400"
-          />
-          <MetricCard
-            value={`${(strategy.minInvestment / 10000).toLocaleString()}만원`}
-            label="최소 투자금"
-            termKey="minInvestment"
-            valueColor="text-white"
-          />
-        </div>
+        {/* 성과 지표: 기본 성과 / 내 백테스트 탭 */}
+        <Tabs defaultValue="canonical" className="mb-8">
+          <TabsList className="bg-slate-800/50 border border-slate-700">
+            <TabsTrigger
+              value="canonical"
+              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+            >
+              기본 성과
+            </TabsTrigger>
+            <TabsTrigger
+              value="my-backtests"
+              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+            >
+              내 백테스트
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="canonical" className="space-y-6 mt-4">
+            {/* SCRUM-344: 대표 백테스트 성과 (canonical) */}
+            {strategy.canonicalBacktest && (
+              <Card className="bg-gradient-to-r from-slate-800/70 to-slate-800/50 border-emerald-500/20">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-white text-lg">대표 백테스트 성과</CardTitle>
+                      <CardDescription className="text-slate-400 text-xs">
+                        {strategy.canonicalBacktest.startDate} ~{' '}
+                        {strategy.canonicalBacktest.endDate} | 초기자본{' '}
+                        {(strategy.canonicalBacktest.initialCapital / 10000).toLocaleString()}만원
+                      </CardDescription>
+                    </div>
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                      자동 산출
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">CAGR</p>
+                      <p
+                        className={`text-lg font-bold ${strategy.canonicalBacktest.cagr >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                      >
+                        {strategy.canonicalBacktest.cagr >= 0 ? '+' : ''}
+                        {strategy.canonicalBacktest.cagr.toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">MDD</p>
+                      <p className="text-lg font-bold text-red-400">
+                        {strategy.canonicalBacktest.mdd.toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">샤프 비율</p>
+                      <p className="text-lg font-bold text-purple-400">
+                        {strategy.canonicalBacktest.sharpeRatio?.toFixed(2) ?? 'N/A'}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">총 수익률</p>
+                      <p
+                        className={`text-lg font-bold ${strategy.canonicalBacktest.totalReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                      >
+                        {strategy.canonicalBacktest.totalReturn >= 0 ? '+' : ''}
+                        {strategy.canonicalBacktest.totalReturn.toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">승률</p>
+                      <p className="text-lg font-bold text-yellow-400">
+                        {strategy.canonicalBacktest.winRate != null
+                          ? `${strategy.canonicalBacktest.winRate.toFixed(1)}%`
+                          : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-slate-400 mb-1">최종 자산</p>
+                      <p className="text-lg font-bold text-cyan-400">
+                        {(strategy.canonicalBacktest.finalValue / 10000).toLocaleString(undefined, {
+                          maximumFractionDigits: 0,
+                        })}
+                        만원
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* 성과 지표 카드 */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <MetricCard
+                value={strategy.totalReturn}
+                label="누적 수익률"
+                termKey="totalReturn"
+                metricKey="totalReturn"
+                valueColor="text-emerald-400"
+              />
+              <MetricCard
+                value={strategy.annualReturn}
+                label="연환산 수익률 (CAGR)"
+                termKey="cagr"
+                metricKey="cagr"
+                valueColor="text-cyan-400"
+              />
+              <MetricCard
+                value={strategy.maxDrawdown}
+                label="최대 낙폭 (MDD)"
+                termKey="mdd"
+                metricKey="mdd"
+                valueColor="text-red-400"
+              />
+              <MetricCard
+                value={strategy.sharpeRatio}
+                label="샤프 비율"
+                termKey="sharpeRatio"
+                metricKey="sharpeRatio"
+                valueColor="text-purple-400"
+              />
+              <MetricCard
+                value={strategy.winRate}
+                label="승률"
+                termKey="winRate"
+                metricKey="winRate"
+                valueColor="text-yellow-400"
+              />
+              <MetricCard
+                value={`${(strategy.minInvestment / 10000).toLocaleString()}만원`}
+                label="최소 투자금"
+                termKey="minInvestment"
+                valueColor="text-white"
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="my-backtests" className="mt-4">
+            {/* 비로그인 상태 */}
+            {!authLoading && !user ? (
+              <Card className="bg-slate-800/50 border-slate-700">
+                <CardContent className="py-12">
+                  <div className="text-center">
+                    <p className="text-slate-400 mb-2">
+                      로그인하고 나만의 조건으로 백테스트해 보세요
+                    </p>
+                    <p className="text-slate-500 text-sm mb-6">
+                      기간, 자본금, 벤치마크를 직접 설정하여 시뮬레이션할 수 있습니다
+                    </p>
+                    <Link href="/auth">
+                      <Button className="bg-emerald-600 hover:bg-emerald-700">로그인</Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              /* 로그인 상태: BacktestHistoryList + CTA */
+              <div className="space-y-4">
+                <BacktestHistoryList strategyId={id} />
+
+                <Card className="bg-slate-800/50 border-slate-700">
+                  <CardContent className="py-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div>
+                        <h4 className="text-white font-medium">새로운 조건으로 테스트</h4>
+                        <p className="text-slate-400 text-sm">
+                          기간, 자본금, 유니버스를 직접 설정하세요
+                        </p>
+                      </div>
+                      <Link href={`/strategies/${id}/backtest`}>
+                        <Button className="bg-cyan-600 hover:bg-cyan-700">새 백테스트 실행</Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* 포트폴리오 구성 (PORTFOLIO 타입일 때만) */}
         {strategy.stockSelectionType === 'PORTFOLIO' && defaultStocks.length > 0 && (
@@ -641,13 +789,13 @@ export default function StrategyDetailPage() {
           <CardContent className="py-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-white mb-1">백테스트 실행</h3>
+                <h3 className="text-lg font-bold text-white mb-1">내 설정으로 백테스트</h3>
                 <p className="text-slate-400 text-sm">
-                  이 전략의 과거 성과를 직접 시뮬레이션해 보세요
+                  기간, 자본금, 유니버스를 직접 설정하여 시뮬레이션해 보세요
                 </p>
               </div>
               <Link href={`/strategies/${id}/backtest`}>
-                <Button className="bg-cyan-600 hover:bg-cyan-700 px-6">백테스트 실행 →</Button>
+                <Button className="bg-cyan-600 hover:bg-cyan-700 px-6">커스텀 백테스트 →</Button>
               </Link>
             </div>
           </CardContent>
@@ -681,6 +829,10 @@ export default function StrategyDetailPage() {
                       ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
                       : 'bg-emerald-600 hover:bg-emerald-700'
                   }`}
+                  onClick={() => {
+                    setSelectedUniverseType(strategy.recommendedUniverseType ?? 'MARKET');
+                    setShowUniverseModal(true);
+                  }}
                 >
                   {strategy.isPremium ? '프리미엄 구독하기' : '무료로 구독하기'}
                 </Button>
@@ -691,6 +843,88 @@ export default function StrategyDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* SCRUM-350: Universe 선택 모달 */}
+        {showUniverseModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+              <h3 className="text-xl font-bold text-white mb-1">투자 유니버스 선택</h3>
+              <p className="text-slate-400 text-sm mb-5">
+                매매 신호를 적용할 종목 범위를 선택하세요.
+              </p>
+
+              <div className="space-y-3 mb-6">
+                {(strategy.supportedUniverseTypes ?? ['MARKET']).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setSelectedUniverseType(type)}
+                    className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-all ${
+                      selectedUniverseType === type
+                        ? 'border-emerald-500 bg-emerald-500/10'
+                        : 'border-slate-600 bg-slate-700/30 hover:border-slate-500'
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        selectedUniverseType === type
+                          ? 'border-emerald-500 bg-emerald-500'
+                          : 'border-slate-500'
+                      }`}
+                    >
+                      {selectedUniverseType === type && (
+                        <div className="w-2 h-2 rounded-full bg-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${getUniverseColor(type)} text-xs`}>
+                          {getUniverseLabel(type)}
+                        </Badge>
+                        {type === strategy.recommendedUniverseType && (
+                          <span className="text-xs text-emerald-400">추천</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {type === 'MARKET' && '시장 전체 종목 중 신호 발생 종목에 적용'}
+                        {type === 'PORTFOLIO' && '전략 기본 종목 포트폴리오에만 적용'}
+                        {type === 'FIXED' && '지정된 고정 종목 목록에만 적용'}
+                        {type === 'SECTOR' && '특정 섹터 종목에만 적용'}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-slate-600 text-slate-300"
+                  onClick={() => setShowUniverseModal(false)}
+                >
+                  취소
+                </Button>
+                <Button
+                  className={`flex-1 ${
+                    strategy.isPremium
+                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
+                      : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
+                  onClick={() => {
+                    // TODO: 실제 구독 API 호출 시 selectedUniverseType 전달
+                    setShowUniverseModal(false);
+                    router.push(
+                      strategy.isPremium
+                        ? '/payment'
+                        : `/strategies/${id}/subscribe?universe=${selectedUniverseType}`,
+                    );
+                  }}
+                >
+                  {getUniverseLabel(selectedUniverseType)}으로 구독
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 태그 */}
         {strategy.tags.length > 0 && (
@@ -708,9 +942,6 @@ export default function StrategyDetailPage() {
           </div>
         )}
       </main>
-
-      {/* 푸터 */}
-      <Footer />
     </div>
   );
 }
