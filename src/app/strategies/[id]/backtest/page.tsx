@@ -43,7 +43,7 @@ export default function BacktestPage() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   // 로그인 후 폼 복원을 위한 저장 값
   const [savedFormValues, setSavedFormValues] = useState<BacktestFormSavedValues | null>(null);
-  const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['SPY']);
+  const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['^KS11']);
   const [strategyName, setStrategyName] = useState<string>('');
   const [strategyRiskSettings, setStrategyRiskSettings] = useState<string | undefined>();
   const [strategyPositionSizing, setStrategyPositionSizing] = useState<string | undefined>();
@@ -132,6 +132,56 @@ export default function BacktestPage() {
     }
   }, []);
 
+  /** 공통 폴링 로직: AbortController → 60s 타임아웃 → poll → Enhanced 조회 → 스크롤 → 클린업 */
+  const resumePolling = useCallback(
+    async (backtestId: string): Promise<void> => {
+      abortControllerRef.current?.abort();
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        abortController.abort();
+        setIsTimedOut(true);
+        setIsLoading(false);
+        setStatus(null);
+      }, 60_000);
+
+      try {
+        const backtestResult = await pollBacktestResult(
+          backtestId,
+          (s) => setStatus(s as BacktestStatus),
+          abortController.signal,
+        );
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+        if (backtestResult.status === 'FAILED') {
+          setError(backtestResult.errorMessage || '백테스트 실행에 실패했습니다.');
+        } else {
+          setResult(backtestResult);
+          try {
+            const enhanced = await getEnhancedBacktestResult(backtestId);
+            setEnhancedResult(enhanced);
+          } catch {
+            /* Enhanced 없으면 무시 */
+          }
+          setTimeout(
+            () => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+            100,
+          );
+        }
+      } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') return;
+        setError(e instanceof Error ? e.message : '백테스트 결과 조회에 실패했습니다.');
+      } finally {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        stopLoadingSteps();
+        setIsLoading(false);
+      }
+    },
+    [stopLoadingSteps],
+  );
+
   const handleSubmit = useCallback(
     async (data: BacktestRunRequest) => {
       // 비로그인 시 mock 데이터로 미리보기 제공 (Soft Gate)
@@ -177,11 +227,6 @@ export default function BacktestPage() {
         return;
       }
 
-      // 이전 폴링 취소
-      abortControllerRef.current?.abort();
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-
       setShowLoginPrompt(false);
       setSelectedBenchmarks(data.benchmarks ?? [data.benchmark]);
       setIsLoading(true);
@@ -191,7 +236,6 @@ export default function BacktestPage() {
       setError(null);
       setIsTimedOut(false);
       setLastBacktestId(null);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       startLoadingSteps();
 
       try {
@@ -199,47 +243,15 @@ export default function BacktestPage() {
         const runResponse = await runBacktest(data);
         setStatus('RUNNING');
         setLastBacktestId(runResponse.backtestId);
-
-        // 1분 타임아웃: 오래 걸리면 폴링 중단 후 안내
-        timeoutRef.current = setTimeout(() => {
-          abortController.abort();
-          setIsTimedOut(true);
-          setIsLoading(false);
-          setStatus(null);
-        }, 60_000);
-
-        // 폴링으로 결과 대기
-        const backtestResult = await pollBacktestResult(
-          runResponse.backtestId,
-          (s) => {
-            setStatus(s as BacktestStatus);
-          },
-          abortController.signal,
-        );
-
-        // 폴링 완료 → 타임아웃 해제
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-        if (backtestResult.status === 'FAILED') {
-          setError(backtestResult.errorMessage || '백테스트 실행에 실패했습니다.');
-        } else {
-          setResult(backtestResult);
-          // Enhanced 결과 조회 시도
-          try {
-            const enhanced = await getEnhancedBacktestResult(runResponse.backtestId);
-            setEnhancedResult(enhanced);
-          } catch {
-            // Enhanced 없으면 무시, 기존 PerformanceCards fallback
-          }
-          // UX-05: 결과 영역으로 자동 스크롤
-          setTimeout(
-            () => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-            100,
-          );
-        }
+        // resumePolling이 AbortController, 타임아웃, 폴링, 클린업 모두 처리
+        await resumePolling(runResponse.backtestId);
       } catch (e) {
-        // AbortError는 타임아웃에 의한 것일 수 있으므로 무시
-        if (e instanceof DOMException && e.name === 'AbortError') return;
+        // runBacktest 실패 케이스 처리 (polling 오류는 resumePolling 내부에서 처리됨)
+        if (e instanceof DOMException && e.name === 'AbortError') {
+          stopLoadingSteps();
+          setIsLoading(false);
+          return;
+        }
 
         // 네트워크 오류 또는 백엔드 오류(500/503)일 때 mock fallback
         const errorStatus = (e as Error & { status?: number }).status;
@@ -250,7 +262,6 @@ export default function BacktestPage() {
           console.warn('백엔드 연결 실패, mock 데이터를 사용합니다.');
           setStatus('RUNNING');
           await new Promise((resolve) => setTimeout(resolve, 1500));
-          if (abortController.signal.aborted) return;
           const mockResult = generateMockBacktestResult(
             strategyId,
             `전략 ${strategyId}`,
@@ -265,13 +276,11 @@ export default function BacktestPage() {
           setError(e instanceof Error ? e.message : '백테스트 실행에 실패했습니다.');
           setStatus('FAILED');
         }
-      } finally {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
         stopLoadingSteps();
         setIsLoading(false);
       }
     },
-    [strategyId, strategyName, user, startLoadingSteps, stopLoadingSteps],
+    [strategyId, strategyName, user, startLoadingSteps, stopLoadingSteps, resumePolling],
   );
 
   // UX-09: 타임아웃 후 폴링 재개
@@ -281,49 +290,8 @@ export default function BacktestPage() {
     setIsLoading(true);
     setStatus('RUNNING');
     startLoadingSteps();
-
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    timeoutRef.current = setTimeout(() => {
-      abortController.abort();
-      setIsTimedOut(true);
-      setIsLoading(false);
-      setStatus(null);
-      stopLoadingSteps();
-    }, 60_000);
-
-    try {
-      const backtestResult = await pollBacktestResult(
-        lastBacktestId,
-        (s) => setStatus(s as BacktestStatus),
-        abortController.signal,
-      );
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (backtestResult.status === 'FAILED') {
-        setError(backtestResult.errorMessage || '백테스트 실행에 실패했습니다.');
-      } else {
-        setResult(backtestResult);
-        try {
-          const enhanced = await getEnhancedBacktestResult(lastBacktestId);
-          setEnhancedResult(enhanced);
-        } catch {
-          /* Enhanced 없으면 무시 */
-        }
-        setTimeout(
-          () => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-          100,
-        );
-      }
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return;
-      setError(e instanceof Error ? e.message : '백테스트 결과 조회에 실패했습니다.');
-    } finally {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      stopLoadingSteps();
-      setIsLoading(false);
-    }
-  }, [lastBacktestId, startLoadingSteps, stopLoadingSteps]);
+    await resumePolling(lastBacktestId);
+  }, [lastBacktestId, startLoadingSteps, resumePolling]);
 
   // FIN-02: 표본 부족 경고용 변수 (JSX 외부에서 계산)
   const roundTrips = result?.metrics

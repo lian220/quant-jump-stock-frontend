@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 // 서버 사이드: API_URL 우선 (Docker 내부 네트워크), 없으면 로컬 기본값
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
+const NO_CACHE_HEADERS = { 'Cache-Control': 'private, no-cache' } as const;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -30,9 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json(data, {
-      headers: { 'Cache-Control': 'private, no-cache' },
-    });
+    return NextResponse.json(data, { headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error('Failed to fetch backtest list:', error);
     const message =

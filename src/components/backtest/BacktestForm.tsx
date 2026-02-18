@@ -29,6 +29,7 @@ import type {
 } from '@/types/backtest';
 import { getAvailableBenchmarks } from '@/lib/api/backtest';
 import { MAX_BACKTEST_DAYS, MAX_BENCHMARKS } from '@/constants/backtest';
+import { UNIVERSE_LABELS } from '@/lib/strategy-helpers';
 
 const backtestFormSchema = z
   .object({
@@ -162,14 +163,6 @@ function InfoTip({ text }: { text: string }) {
     </Tooltip>
   );
 }
-
-// SCRUM-344: 유니버스 타입 옵션
-const universeTypeLabels: Record<UniverseType, string> = {
-  MARKET: '전체 시장',
-  PORTFOLIO: '전략 기본 종목',
-  SECTOR: '섹터별',
-  FIXED: '지정 종목',
-};
 
 // 슬리피지 모델 옵션
 const slippageOptions: { value: SlippageType; label: string }[] = [
@@ -630,7 +623,7 @@ export default function BacktestForm({
                   <SelectContent className="bg-slate-800 border-slate-600">
                     {supportedUniverseTypes.map((ut) => (
                       <SelectItem key={ut} value={ut} className="text-slate-200">
-                        {universeTypeLabels[ut]}
+                        {UNIVERSE_LABELS[ut] ?? ut}
                         {ut === recommendedUniverseType && ' (추천)'}
                       </SelectItem>
                     ))}

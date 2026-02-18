@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getUniverseLabel } from '@/lib/strategy-helpers';
 
 interface BacktestHistoryItem {
-  id: number;
+  id: string;
   strategyId: number;
   strategyName: string | null;
   status: string;
@@ -26,13 +27,6 @@ interface BacktestHistoryItem {
 interface BacktestHistoryListProps {
   strategyId: string;
 }
-
-const universeLabels: Record<string, string> = {
-  MARKET: '전체 시장',
-  PORTFOLIO: '기본 종목',
-  SECTOR: '섹터별',
-  FIXED: '지정 종목',
-};
 
 export default function BacktestHistoryList({ strategyId }: BacktestHistoryListProps) {
   const [history, setHistory] = useState<BacktestHistoryItem[]>([]);
@@ -167,7 +161,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
                       </Badge>
                       {item.universeType && (
                         <span className="text-xs text-slate-500">
-                          {universeLabels[item.universeType] || item.universeType}
+                          {getUniverseLabel(item.universeType)}
                         </span>
                       )}
                     </div>

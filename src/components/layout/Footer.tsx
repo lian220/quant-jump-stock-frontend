@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const HIDDEN_PREFIXES = ['/auth', '/onboarding', '/offline'];
+const HIDDEN_PREFIXES = ['/auth', '/onboarding', '/offline', '/funnel'];
 
 export function Footer() {
   const pathname = usePathname();
