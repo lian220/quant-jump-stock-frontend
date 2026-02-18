@@ -23,6 +23,8 @@ import type {
   RebalancePeriod,
   BenchmarkOption,
   RiskSettings,
+  PositionSizingConfig,
+  TradingCostsConfig,
   PositionSizingMethod,
   SlippageType,
   UniverseType,
@@ -64,8 +66,12 @@ export interface BacktestFormSavedValues {
   endDate?: string;
   initialCapital?: number;
   benchmark?: string;
+  additionalBenchmarks?: string[];
   rebalancePeriod?: string;
   universeType?: UniverseType;
+  riskSettings?: RiskSettings;
+  positionSizing?: PositionSizingConfig;
+  tradingCosts?: TradingCostsConfig;
 }
 
 interface BacktestFormProps {
@@ -316,25 +322,68 @@ export default function BacktestForm({
 
   // initialValues가 세팅되면 폼 전체 리셋 (로그인 후 복귀 시 폼 값 복원)
   useEffect(() => {
-    if (initialValues) {
-      reset({
-        startDate: initialValues.startDate ?? defaultDates.startDate,
-        endDate: initialValues.endDate ?? defaultDates.endDate,
-        initialCapital: initialValues.initialCapital ?? 10000000,
-        benchmark: initialValues.benchmark ?? '^KS11',
-        rebalancePeriod:
-          (initialValues.rebalancePeriod as RebalancePeriod | undefined) ?? 'MONTHLY',
-      });
-    }
-  }, [initialValues]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!initialValues) return;
 
-  // initialValues로 universeType 복원
-  useEffect(() => {
-    if (initialValues?.universeType) {
+    // 기본 폼 필드 복원
+    reset({
+      startDate: initialValues.startDate ?? defaultDates.startDate,
+      endDate: initialValues.endDate ?? defaultDates.endDate,
+      initialCapital: initialValues.initialCapital ?? 10000000,
+      benchmark: initialValues.benchmark ?? '^KS11',
+      rebalancePeriod: (initialValues.rebalancePeriod as RebalancePeriod | undefined) ?? 'MONTHLY',
+    });
+
+    // 유니버스 타입 복원
+    if (initialValues.universeType) {
       setUniverseType(initialValues.universeType);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    // 비교 벤치마크 복원
+    if (initialValues.additionalBenchmarks?.length) {
+      setAdditionalBenchmarks(initialValues.additionalBenchmarks);
+      setShowBenchmarkCompare(true);
+    }
+
+    // 리스크 설정 복원
+    if (initialValues.riskSettings) {
+      const rs = initialValues.riskSettings;
+      if (rs.stopLoss?.enabled) {
+        setStopLossEnabled(true);
+        setStopLossValue(rs.stopLoss.value ?? 5);
+      }
+      if (rs.takeProfit?.enabled) {
+        setTakeProfitEnabled(true);
+        setTakeProfitValue(rs.takeProfit.value ?? 10);
+      }
+      if (rs.trailingStop?.enabled) {
+        setTrailingStopEnabled(true);
+        setTrailingStopValue(rs.trailingStop.value ?? 3);
+      }
+      setShowAdvanced(true);
+    }
+
+    // 포지션 사이징 복원
+    if (initialValues.positionSizing) {
+      const ps = initialValues.positionSizing;
+      if (ps.method) setPositionMethod(ps.method);
+      if (ps.maxPositionPct != null) setMaxPositionPct(ps.maxPositionPct);
+      if (ps.maxPositions != null) setMaxPositions(ps.maxPositions);
+      setShowAdvanced(true);
+    }
+
+    // 거래 비용 복원 (저장 시 /100 적용했으므로 *100으로 역변환)
+    if (initialValues.tradingCosts) {
+      const tc = initialValues.tradingCosts;
+      if (tc.commission != null) setCommissionRate(tc.commission * 100);
+      if (tc.tax != null) setTaxRate(tc.tax * 100);
+      if (tc.slippageModel) {
+        setSlippageModel(tc.slippageModel.type);
+        if (tc.slippageModel.baseSlippage != null)
+          setBaseSlippage(tc.slippageModel.baseSlippage * 100);
+      }
+      setShowAdvanced(true);
+    }
+  }, [initialValues]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const benchmarkValue = watch('benchmark');
   const rebalanceValue = watch('rebalancePeriod');

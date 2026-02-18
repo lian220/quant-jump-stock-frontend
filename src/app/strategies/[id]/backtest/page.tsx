@@ -215,8 +215,14 @@ export default function BacktestPage() {
             endDate: data.endDate,
             initialCapital: data.initialCapital,
             benchmark: data.benchmark,
+            additionalBenchmarks: data.benchmarks
+              ? data.benchmarks.filter((b) => b !== data.benchmark)
+              : [],
             rebalancePeriod: data.rebalancePeriod,
             universeType: data.universeType,
+            riskSettings: data.riskSettings,
+            positionSizing: data.positionSizing,
+            tradingCosts: data.tradingCosts,
           } satisfies BacktestFormSavedValues),
         );
         // UX-05: 결과 영역으로 자동 스크롤

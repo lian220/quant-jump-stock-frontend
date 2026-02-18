@@ -80,7 +80,7 @@ export const UNIVERSE_LABELS: Record<string, string> = {
 // SCRUM-351: Universe 타입 색상 클래스 (공유 상수)
 export const UNIVERSE_COLOR_CLASSES: Record<string, string> = {
   MARKET: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-  PORTFOLIO: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  PORTFOLIO: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
   SECTOR: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
   FIXED: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
 };
