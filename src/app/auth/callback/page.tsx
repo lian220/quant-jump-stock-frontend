@@ -19,8 +19,16 @@ export default function AuthCallbackPage() {
     const error = urlParams.get('error');
 
     if (error) {
+      const ERROR_MESSAGES: Record<string, string> = {
+        invalid_token: '유효하지 않은 토큰입니다.',
+        token_expired: '토큰이 만료되었습니다.',
+        unauthorized: '인증에 실패했습니다.',
+        access_denied: '접근이 거부되었습니다.',
+        server_error: '서버 오류가 발생했습니다.',
+        oauth_error: 'OAuth 인증 중 오류가 발생했습니다.',
+      };
       setStatus('error');
-      setMessage(`로그인 실패: ${error}`);
+      setMessage(`로그인 실패: ${ERROR_MESSAGES[error] ?? '알 수 없는 오류가 발생했습니다.'}`);
       setTimeout(() => router.push('/auth'), 3000);
       return;
     }

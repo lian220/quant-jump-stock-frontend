@@ -59,13 +59,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const authorization = request.headers.get('authorization');
+    if (!authorization) {
+      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
     const response = await fetch(`${API_URL}/api/v1/backtest/run`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(authorization && { Authorization: authorization }),
+        Authorization: authorization,
       },
       body: JSON.stringify(body),
       signal: controller.signal,

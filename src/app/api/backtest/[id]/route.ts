@@ -8,11 +8,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   try {
     const authorization = request.headers.get('authorization');
+    if (!authorization) {
+      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+    }
     const response = await fetch(`${API_URL}/api/v1/backtest/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...(authorization && { Authorization: authorization }),
+        Authorization: authorization,
       },
     });
 
