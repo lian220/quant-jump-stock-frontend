@@ -6,12 +6,12 @@
 
 | Feature | Status | Priority |
 |---------|--------|----------|
-| [Dashboard](./dashboard.md) | Draft | P0 |
-| [Stock Analysis](./stock-analysis.md) | Draft | P0 |
-| [Auto Trading](./auto-trading.md) | Draft | P1 |
-| [Account](./account.md) | Draft | P1 |
-| [Trades](./trades.md) | Draft | P2 |
-| [Settings](./settings.md) | Draft | P2 |
+| [Dashboard](./대시보드.md) | Draft | P0 |
+| [Stock Analysis](./종목_분석.md) | Draft | P0 |
+| [Auto Trading](./자동_트레이딩.md) | Draft | P1 |
+| [Account](./계정.md) | Draft | P1 |
+| [Trades](./거래.md) | Draft | P2 |
+| [Settings](./설정.md) | Draft | P2 |
 
 ## Page Structure
 
