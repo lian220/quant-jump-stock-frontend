@@ -42,13 +42,20 @@ clientApi.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+// 401 리다이렉트에서 제외할 경로 (자체적으로 401을 처리하는 엔드포인트)
+const AUTH_SILENT_PATHS = ['/api/auth/me', '/api/auth/login', '/api/auth/signup'];
+
 // Response Interceptor (에러 처리) - clientApi에 적용
 clientApi.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // 인증 만료 - 단, 로그인 페이지에서의 401은 리다이렉트하지 않음 (로그인 실패 에러)
-      if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
+      const requestPath = error.config?.url || '';
+      const isSilent = AUTH_SILENT_PATHS.some((p) => requestPath.startsWith(p));
+
+      // 세션 검증·로그인 요청의 401은 호출자가 직접 처리 (AuthContext)
+      // 그 외 API 401만 로그인 페이지로 리다이렉트
+      if (!isSilent && typeof window !== 'undefined' && window.location.pathname !== '/auth') {
         localStorage.removeItem('auth_token');
         window.location.href = '/auth';
       }
