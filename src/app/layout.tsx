@@ -5,6 +5,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { structuredDataTemplates } from '@/lib/seo/config';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
+import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
+import { IosInstallGuide } from '@/components/pwa/IosInstallGuide';
 
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -135,6 +137,8 @@ export default function RootLayout({
         <CopyProtection />
         <ServiceWorkerRegister />
         <InstallPrompt />
+        <IosInstallGuide />
+        <UpdatePrompt />
 
         <Toaster position="top-center" richColors />
         <AuthProvider>

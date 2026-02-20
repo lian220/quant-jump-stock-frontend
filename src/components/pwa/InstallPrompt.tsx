@@ -24,11 +24,11 @@ export function InstallPrompt() {
       return;
     }
 
-    // 이전에 닫았는지 확인 (24시간 동안 표시 안 함)
+    // 이전에 닫았는지 확인 (7일 동안 표시 안 함)
     const dismissedTime = localStorage.getItem('pwa-install-dismissed');
     if (dismissedTime) {
       const hoursSinceDismissed = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60);
-      if (hoursSinceDismissed < 24) {
+      if (hoursSinceDismissed < 168) {
         return;
       }
     }
@@ -73,7 +73,7 @@ export function InstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 sm:left-auto sm:right-4 sm:w-96">
+    <div className="fixed bottom-20 left-4 right-4 z-50 sm:bottom-4 sm:left-auto sm:right-4 sm:w-96">
       <div className="relative overflow-hidden rounded-lg border border-emerald-600/50 bg-slate-800 p-4 shadow-lg shadow-emerald-600/20">
         {/* 배경 그라디언트 */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/10 to-transparent" />

@@ -134,21 +134,45 @@ self.addEventListener('sync', (event) => {
   }
 });
 
+// SKIP_WAITING 메시지 핸들러 (UpdatePrompt에서 사용)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // 푸시 알림
 self.addEventListener('push', (event) => {
-  const options = {
-    body: event.data ? event.data.text() : '새로운 알림이 있습니다.',
+  let title = 'Alpha Foundry';
+  let options = {
+    body: '새로운 알림이 있습니다.',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     vibrate: [200, 100, 200],
+    data: {},
   };
-  event.waitUntil(self.registration.showNotification('Alpha Foundry', options));
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      title = payload.title || title;
+      options.body = payload.body || options.body;
+      options.data = { action_url: payload.action_url || '/' };
+    } catch {
+      // JSON 파싱 실패 시 텍스트로 폴백
+      options.body = event.data.text() || options.body;
+      options.data = { action_url: '/' };
+    }
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
 // 알림 클릭 처리
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow('/'));
+  const actionUrl = event.notification.data?.action_url || '/';
+  event.waitUntil(clients.openWindow(actionUrl));
 });
 
 async function syncData() {
