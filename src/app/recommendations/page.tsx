@@ -467,7 +467,7 @@ export default function RecommendationsPage() {
                       return (
                         <Card
                           key={stock.ticker}
-                          className={`bg-gradient-to-br from-slate-800/80 to-slate-800/50 transition-all hover:shadow-lg ${
+                          className={`flex flex-col bg-gradient-to-br from-slate-800/80 to-slate-800/50 transition-all hover:shadow-lg ${
                             isStrong
                               ? 'border-emerald-500/50 hover:border-emerald-400 hover:shadow-emerald-500/10'
                               : isMedium
@@ -524,17 +524,23 @@ export default function RecommendationsPage() {
                             </div>
 
                             {/* 점수 상세 */}
-                            <div className="grid grid-cols-2 gap-3 mb-4">
-                              <div className="bg-slate-700/30 p-3 rounded-lg">
-                                <p className="text-xs text-slate-400 mb-1">기술 점수</p>
-                                <p className="text-lg font-bold text-cyan-400 tabular-nums">
+                            <div className="grid grid-cols-3 gap-2 mb-4">
+                              <div className="bg-slate-700/30 p-2.5 rounded-lg">
+                                <p className="text-[10px] text-slate-400 mb-1">기술 점수</p>
+                                <p className="text-base font-bold text-cyan-400 tabular-nums">
                                   {stock.techScore.toFixed(1)}
                                 </p>
                               </div>
-                              <div className="bg-slate-700/30 p-3 rounded-lg">
-                                <p className="text-xs text-slate-400 mb-1">AI 점수</p>
-                                <p className="text-lg font-bold text-purple-400 tabular-nums">
+                              <div className="bg-slate-700/30 p-2.5 rounded-lg">
+                                <p className="text-[10px] text-slate-400 mb-1">AI 점수</p>
+                                <p className="text-base font-bold text-purple-400 tabular-nums">
                                   {stock.aiScore.toFixed(1)}
+                                </p>
+                              </div>
+                              <div className="bg-slate-700/30 p-2.5 rounded-lg">
+                                <p className="text-[10px] text-slate-400 mb-1">감성 점수</p>
+                                <p className="text-base font-bold text-yellow-400 tabular-nums">
+                                  {stock.sentimentScore.toFixed(1)}
                                 </p>
                               </div>
                             </div>
@@ -542,64 +548,52 @@ export default function RecommendationsPage() {
                             {/* 가격 정보 */}
                             {(stock.currentPrice != null || stock.targetPrice != null) && (
                               <div className="bg-slate-700/20 p-4 rounded-lg mb-4">
-                                {stock.currentPrice != null ? (
-                                  <div className="grid grid-cols-2 gap-4 mb-3">
-                                    <div>
-                                      <p className="text-xs text-slate-400 mb-1">현재가</p>
-                                      <p className="text-xl font-bold text-white font-mono tabular-nums">
-                                        ${stock.currentPrice.toFixed(2)}
-                                      </p>
-                                    </div>
-                                    {stock.targetPrice != null && (
-                                      <div>
-                                        <p className="text-xs text-slate-400 mb-1">목표가</p>
-                                        <p className="text-xl font-bold text-emerald-400 font-mono tabular-nums">
-                                          ${stock.targetPrice.toFixed(2)}
-                                        </p>
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="mb-3">
-                                    <p className="text-xs text-slate-400 mb-1">AI 목표가</p>
-                                    <p className="text-2xl font-bold text-emerald-400 font-mono tabular-nums">
-                                      ${stock.targetPrice!.toFixed(2)}
+                                <div className="grid grid-cols-2 gap-4 mb-3">
+                                  <div>
+                                    <p className="text-xs text-slate-400 mb-1">현재가</p>
+                                    <p className="text-xl font-bold text-white font-mono tabular-nums">
+                                      {stock.currentPrice != null
+                                        ? `$${stock.currentPrice.toFixed(2)}`
+                                        : '—'}
                                     </p>
                                   </div>
-                                )}
+                                  <div>
+                                    <p className="text-xs text-slate-400 mb-1">AI 목표가</p>
+                                    <p className="text-xl font-bold text-emerald-400 font-mono tabular-nums">
+                                      {stock.targetPrice != null
+                                        ? `$${stock.targetPrice.toFixed(2)}`
+                                        : '—'}
+                                    </p>
+                                  </div>
+                                </div>
 
                                 <div className="flex items-center justify-between">
-                                  {stock.upsidePercent !== undefined &&
-                                    stock.upsidePercent !== null && (
-                                      <Badge
-                                        className={`
-                                    ${
-                                      stock.upsidePercent >= 10
-                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                        : stock.upsidePercent >= 5
-                                          ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
-                                          : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                                    }
-                                  `}
-                                      >
-                                        상승여력 {stock.upsidePercent > 0 ? '+' : ''}
-                                        {stock.upsidePercent.toFixed(1)}%
-                                      </Badge>
-                                    )}
+                                  {stock.upsidePercent != null && (
+                                    <Badge
+                                      className={
+                                        stock.upsidePercent >= 10
+                                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                          : stock.upsidePercent >= 5
+                                            ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                                            : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                      }
+                                    >
+                                      상승여력 {stock.upsidePercent > 0 ? '+' : ''}
+                                      {stock.upsidePercent.toFixed(1)}%
+                                    </Badge>
+                                  )}
 
                                   {stock.priceRecommendation && (
                                     <Badge
-                                      className={`
-                                    ${
-                                      stock.priceRecommendation === '강력매수' ||
-                                      stock.priceRecommendation === '높은 관심'
-                                        ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                                        : stock.priceRecommendation === '매수' ||
-                                            stock.priceRecommendation === '관심'
-                                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                          : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                                    }
-                                  `}
+                                      className={
+                                        stock.priceRecommendation === '강력매수' ||
+                                        stock.priceRecommendation === '높은 관심'
+                                          ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                          : stock.priceRecommendation === '매수' ||
+                                              stock.priceRecommendation === '관심'
+                                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                            : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                      }
                                     >
                                       {stock.priceRecommendation}
                                     </Badge>
@@ -609,7 +603,7 @@ export default function RecommendationsPage() {
                             )}
                           </CardHeader>
 
-                          <CardContent>
+                          <CardContent className="flex-1 flex flex-col">
                             {/* 분석 근거 */}
                             {stock.recommendationReason && (
                               <div className="mb-4">
@@ -656,7 +650,7 @@ export default function RecommendationsPage() {
                             )}
 
                             {/* CTA 버튼 - Primary/Secondary 위계 */}
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 mt-auto pt-4">
                               <Button
                                 asChild
                                 className="flex-1 bg-emerald-600 hover:bg-emerald-700"

@@ -66,8 +66,9 @@ function StrategiesContent() {
           ? prefs.riskTolerance
           : 'all';
 
-    // 리스크 성향에 따른 기본 정렬
-    const sort: SortOption = risk !== 'all' ? (RISK_SORT_MAP[risk] ?? 'popularity') : 'popularity';
+    // 리스크 성향에 따른 기본 정렬 (기본: 수익률 높은순)
+    const sort: SortOption =
+      risk !== 'all' ? (RISK_SORT_MAP[risk] ?? 'return_high') : 'return_high';
 
     return { category, risk, sort };
   };

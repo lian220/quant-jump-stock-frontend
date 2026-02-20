@@ -67,7 +67,7 @@ export function Header() {
             </Link>
             <Badge
               variant="secondary"
-              className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs"
+              className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] px-1.5 py-0 hidden sm:inline-flex"
             >
               BETA
             </Badge>

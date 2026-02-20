@@ -23,6 +23,29 @@ function hasData(v: string | number | null | undefined): boolean {
   return v != null && v !== '' && v !== '-' && v !== 'N/A';
 }
 
+// "+42.5%" 또는 "-12.3%" 문자열에서 숫자 추출, null이면 undefined 반환
+function parseReturn(v: string | number | null | undefined): number | undefined {
+  if (!hasData(v)) return undefined;
+  const n = parseFloat(String(v).replace('%', '').replace('+', ''));
+  return isNaN(n) ? undefined : n;
+}
+
+// 누적 수익률 미니 바: 최대 ±150%를 100%로 표시
+function ReturnBar({ value }: { value: string | number | null | undefined }) {
+  const n = parseReturn(value);
+  if (n === undefined) return null;
+  const isPositive = n >= 0;
+  const width = Math.min(Math.abs(n) / 150, 1) * 100;
+  return (
+    <div className="mt-1 h-1 w-full bg-slate-700 rounded-full overflow-hidden">
+      <div
+        className={`h-full rounded-full transition-all ${isPositive ? 'bg-emerald-500' : 'bg-red-500'}`}
+        style={{ width: `${width}%` }}
+      />
+    </div>
+  );
+}
+
 export function StrategyCard({ strategy }: StrategyCardProps) {
   return (
     <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10 overflow-hidden">
@@ -87,6 +110,8 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
             },
           ]}
         />
+        {/* 누적 수익률 미니 바 */}
+        <ReturnBar value={strategy.totalReturn} />
 
         {/* 위험 지표 */}
         <div className="flex items-center justify-between text-sm">
