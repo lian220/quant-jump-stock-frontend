@@ -12,6 +12,7 @@ interface StrategyFilterProps {
   onCategoryChange: (category: StrategyCategory) => void;
   onRiskLevelChange: (riskLevel: RiskLevel | 'all') => void;
   onSortChange: (sort: SortOption) => void;
+  onReset: () => void;
 }
 
 export function StrategyFilter({
@@ -21,6 +22,7 @@ export function StrategyFilter({
   onCategoryChange,
   onRiskLevelChange,
   onSortChange,
+  onReset,
 }: StrategyFilterProps) {
   const categories: { value: StrategyCategory; label: string }[] = [
     { value: 'all', label: '전체' },
@@ -113,11 +115,7 @@ export function StrategyFilter({
 
       {/* 필터 초기화 */}
       <Button
-        onClick={() => {
-          onCategoryChange('all');
-          onRiskLevelChange('all');
-          onSortChange('popularity');
-        }}
+        onClick={onReset}
         variant="outline"
         className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
       >

@@ -15,8 +15,15 @@ import {
 } from '@/lib/onboarding';
 import { getPreferences, type PreferencesData } from '@/lib/api/preferences';
 import { getStrategies } from '@/lib/api/strategies';
+import {
+  getMySubscriptions,
+  unsubscribeStrategy,
+  updateSubscriptionAlert,
+  type SubscriptionSummary,
+} from '@/lib/api/subscriptions';
 import type { Strategy, RiskLevel } from '@/types/strategy';
 import { getRiskColor, getRiskLabel, getCategoryLabel } from '@/lib/strategy-helpers';
+import { PageSEO } from '@/components/seo';
 
 export default function MyPage() {
   const { user, loading, signOut } = useAuth();
@@ -25,6 +32,12 @@ export default function MyPage() {
   const [prefsLoading, setPrefsLoading] = React.useState(true);
   const [recommendedStrategies, setRecommendedStrategies] = React.useState<Strategy[]>([]);
   const [strategiesLoading, setStrategiesLoading] = React.useState(false);
+  const [subscriptions, setSubscriptions] = React.useState<SubscriptionSummary[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = React.useState(true);
+  const [togglingAlert, setTogglingAlert] = React.useState<number | null>(null);
+  const [unsubscribing, setUnsubscribing] = React.useState<number | null>(null);
+  const [subscriptionError, setSubscriptionError] = React.useState<string | null>(null);
+  const [subscriptionLoadError, setSubscriptionLoadError] = React.useState(false);
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -47,6 +60,66 @@ export default function MyPage() {
       mounted = false;
     };
   }, [user]);
+
+  // 구독 목록 로드
+  React.useEffect(() => {
+    if (!user) return;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!token) {
+      setSubscriptionsLoading(false);
+      return;
+    }
+    let mounted = true;
+    getMySubscriptions(token)
+      .then((data) => {
+        if (mounted) setSubscriptions(data.subscriptions);
+      })
+      .catch(() => {
+        if (mounted) setSubscriptionLoadError(true);
+      })
+      .finally(() => {
+        if (mounted) setSubscriptionsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [user]);
+
+  async function handleUnsubscribe(strategyId: number) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    setUnsubscribing(strategyId);
+    setSubscriptionError(null);
+    try {
+      await unsubscribeStrategy(strategyId, token);
+      setSubscriptions((prev) => prev.filter((s) => s.strategyId !== strategyId));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '구독 취소에 실패했습니다.';
+      setSubscriptionError(message);
+    } finally {
+      setUnsubscribing(null);
+    }
+  }
+
+  async function handleToggleAlert(subscriptionId: number, current: boolean) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    setTogglingAlert(subscriptionId);
+    setSubscriptionError(null);
+    try {
+      await updateSubscriptionAlert(subscriptionId, !current, token);
+      setSubscriptions((prev) =>
+        prev.map((s) =>
+          s.subscriptionId === subscriptionId ? { ...s, alertEnabled: !current } : s,
+        ),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '알림 설정 변경에 실패했습니다.';
+      setSubscriptionError(message);
+    } finally {
+      setTogglingAlert(null);
+    }
+  }
 
   // 성향 기반 전략 추천 로드
   React.useEffect(() => {
@@ -116,6 +189,10 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
+      <PageSEO
+        title="마이페이지 - Alpha Foundry"
+        description="내 계정 정보, 구독 전략, 투자 성향을 관리하세요."
+      />
       <div className="max-w-lg mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-white text-center">마이페이지</h1>
 
@@ -133,6 +210,113 @@ export default function MyPage() {
                 <span className="text-white text-sm font-medium">{item.value}</span>
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* 내 구독 전략 */}
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg text-white">내 구독 전략</CardTitle>
+              {!subscriptionsLoading && (
+                <Badge variant="outline" className="text-xs border-slate-600 text-slate-400">
+                  {subscriptions.length}개
+                </Badge>
+              )}
+            </div>
+            <Link href="/strategies">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-emerald-400 hover:text-emerald-300 text-xs"
+              >
+                전략 찾기
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {subscriptionsLoading ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => (
+                  <div key={i} className="h-16 bg-slate-700/50 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : subscriptionLoadError ? (
+              <div className="text-center py-6">
+                <p className="text-red-400 text-sm mb-3">구독 목록을 불러오지 못했습니다</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  onClick={() => window.location.reload()}
+                >
+                  다시 시도
+                </Button>
+              </div>
+            ) : subscriptions.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-slate-400 text-sm mb-3">구독한 전략이 없습니다</p>
+                <Link href="/strategies">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-emerald-600 text-emerald-400 hover:bg-emerald-600/10"
+                  >
+                    마켓플레이스 둘러보기
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {subscriptionError && (
+                  <p className="text-red-400 text-xs mb-2">{subscriptionError}</p>
+                )}
+                {subscriptions.map((sub) => (
+                  <div
+                    key={sub.subscriptionId}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                  >
+                    {/* 전략 정보 */}
+                    <Link href={`/strategies/${sub.strategyId}`} className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{sub.strategyName}</p>
+                      <p className="text-slate-500 text-xs mt-0.5">
+                        {new Date(sub.subscribedAt).toLocaleDateString('ko-KR')} 구독
+                      </p>
+                    </Link>
+
+                    {/* 알림 토글 */}
+                    <button
+                      onClick={() => handleToggleAlert(sub.subscriptionId, sub.alertEnabled)}
+                      disabled={togglingAlert === sub.subscriptionId}
+                      className={`shrink-0 text-xs px-2 py-1 rounded transition-colors ${
+                        sub.alertEnabled
+                          ? 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30'
+                          : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
+                      }`}
+                      title={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
+                      aria-label={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
+                    >
+                      {togglingAlert === sub.subscriptionId
+                        ? '...'
+                        : sub.alertEnabled
+                          ? '🔔'
+                          : '🔕'}
+                    </button>
+
+                    {/* 구독 취소 */}
+                    <button
+                      onClick={() => handleUnsubscribe(sub.strategyId)}
+                      disabled={unsubscribing === sub.strategyId}
+                      className="shrink-0 text-slate-500 hover:text-red-400 transition-colors text-lg leading-none"
+                      title="구독 취소"
+                      aria-label="구독 취소"
+                    >
+                      {unsubscribing === sub.strategyId ? '...' : '×'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

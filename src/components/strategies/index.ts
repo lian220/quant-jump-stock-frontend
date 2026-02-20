@@ -6,3 +6,4 @@ export { MetricCard } from './MetricCard';
 export { InvestmentSummary } from './InvestmentSummary';
 export { EquityCurveChart } from './EquityCurveChart';
 export { TermTooltip } from './TermTooltip';
+export { SubscribeButton } from './SubscribeButton';

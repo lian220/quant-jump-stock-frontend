@@ -14,6 +14,11 @@ export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
+    // 모바일 기기에서만 표시 (PC는 표시 안 함)
+    if (!window.matchMedia('(max-width: 768px)').matches) {
+      return;
+    }
+
     // 이미 설치된 경우 프롬프트 표시 안 함
     if (window.matchMedia('(display-mode: standalone)').matches) {
       return;

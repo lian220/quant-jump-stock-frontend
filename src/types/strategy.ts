@@ -112,6 +112,9 @@ export interface StrategyDetail extends Strategy {
   tradingCosts?: string;
   // SCRUM-344: 대표 백테스트
   canonicalBacktest?: CanonicalBacktestSummary | null;
+  // 현재 사용자의 구독 여부 (로그인 시 백엔드에서 포함)
+  isSubscribed?: boolean;
+  subscriptionId?: number | null;
 }
 
 // SCRUM-344: 대표 백테스트 요약

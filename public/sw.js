@@ -1,6 +1,6 @@
 // Service Worker for Alpha Foundry PWA
 // 배포 시 이 버전을 변경하면 SW가 자동 업데이트됨
-const SW_VERSION = '4';
+const SW_VERSION = '5';
 const STATIC_CACHE = `alphafoundry-static-v${SW_VERSION}`;
 const DYNAMIC_CACHE = `alphafoundry-dynamic-v${SW_VERSION}`;
 
@@ -42,8 +42,14 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API 요청은 네트워크만 사용
+  // API 요청 처리
   if (url.pathname.startsWith('/api/')) {
+    // POST/PUT/DELETE/PATCH 등 변이 요청은 SW를 거치지 않고 브라우저가 직접 처리
+    // 이유: fetch body 소비 문제, credentials 전달 이슈, 로그인/구독 등 중요 요청 오작동 방지
+    if (request.method !== 'GET') {
+      return;
+    }
+    // GET 요청은 네트워크 우선, 오프라인 시 503
     event.respondWith(
       fetch(request).catch(() => {
         return new Response(JSON.stringify({ error: '오프라인 상태입니다.' }), {
