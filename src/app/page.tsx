@@ -21,6 +21,7 @@ import {
 } from '@/lib/api/predictions';
 import type { Strategy } from '@/types/strategy';
 import { trackEvent } from '@/lib/analytics';
+import { useAuth } from '@/hooks/useAuth';
 
 /** recommendationReason에서 기술 지표 키워드를 파싱하여 배지 라벨 배열 반환 */
 function parseIndicatorBadges(reason?: string): string[] {
@@ -57,6 +58,7 @@ function parseIndicatorBadges(reason?: string): string[] {
 }
 
 export default function Home() {
+  const { user } = useAuth();
   const [featuredStrategies, setFeaturedStrategies] = useState<Strategy[]>([]);
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
   const [tiers, setTiers] = useState<{
@@ -235,19 +237,21 @@ export default function Home() {
               AI 분석 + 퀀트 전략, 발굴에서 실행까지
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/signup"
-                onClick={() =>
-                  trackEvent('landing_cta_click', {
-                    cta: 'hero_primary_signup',
-                    location: 'hero',
-                  })
-                }
-              >
-                <Button size="lg" className="min-w-[200px] bg-emerald-600 hover:bg-emerald-700">
-                  무료 회원가입
-                </Button>
-              </Link>
+              {!user && (
+                <Link
+                  href="/signup"
+                  onClick={() =>
+                    trackEvent('landing_cta_click', {
+                      cta: 'hero_primary_signup',
+                      location: 'hero',
+                    })
+                  }
+                >
+                  <Button size="lg" className="min-w-[200px] bg-emerald-600 hover:bg-emerald-700">
+                    무료 회원가입
+                  </Button>
+                </Link>
+              )}
               <Link
                 href="/recommendations"
                 onClick={() =>
@@ -871,29 +875,31 @@ export default function Home() {
           {/* ──────────────────────────────────────────────
               7. CTA 섹션
               ────────────────────────────────────────────── */}
-          <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
-            <CardContent className="text-center py-12">
-              <h2 className="text-3xl font-bold mb-4 text-white">
-                지금 바로 퀀트 투자를 시작하세요
-              </h2>
-              <p className="text-xl mb-8 text-emerald-100">
-                무료 체험으로 AI 기반 투자 분석을 경험해보세요.
-              </p>
-              <Link
-                href="/signup"
-                onClick={() =>
-                  trackEvent('landing_cta_click', {
-                    cta: 'bottom_primary_signup',
-                    location: 'bottom_cta',
-                  })
-                }
-              >
-                <Button size="lg" className="bg-white text-emerald-700 hover:bg-slate-100">
-                  무료 회원가입
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          {!user && (
+            <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
+              <CardContent className="text-center py-12">
+                <h2 className="text-3xl font-bold mb-4 text-white">
+                  지금 바로 퀀트 투자를 시작하세요
+                </h2>
+                <p className="text-xl mb-8 text-emerald-100">
+                  무료 체험으로 AI 기반 투자 분석을 경험해보세요.
+                </p>
+                <Link
+                  href="/signup"
+                  onClick={() =>
+                    trackEvent('landing_cta_click', {
+                      cta: 'bottom_primary_signup',
+                      location: 'bottom_cta',
+                    })
+                  }
+                >
+                  <Button size="lg" className="bg-white text-emerald-700 hover:bg-slate-100">
+                    무료 회원가입
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </main>
       </div>
     </>
