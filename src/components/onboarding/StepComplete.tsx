@@ -10,7 +10,15 @@ interface StepCompleteProps {
   onGoRecommendations: () => void;
 }
 
-const GUIDE_STEPS = [
+interface GuideStep {
+  step: string;
+  title: string;
+  description: string;
+  color: string;
+  bg: string;
+}
+
+const GUIDE_STEPS: GuideStep[] = [
   {
     step: '1',
     title: '맞춤 전략 찾기',

@@ -58,7 +58,7 @@ function parseIndicatorBadges(reason?: string): string[] {
 }
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [featuredStrategies, setFeaturedStrategies] = useState<Strategy[]>([]);
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
   const [tiers, setTiers] = useState<{
@@ -79,9 +79,12 @@ export default function Home() {
   // 가입자 수 조회 + 카운트업 애니메이션
   useEffect(() => {
     fetch('/api/stats/public')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) return null;
+        return r.json();
+      })
       .then((data) => {
-        if (data.userCount > 0) setUserCount(data.userCount);
+        if (data?.userCount > 0) setUserCount(data.userCount);
       })
       .catch(() => {});
   }, []);
@@ -237,7 +240,7 @@ export default function Home() {
               AI 분석 + 퀀트 전략, 발굴에서 실행까지
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {!user && (
+              {!authLoading && !user && (
                 <Link
                   href="/signup"
                   onClick={() =>
@@ -290,7 +293,9 @@ export default function Home() {
               <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
                 <p className="text-[11px] text-slate-500 mb-1">가입자</p>
                 <p className="text-xl font-bold text-emerald-400">
-                  {userCount !== null ? `${displayUserCount.toLocaleString()}+` : '—'}
+                  {userCount !== null && displayUserCount > 0
+                    ? `${displayUserCount.toLocaleString()}+`
+                    : '—'}
                 </p>
                 <p className="text-[10px] text-slate-500 mt-0.5">누적 회원</p>
               </div>
@@ -875,7 +880,7 @@ export default function Home() {
           {/* ──────────────────────────────────────────────
               7. CTA 섹션
               ────────────────────────────────────────────── */}
-          {!user && (
+          {!authLoading && !user && (
             <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
               <CardContent className="text-center py-12">
                 <h2 className="text-3xl font-bold mb-4 text-white">
