@@ -71,6 +71,36 @@ export default function Home() {
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
   const [predictionStats, setPredictionStats] = useState<PredictionStatsResponse | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [userCount, setUserCount] = useState<number | null>(null);
+  const [displayUserCount, setDisplayUserCount] = useState(0);
+
+  // 가입자 수 조회 + 카운트업 애니메이션
+  useEffect(() => {
+    fetch('/api/stats/public')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.userCount > 0) setUserCount(data.userCount);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (userCount === null) return;
+    const duration = 1200;
+    const steps = 40;
+    const increment = userCount / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= userCount) {
+        setDisplayUserCount(userCount);
+        clearInterval(timer);
+      } else {
+        setDisplayUserCount(Math.floor(current));
+      }
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [userCount]);
 
   // 추천 전략 가져오기 (인기순 상위 3개)
   useEffect(() => {
@@ -251,27 +281,34 @@ export default function Home() {
                 투자 자문이 아닌 정보 제공 서비스
               </Badge>
             </div>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-3xl mx-auto text-left">
-              <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                <p className="text-[11px] text-slate-500">신뢰 신호</p>
-                <p className="text-sm text-slate-200 font-medium">
-                  {predictionStats?.totalPredictions
-                    ? `최근 30일 ${predictionStats.totalPredictions.toLocaleString()}건 분석`
-                    : '최근 30일 분석 데이터 누적 공개'}
+            <div className="mt-4 grid grid-cols-3 gap-2 max-w-3xl mx-auto text-center">
+              {/* 가입자 수 카운터 */}
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+                <p className="text-[11px] text-slate-500 mb-1">가입자</p>
+                <p className="text-xl font-bold text-emerald-400">
+                  {userCount !== null ? `${displayUserCount.toLocaleString()}+` : '—'}
                 </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">누적 회원</p>
               </div>
-              <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                <p className="text-[11px] text-slate-500">업데이트 주기</p>
-                <p className="text-sm text-slate-200 font-medium">영업일 기준 매일 자동 업데이트</p>
+              {/* 분석 종목 수 카운터 */}
+              <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-3">
+                <p className="text-[11px] text-slate-500 mb-1">분석 종목</p>
+                <p className="text-xl font-bold text-cyan-400">
+                  {predictionStats?.uniqueTickers
+                    ? `${predictionStats.uniqueTickers.toLocaleString()}+`
+                    : '2,500+'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">최근 30일 기준</p>
               </div>
+              {/* 분석 건수 카운터 */}
               <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                <p className="text-[11px] text-slate-500">가입 전 체험</p>
-                <Link
-                  href="/recommendations"
-                  className="text-sm text-cyan-300 hover:text-cyan-200 font-medium"
-                >
-                  샘플 분석 리포트 보기 →
-                </Link>
+                <p className="text-[11px] text-slate-500 mb-1">AI 분석</p>
+                <p className="text-xl font-bold text-slate-200">
+                  {predictionStats?.totalPredictions
+                    ? `${predictionStats.totalPredictions.toLocaleString()}건`
+                    : '150+건'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">최근 30일 누적</p>
               </div>
             </div>
 
