@@ -35,6 +35,8 @@ function calcDailyReturns(values: number[]): number[] {
   for (let i = 1; i < values.length; i++) {
     if (values[i - 1] !== 0) {
       returns.push((values[i] - values[i - 1]) / values[i - 1]);
+    } else {
+      returns.push(0); // 0 기준일은 수익률 0으로 처리 (배열 길이 보존)
     }
   }
   return returns;
@@ -101,22 +103,28 @@ export default function BenchmarkComparisonTable({
       return [];
     }
 
-    const strategyValues = equityCurve.map((p) => p.value);
-    const strategyDailyReturns = calcDailyReturns(strategyValues);
-    const firstDate = equityCurve[0].date;
-    const lastDate = equityCurve[equityCurve.length - 1].date;
-
     return benchmarks.map((ticker) => {
-      // 다중 벤치마크 맵 우선, 단일 벤치마크 fallback
-      const bmValues = equityCurve
-        .map((p) => {
-          if (p.benchmarks && p.benchmarks[ticker] != null) return Number(p.benchmarks[ticker]);
-          if (ticker === benchmarks[0] && p.benchmark != null) return Number(p.benchmark);
-          return null;
-        })
-        .filter((v): v is number => v !== null);
+      // 날짜 정렬된 paired series 구축 (전략-벤치마크 둘 다 non-null인 지점만)
+      const pairedStrategy: number[] = [];
+      const pairedBenchmark: number[] = [];
+      const pairedDates: string[] = [];
 
-      if (bmValues.length < 2) {
+      for (const p of equityCurve) {
+        const bmVal =
+          p.benchmarks && p.benchmarks[ticker] != null
+            ? Number(p.benchmarks[ticker])
+            : ticker === benchmarks[0] && p.benchmark != null
+              ? Number(p.benchmark)
+              : null;
+
+        if (bmVal !== null && p.value != null) {
+          pairedStrategy.push(p.value);
+          pairedBenchmark.push(bmVal);
+          pairedDates.push(p.date);
+        }
+      }
+
+      if (pairedBenchmark.length < 2) {
         return {
           ticker,
           label: getBenchmarkLabel(ticker),
@@ -128,14 +136,20 @@ export default function BenchmarkComparisonTable({
         };
       }
 
-      const bmTotalReturn = calcTotalReturn(bmValues);
-      const bmCagr = calcCagr(bmValues, firstDate, lastDate);
+      const bmFirstDate = pairedDates[0];
+      const bmLastDate = pairedDates[pairedDates.length - 1];
+
+      const bmTotalReturn = calcTotalReturn(pairedBenchmark);
+      const bmCagr = calcCagr(pairedBenchmark, bmFirstDate, bmLastDate);
       const excessReturn =
         strategyTotalReturn != null && bmTotalReturn != null
           ? strategyTotalReturn - bmTotalReturn
           : null;
       const excessCagr = strategyCagr != null && bmCagr != null ? strategyCagr - bmCagr : null;
-      const bmDailyReturns = calcDailyReturns(bmValues);
+
+      // 정렬된 paired series로 상관계수 계산
+      const strategyDailyReturns = calcDailyReturns(pairedStrategy);
+      const bmDailyReturns = calcDailyReturns(pairedBenchmark);
       const correlation = calcPearsonCorrelation(strategyDailyReturns, bmDailyReturns);
 
       return {

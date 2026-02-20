@@ -9,7 +9,6 @@ import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { StateMessageCard } from '@/components/common/StateMessageCard';
 import { getStrategies } from '@/lib/api/strategies';
-import { getUserPreferences } from '@/lib/onboarding';
 import type {
   Strategy,
   StrategyCategory,
@@ -18,28 +17,17 @@ import type {
   PaginationInfo,
 } from '@/types/strategy';
 
-// 리스크 성향 → 기본 정렬 매핑
-const RISK_SORT_MAP: Record<string, SortOption> = {
-  high: 'return_high',
-  low: 'risk_low',
-  medium: 'popularity',
-};
-
 function StrategiesContent() {
   const searchParams = useSearchParams();
 
-  // URL 파라미터 또는 localStorage 성향으로 초기값 결정
+  // URL 파라미터로만 초기값 결정 (localStorage 자동 필터 제거)
   const getInitialFilters = (): {
     category: StrategyCategory;
     risk: RiskLevel | 'all';
     sort: SortOption;
   } => {
-    // 1순위: URL 파라미터
     const urlCategory = searchParams.get('category');
     const urlRisk = searchParams.get('risk');
-
-    // 2순위: localStorage 성향
-    const prefs = getUserPreferences();
 
     const validCategories: StrategyCategory[] = [
       'value',
@@ -54,21 +42,12 @@ function StrategiesContent() {
     const category: StrategyCategory =
       urlCategory && validCategories.includes(urlCategory as StrategyCategory)
         ? (urlCategory as StrategyCategory)
-        : prefs?.investmentCategories?.[0] &&
-            validCategories.includes(prefs.investmentCategories[0])
-          ? prefs.investmentCategories[0]
-          : 'all';
+        : 'all';
 
     const risk: RiskLevel | 'all' =
-      urlRisk && validRisks.includes(urlRisk as RiskLevel)
-        ? (urlRisk as RiskLevel)
-        : prefs?.riskTolerance && validRisks.includes(prefs.riskTolerance)
-          ? prefs.riskTolerance
-          : 'all';
+      urlRisk && validRisks.includes(urlRisk as RiskLevel) ? (urlRisk as RiskLevel) : 'all';
 
-    // 리스크 성향에 따른 기본 정렬 (기본: 수익률 높은순)
-    const sort: SortOption =
-      risk !== 'all' ? (RISK_SORT_MAP[risk] ?? 'return_high') : 'return_high';
+    const sort: SortOption = 'return_high';
 
     return { category, risk, sort };
   };
@@ -329,7 +308,7 @@ function StrategiesContent() {
                   onClick: () => {
                     setSelectedCategory('all');
                     setSelectedRiskLevel('all');
-                    setSelectedSort('popularity');
+                    setSelectedSort('return_high');
                     setCurrentPage(1);
                   },
                   variant: 'ghost',
