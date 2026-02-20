@@ -45,6 +45,7 @@ export function StepMarketRisk({
               <button
                 key={value}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => toggleMarket(value)}
                 className={cn(
                   'relative flex flex-col items-center p-4 rounded-xl border transition-all duration-200',
@@ -86,11 +87,12 @@ export function StepMarketRisk({
               <button
                 key={value}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => onRiskChange(value)}
                 className={cn(
                   'flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 text-left',
                   isSelected
-                    ? `border-current ${riskColorClass}`
+                    ? riskColorClass
                     : 'border-slate-700 bg-slate-800/50 hover:border-slate-600 hover:bg-slate-800',
                 )}
               >
@@ -104,8 +106,8 @@ export function StepMarketRisk({
                   <span className="text-xs text-slate-500">{description}</span>
                 </div>
                 {isSelected && (
-                  <div className="w-5 h-5 rounded-full bg-current/20 flex items-center justify-center flex-shrink-0">
-                    <Check size={12} />
+                  <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <Check size={12} className="text-white" />
                   </div>
                 )}
               </button>
