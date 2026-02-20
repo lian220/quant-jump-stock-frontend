@@ -164,22 +164,31 @@ function StrategiesContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // 모바일 필터 패널 자동 닫기
+  const closeMobileFilter = useCallback(() => {
+    setIsFilterOpen(false);
+  }, []);
+
   // 필터 변경 시 URL 업데이트 → searchParams 변경 → 자동 리렌더
   const handleCategoryChange = (category: StrategyCategory) => {
     updateFilters({ category });
+    closeMobileFilter();
   };
 
   const handleRiskLevelChange = (riskLevel: RiskLevel | 'all') => {
     updateFilters({ risk: riskLevel });
+    closeMobileFilter();
   };
 
   const handleSortChange = (sort: SortOption) => {
     updateFilters({ sort });
+    closeMobileFilter();
   };
 
   const handleReset = useCallback(() => {
     updateFilters({ category: 'all', risk: 'all', sort: 'return_high' });
-  }, [updateFilters]);
+    closeMobileFilter();
+  }, [updateFilters, closeMobileFilter]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -300,18 +309,71 @@ function StrategiesContent() {
 
           {/* 전략 그리드 */}
           <div>
-            {/* 결과 수 표시 */}
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-slate-400">
-                총{' '}
-                <span className="text-white font-semibold">
-                  {isLoading ? '집계중' : paginationInfo.totalItems.toLocaleString()}
-                </span>
-                개의 전략
-              </p>
-              <Badge className="bg-slate-700/50 text-slate-300 border-slate-600">
-                {isLoading ? '로딩중' : `${currentPage} / ${paginationInfo.totalPages} 페이지`}
-              </Badge>
+            {/* 결과 수 + 활성 필터 표시 */}
+            <div className="flex flex-col gap-3 mb-6">
+              <div className="flex items-center justify-between">
+                <p className="text-slate-400">
+                  총{' '}
+                  <span className="text-white font-semibold">
+                    {isLoading ? '집계중' : paginationInfo.totalItems.toLocaleString()}
+                  </span>
+                  개의 전략
+                </p>
+                <Badge className="bg-slate-700/50 text-slate-300 border-slate-600">
+                  {isLoading ? '로딩중' : `${currentPage} / ${paginationInfo.totalPages} 페이지`}
+                </Badge>
+              </div>
+
+              {/* 활성 필터 칩 */}
+              {(selectedCategory !== 'all' || selectedRiskLevel !== 'all') && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-slate-500">활성 필터:</span>
+                  {selectedCategory !== 'all' && (
+                    <Badge
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleCategoryChange('all')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleCategoryChange('all');
+                        }
+                      }}
+                      className="cursor-pointer bg-emerald-600/20 text-emerald-400 border-emerald-600/40 hover:bg-emerald-600/30 active:scale-90 transition-all gap-1"
+                    >
+                      {
+                        {
+                          value: '가치투자',
+                          momentum: '모멘텀',
+                          asset_allocation: '자산배분',
+                          quant_composite: '퀀트 복합',
+                          seasonal: '시즌널',
+                          ml_prediction: 'AI 예측',
+                          all: '',
+                        }[selectedCategory]
+                      }
+                      <span className="text-emerald-400/60">✕</span>
+                    </Badge>
+                  )}
+                  {selectedRiskLevel !== 'all' && (
+                    <Badge
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleRiskLevelChange('all')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleRiskLevelChange('all');
+                        }
+                      }}
+                      className="cursor-pointer bg-cyan-600/20 text-cyan-400 border-cyan-600/40 hover:bg-cyan-600/30 active:scale-90 transition-all gap-1"
+                    >
+                      리스크: {{ low: '낮음', medium: '중간', high: '높음' }[selectedRiskLevel]}
+                      <span className="text-cyan-400/60">✕</span>
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 전략 목록 */}

@@ -84,11 +84,11 @@ export function SubscribeButton({
   };
 
   return (
-    <div className="relative inline-block">
+    <div className="relative">
       {subscribed ? (
         <Button
           variant="outline"
-          className="border-emerald-500/50 text-emerald-400 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 gap-2"
+          className="w-full lg:w-auto border-emerald-500/50 text-emerald-400 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 gap-2 active:scale-95 transition-all"
           onClick={handleToggle}
           disabled={loading}
         >
@@ -97,7 +97,7 @@ export function SubscribeButton({
         </Button>
       ) : (
         <Button
-          className={`gap-2 ${isPremiumStrategy ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+          className={`w-full lg:w-auto gap-2 active:scale-95 transition-all ${isPremiumStrategy ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
           onClick={handleToggle}
           disabled={loading}
         >

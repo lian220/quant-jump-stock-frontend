@@ -49,6 +49,15 @@ export function StrategyFilter({
     { value: 'risk_low', label: '리스크 낮은순' },
   ];
 
+  // 토글 동작: 이미 선택된 필터를 다시 클릭하면 해제 (→ 'all')
+  const handleCategoryClick = (value: StrategyCategory) => {
+    onCategoryChange(selectedCategory === value && value !== 'all' ? 'all' : value);
+  };
+
+  const handleRiskClick = (value: RiskLevel | 'all') => {
+    onRiskLevelChange(selectedRiskLevel === value && value !== 'all' ? 'all' : value);
+  };
+
   return (
     <div className="space-y-6">
       {/* 카테고리 필터 */}
@@ -58,11 +67,19 @@ export function StrategyFilter({
           {categories.map((category) => (
             <Badge
               key={category.value}
-              onClick={() => onCategoryChange(category.value)}
-              className={`cursor-pointer transition-all ${
+              role="button"
+              tabIndex={0}
+              onClick={() => handleCategoryClick(category.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleCategoryClick(category.value);
+                }
+              }}
+              className={`cursor-pointer select-none transition-all active:scale-90 ${
                 selectedCategory === category.value
-                  ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700'
-                  : 'bg-slate-700/50 text-slate-300 border-slate-600 hover:bg-slate-700'
+                  ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20'
+                  : 'bg-slate-700/50 text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-white'
               }`}
             >
               {category.label}
@@ -78,11 +95,19 @@ export function StrategyFilter({
           {riskLevels.map((risk) => (
             <Badge
               key={risk.value}
-              onClick={() => onRiskLevelChange(risk.value)}
-              className={`cursor-pointer transition-all ${
+              role="button"
+              tabIndex={0}
+              onClick={() => handleRiskClick(risk.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleRiskClick(risk.value);
+                }
+              }}
+              className={`cursor-pointer select-none transition-all active:scale-90 ${
                 selectedRiskLevel === risk.value
-                  ? 'bg-cyan-600 text-white border-cyan-500 hover:bg-cyan-700'
-                  : 'bg-slate-700/50 text-slate-300 border-slate-600 hover:bg-slate-700'
+                  ? 'bg-cyan-600 text-white border-cyan-500 hover:bg-cyan-700 shadow-lg shadow-cyan-600/20'
+                  : 'bg-slate-700/50 text-slate-300 border-slate-600 hover:bg-slate-700 hover:text-white'
               }`}
             >
               {risk.label}
@@ -101,11 +126,11 @@ export function StrategyFilter({
               onClick={() => onSortChange(sort.value)}
               variant={selectedSort === sort.value ? 'default' : 'outline'}
               size="sm"
-              className={
+              className={`transition-all active:scale-95 ${
                 selectedSort === sort.value
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                  : 'border-slate-600 text-slate-300 hover:bg-slate-700'
-              }
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
+                  : 'border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white'
+              }`}
             >
               {sort.label}
             </Button>
@@ -117,7 +142,7 @@ export function StrategyFilter({
       <Button
         onClick={onReset}
         variant="outline"
-        className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
+        className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
       >
         필터 초기화
       </Button>

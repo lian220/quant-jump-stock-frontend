@@ -29,7 +29,7 @@ function AuthPageContent() {
   // 이미 로그인된 경우 리다이렉트 (returnUrl 우선, 없으면 onboarding 여부로 결정)
   useEffect(() => {
     if (!authLoading && user) {
-      router.push(getPostLoginRedirect());
+      getPostLoginRedirect().then((redirect) => router.push(redirect));
     }
   }, [user, authLoading, router]);
 
