@@ -55,5 +55,7 @@ export interface LoginResponse {
 export interface SignUpResponse {
   success: boolean;
   message?: string;
+  token?: string;
+  user?: AuthUser;
   error?: string;
 }

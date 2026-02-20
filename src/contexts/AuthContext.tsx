@@ -143,6 +143,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const data = response.data;
 
       if (data.success) {
+        // 자동 로그인: 토큰과 유저 정보가 있으면 바로 로그인 상태로 설정
+        if (data.token && data.user) {
+          setToken(data.token);
+          setUser(data.user);
+          setError(null);
+        }
         return {};
       }
 

@@ -62,7 +62,6 @@ export const SignUpForm = ({ onSuccess, onSwitchToLogin }: SignUpFormProps) => {
       trackEvent('signup_complete', {
         source: 'signup_form',
       });
-      setSuccess('회원가입이 완료되었습니다! 로그인해주세요.');
       onSuccess?.();
     }
   };
