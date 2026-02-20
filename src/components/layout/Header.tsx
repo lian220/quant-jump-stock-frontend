@@ -50,7 +50,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex md:grid md:grid-cols-3 items-center justify-between py-4">
+        <div className="flex items-center justify-between py-4">
           {/* 왼쪽: 로고 */}
           <div className="flex items-center space-x-2">
             <Link href="/" className="flex items-center space-x-2">
@@ -61,46 +61,47 @@ export function Header() {
                 height={36}
                 className="rounded-lg"
               />
-              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer">
+              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer whitespace-nowrap">
                 Alpha Foundry
               </span>
             </Link>
             <Badge
               variant="secondary"
-              className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs"
+              className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] px-1.5 py-0 hidden sm:inline-flex"
             >
               BETA
             </Badge>
           </div>
 
           {/* 중앙: 데스크톱 네비게이션 */}
-          <nav className="hidden md:flex items-center justify-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
             <Link
               href="/recommendations"
               className={cn(
-                'inline-flex items-center transition-colors font-medium',
+                'inline-flex items-center transition-colors font-medium text-sm lg:text-base whitespace-nowrap',
                 isActive('/recommendations')
                   ? 'text-emerald-400'
                   : 'text-slate-300 hover:text-emerald-400',
               )}
             >
-              종목 분석
+              AI 추천
             </Link>
             <Link
               href="/strategies"
               className={cn(
-                'inline-flex items-center transition-colors font-medium',
+                'inline-flex items-center transition-colors font-medium text-sm lg:text-base whitespace-nowrap',
                 isActive('/strategies')
                   ? 'text-emerald-400'
                   : 'text-slate-300 hover:text-emerald-400',
               )}
             >
-              전략 마켓플레이스
+              <span className="lg:hidden">전략</span>
+              <span className="hidden lg:inline">전략 마켓플레이스</span>
             </Link>
             <Link
               href="/news"
               className={cn(
-                'inline-flex items-center transition-colors font-medium',
+                'inline-flex items-center transition-colors font-medium text-sm lg:text-base whitespace-nowrap',
                 isActive('/news') ? 'text-emerald-400' : 'text-slate-300 hover:text-emerald-400',
               )}
             >
@@ -109,7 +110,7 @@ export function Header() {
             <Link
               href="/stocks"
               className={cn(
-                'inline-flex items-center transition-colors font-medium',
+                'inline-flex items-center transition-colors font-medium text-sm lg:text-base whitespace-nowrap',
                 isActive('/stocks') ? 'text-emerald-400' : 'text-slate-300 hover:text-emerald-400',
               )}
             >
@@ -191,7 +192,7 @@ export function Header() {
                     : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-800',
                 )}
               >
-                종목 분석
+                AI 추천
               </Link>
               <Link
                 href="/strategies"

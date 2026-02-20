@@ -8,7 +8,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 // === 타입 정의 ===
 
 export type Signal = 'BUY' | 'SELL' | 'HOLD';
-export type CompositeGrade = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'LOW';
+export type CompositeGrade = 'A' | 'B' | 'C' | 'D' | 'EXCELLENT' | 'GOOD' | 'FAIR' | 'LOW';
 export type SignalTier = 'strong' | 'medium' | 'weak';
 
 export interface BuySignal {

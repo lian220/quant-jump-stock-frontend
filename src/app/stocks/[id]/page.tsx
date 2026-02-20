@@ -157,13 +157,19 @@ export default function StockDetailPage() {
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 뒤로가기 */}
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/stocks')}
-          className="text-slate-400 hover:text-white mb-6 -ml-2"
-        >
-          ← 종목 목록으로
-        </Button>
+        <div className="flex items-center gap-2 mb-6 -ml-2">
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/stocks')}
+            className="text-slate-400 hover:text-white"
+          >
+            ← 종목 목록
+          </Button>
+          <span className="text-slate-600">|</span>
+          <Button variant="ghost" asChild className="text-slate-400 hover:text-emerald-400">
+            <Link href="/recommendations">← AI 추천</Link>
+          </Button>
+        </div>
 
         {/* Hero 섹션 */}
         <div className="mb-8">

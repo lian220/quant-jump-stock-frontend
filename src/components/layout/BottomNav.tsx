@@ -8,7 +8,7 @@ import { cn, isActiveRoute } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: '홈', icon: Home },
-  { href: '/recommendations', label: '분석', icon: TrendingUp },
+  { href: '/recommendations', label: 'AI추천', icon: TrendingUp },
   { href: '/news', label: '뉴스', icon: Newspaper },
   { href: '/strategies', label: '전략', icon: BarChart3 },
   { href: '/stocks', label: '종목', icon: Search },

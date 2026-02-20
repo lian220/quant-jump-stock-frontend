@@ -12,6 +12,7 @@ import RiskAnalysisCards from '@/components/backtest/RiskAnalysisCards';
 import EquityCurveChart from '@/components/backtest/EquityCurveChart';
 import TradeHistoryTable from '@/components/backtest/TradeHistoryTable';
 import BacktestHistoryList from '@/components/backtest/BacktestHistoryList';
+import BenchmarkComparisonTable from '@/components/backtest/BenchmarkComparisonTable';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageSEO } from '@/components/seo';
 import {
@@ -532,6 +533,14 @@ export default function BacktestPage() {
                     equityCurve={result.equityCurve}
                     benchmarkLabels={selectedBenchmarks}
                     defaultBenchmark={selectedBenchmarks[0]}
+                  />
+
+                  {/* 벤치마크 성과 비교 테이블 (SCRUM-353) */}
+                  <BenchmarkComparisonTable
+                    equityCurve={result.equityCurve}
+                    benchmarks={selectedBenchmarks}
+                    strategyCagr={result.metrics?.cagr ?? null}
+                    strategyTotalReturn={result.metrics?.totalReturn ?? null}
                   />
 
                   {/* 거래 내역 테이블 */}
