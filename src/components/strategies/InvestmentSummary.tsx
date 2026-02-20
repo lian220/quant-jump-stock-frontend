@@ -33,19 +33,21 @@ export function InvestmentSummary({
   return (
     <Card className={`bg-gradient-to-r ${bgGradient} border-slate-700 mb-8`}>
       <CardContent className="py-6">
-        <h3 className="text-lg font-semibold text-white mb-4">💰 투자 시뮬레이션 결과</h3>
+        <h3 className="text-base sm:text-lg font-semibold text-white mb-4">
+          💰 투자 시뮬레이션 결과
+        </h3>
         <div className="space-y-3">
-          <p className="text-slate-200 text-base leading-relaxed">
+          <p className="text-slate-200 text-sm sm:text-base leading-relaxed">
             <span className="text-white font-medium">
               {formatKoreanCurrency(outcome.initialAmount)}원
             </span>
             을 투자했다면 →{' '}
-            <span className={`font-bold text-lg ${profitColor}`}>
+            <span className={`font-bold text-base sm:text-lg ${profitColor}`}>
               {formatKoreanCurrency(outcome.finalAmount)}원
             </span>
             {outcome.isPositive ? '으로 불어났을 것입니다' : '으로 줄었을 것입니다'}
           </p>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-400 text-xs sm:text-sm">
             (수익:{' '}
             <span className={profitColor}>
               {profitSign}
@@ -60,7 +62,7 @@ export function InvestmentSummary({
           </p>
 
           {outcome.mddPercent < 0 && (
-            <p className="text-yellow-400/90 text-sm mt-2">
+            <p className="text-yellow-400/90 text-xs sm:text-sm mt-2">
               ⚠️ 단, 최대 <span className="font-medium">{outcome.mddPercent.toFixed(1)}%</span>{' '}
               하락을 견뎌야 했습니다 (약 -{formatKoreanCurrency(outcome.mddAmount)}원 일시 손실
               가능)

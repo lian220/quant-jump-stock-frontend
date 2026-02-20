@@ -124,11 +124,12 @@ export function getAndClearAuthReturnUrl(): string | null {
   return url;
 }
 
-/** 로그인 후 리다이렉트 경로 반환 — returnUrl 우선, 없으면 onboarding 여부로 결정 */
-export function getPostLoginRedirect(): string {
+/** 로그인 후 리다이렉트 경로 반환 — returnUrl 우선, 없으면 onboarding 여부로 결정 (비동기: 백엔드 확인 포함) */
+export async function getPostLoginRedirect(): Promise<string> {
   const returnUrl = getAndClearAuthReturnUrl();
   if (returnUrl) return returnUrl;
-  return isOnboardingCompleted() ? '/' : '/onboarding';
+  const completed = await isOnboardingCompletedAsync();
+  return completed ? '/' : '/onboarding';
 }
 
 // --- 표시용 상수 ---

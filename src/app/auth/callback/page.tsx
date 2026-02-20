@@ -46,11 +46,12 @@ export default function AuthCallbackPage() {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
-        .then((data) => {
+        .then(async (data) => {
           if (data.success && data.user) {
             setStatus('success');
             setMessage(`환영합니다, ${data.user.name || data.user.email || data.user.userId}님!`);
-            setTimeout(() => router.push(getPostLoginRedirect()), 1500);
+            const redirect = await getPostLoginRedirect();
+            setTimeout(() => router.push(redirect), 1500);
           } else {
             throw new Error('사용자 정보를 가져올 수 없습니다');
           }
@@ -70,7 +71,9 @@ export default function AuthCallbackPage() {
     if (storedToken) {
       setStatus('success');
       setMessage('로그인 성공! 잠시 후 이동합니다...');
-      setTimeout(() => router.push(getPostLoginRedirect()), 1500);
+      getPostLoginRedirect().then((redirect) => {
+        setTimeout(() => router.push(redirect), 1500);
+      });
       return;
     }
 

@@ -14,7 +14,7 @@ export default function SignUpPage() {
 
   useEffect(() => {
     if (!loading && user && !justSignedUpRef.current) {
-      router.push(getPostLoginRedirect());
+      getPostLoginRedirect().then((redirect) => router.push(redirect));
     }
   }, [loading, user, router]);
 

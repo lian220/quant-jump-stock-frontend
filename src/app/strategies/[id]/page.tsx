@@ -17,7 +17,7 @@ import {
   TermTooltip,
   SubscribeButton,
 } from '@/components/strategies';
-import { getMySubscriptions } from '@/lib/api/subscriptions';
+import { getMySubscriptions, type SubscriptionSummary } from '@/lib/api/subscriptions';
 import {
   getRiskColor,
   getRiskLabel,
@@ -34,7 +34,7 @@ import {
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
 import { PageSEO } from '@/components/seo';
-import type { StrategyDetail, BenchmarkSeries } from '@/types/strategy';
+import type { StrategyDetail, StrategyCategory, BenchmarkSeries } from '@/types/strategy';
 import type { DefaultStockResponse } from '@/types/api';
 
 const BacktestHistoryList = dynamic(() => import('@/components/backtest/BacktestHistoryList'), {
@@ -58,6 +58,7 @@ export default function StrategyDetailPage() {
   const [selectedUniverseType, setSelectedUniverseType] = useState<UniverseType>('MARKET');
   // 구독 상태
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionSummary | null>(null);
 
   useEffect(() => {
     const fetchStrategy = async () => {
@@ -140,6 +141,7 @@ export default function StrategyDetailPage() {
   useEffect(() => {
     // id 변경 시 구독 상태 초기화 (전략 간 이동 시 stale UI 방지)
     setIsSubscribed(false);
+    setSubscriptionInfo(null);
 
     if (!user || !id) return;
     const token = localStorage.getItem('auth_token');
@@ -150,6 +152,7 @@ export default function StrategyDetailPage() {
         const found = data.subscriptions.find((s) => s.strategyId === Number(id));
         if (found) {
           setIsSubscribed(true);
+          setSubscriptionInfo(found);
         }
       })
       .catch(() => {
@@ -202,19 +205,20 @@ export default function StrategyDetailPage() {
       />
       {/* 메인 컨텐츠 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 전략 헤더 */}
+        {/* 전략 헤더 — 모바일: 스택, 데스크톱: 2컬럼 */}
         <div className="mb-8">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-white">{strategy.name}</h1>
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            {/* 좌측: 제목 + 뱃지 + 설명 */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">{strategy.name}</h1>
                 {strategy.isPremium && (
                   <Badge className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border-yellow-500/30">
                     프리미엄
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <Badge className="bg-slate-700/50 text-slate-300 border-slate-600">
                   {getCategoryLabel(strategy.category)}
                 </Badge>
@@ -227,26 +231,73 @@ export default function StrategyDetailPage() {
                   <TermTooltip termKey="backtest">백테스트: {strategy.backtestPeriod}</TermTooltip>
                 </span>
               </div>
-              <p className="text-slate-400 max-w-2xl">{strategy.description}</p>
+              <p className="text-slate-400 max-w-2xl text-sm sm:text-base">
+                {strategy.description}
+              </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
-                  <span>⭐ {strategy.rating.toFixed(1)}</span>
-                  <span>|</span>
-                  <span>👥 {strategy.subscribers.toLocaleString()}명 구독</span>
-                </div>
+
+            {/* 우측: 평점 + 구독 버튼 */}
+            <div className="flex flex-col gap-2 lg:items-end lg:shrink-0">
+              <div className="flex items-center gap-3 text-sm text-slate-400">
+                <span className="flex items-center gap-1">
+                  <span className="text-yellow-400">⭐</span> {strategy.rating.toFixed(1)}
+                </span>
+                <span className="w-px h-4 bg-slate-700" />
+                <span>👥 {strategy.subscribers.toLocaleString()}명 구독</span>
+              </div>
+              <div className="w-full lg:w-auto">
                 <SubscribeButton
                   strategyId={Number(id)}
                   initialSubscribed={isSubscribed}
                   isPremiumStrategy={strategy.isPremium}
                   onSubscribeChange={(sub) => {
                     setIsSubscribed(sub);
+                    if (!sub) setSubscriptionInfo(null);
                   }}
                 />
               </div>
             </div>
           </div>
+
+          {/* 구독 정보 카드 — 구독 중일 때만 표시 */}
+          {isSubscribed && subscriptionInfo && (
+            <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-sm font-semibold text-emerald-400">구독 활성화됨</span>
+                </div>
+                <span className="text-xs text-slate-400">
+                  {new Date(subscriptionInfo.subscribedAt).toLocaleDateString('ko-KR')} 시작
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
+                <div>
+                  <p className="text-xs text-slate-500">카테고리</p>
+                  <p className="text-sm text-slate-200">
+                    {getCategoryLabel(subscriptionInfo.strategyCategory as StrategyCategory)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">상태</p>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${subscriptionInfo.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-yellow-400'}`}
+                    />
+                    <p className="text-sm text-slate-200">
+                      {subscriptionInfo.status === 'ACTIVE' ? '운용 중' : '일시정지'}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">알림</p>
+                  <p className="text-sm text-slate-200">
+                    {subscriptionInfo.alertEnabled ? '🔔 활성' : '🔕 비활성'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 성과 지표: 기본 성과 / 내 백테스트 탭 */}
@@ -254,13 +305,13 @@ export default function StrategyDetailPage() {
           <TabsList className="bg-slate-800/50 border border-slate-700">
             <TabsTrigger
               value="canonical"
-              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
             >
               기본 성과
             </TabsTrigger>
             <TabsTrigger
               value="my-backtests"
-              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
             >
               내 백테스트
             </TabsTrigger>
@@ -286,48 +337,48 @@ export default function StrategyDetailPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                     <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">CAGR</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">CAGR</p>
                       <p
-                        className={`text-lg font-bold ${strategy.canonicalBacktest.cagr >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                        className={`text-sm sm:text-lg font-bold ${strategy.canonicalBacktest.cagr >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
                       >
                         {strategy.canonicalBacktest.cagr >= 0 ? '+' : ''}
                         {strategy.canonicalBacktest.cagr.toFixed(1)}%
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">MDD</p>
-                      <p className="text-lg font-bold text-red-400">
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">MDD</p>
+                      <p className="text-sm sm:text-lg font-bold text-red-400">
                         {strategy.canonicalBacktest.mdd.toFixed(1)}%
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">샤프 비율</p>
-                      <p className="text-lg font-bold text-purple-400">
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">샤프 비율</p>
+                      <p className="text-sm sm:text-lg font-bold text-purple-400">
                         {strategy.canonicalBacktest.sharpeRatio?.toFixed(2) ?? 'N/A'}
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">총 수익률</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">총 수익률</p>
                       <p
-                        className={`text-lg font-bold ${strategy.canonicalBacktest.totalReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                        className={`text-sm sm:text-lg font-bold ${strategy.canonicalBacktest.totalReturn >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
                       >
                         {strategy.canonicalBacktest.totalReturn >= 0 ? '+' : ''}
                         {strategy.canonicalBacktest.totalReturn.toFixed(1)}%
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">승률</p>
-                      <p className="text-lg font-bold text-yellow-400">
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">승률</p>
+                      <p className="text-sm sm:text-lg font-bold text-yellow-400">
                         {strategy.canonicalBacktest.winRate != null
                           ? `${strategy.canonicalBacktest.winRate.toFixed(1)}%`
                           : 'N/A'}
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-xs text-slate-400 mb-1">최종 자산</p>
-                      <p className="text-lg font-bold text-cyan-400">
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">최종 자산</p>
+                      <p className="text-sm sm:text-lg font-bold text-cyan-400 truncate">
                         {(strategy.canonicalBacktest.finalValue / 10000).toLocaleString(undefined, {
                           maximumFractionDigits: 0,
                         })}
@@ -340,7 +391,7 @@ export default function StrategyDetailPage() {
             )}
 
             {/* 성과 지표 카드 */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
               <MetricCard
                 value={strategy.totalReturn}
                 label="누적 수익률"
@@ -350,14 +401,14 @@ export default function StrategyDetailPage() {
               />
               <MetricCard
                 value={strategy.annualReturn}
-                label="연환산 수익률 (CAGR)"
+                label="CAGR"
                 termKey="cagr"
                 metricKey="cagr"
                 valueColor="text-cyan-400"
               />
               <MetricCard
                 value={strategy.maxDrawdown}
-                label="최대 낙폭 (MDD)"
+                label="MDD"
                 termKey="mdd"
                 metricKey="mdd"
                 valueColor="text-red-400"
@@ -514,32 +565,34 @@ export default function StrategyDetailPage() {
 
         {/* 탭 컨텐츠 */}
         <Tabs defaultValue="performance" className="space-y-6">
-          <TabsList className="bg-slate-800/50 border border-slate-700">
-            <TabsTrigger
-              value="performance"
-              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
-            >
-              수익 곡선
-            </TabsTrigger>
-            <TabsTrigger
-              value="rules"
-              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
-            >
-              전략 조건
-            </TabsTrigger>
-            <TabsTrigger
-              value="trades"
-              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
-            >
-              거래 내역
-            </TabsTrigger>
-            <TabsTrigger
-              value="monthly"
-              className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
-            >
-              월별 수익률
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="bg-slate-800/50 border border-slate-700 w-max sm:w-auto">
+              <TabsTrigger
+                value="performance"
+                className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              >
+                수익 곡선
+              </TabsTrigger>
+              <TabsTrigger
+                value="rules"
+                className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              >
+                전략 조건
+              </TabsTrigger>
+              <TabsTrigger
+                value="trades"
+                className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              >
+                거래 내역
+              </TabsTrigger>
+              <TabsTrigger
+                value="monthly"
+                className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
+              >
+                월별 수익률
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* 수익 곡선 탭 */}
           <TabsContent value="performance">
@@ -822,60 +875,122 @@ export default function StrategyDetailPage() {
           <CardContent className="py-6">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-white mb-1">내 설정으로 백테스트</h3>
-                <p className="text-slate-400 text-sm">
+                <h3 className="text-base sm:text-lg font-bold text-white mb-1">
+                  내 설정으로 백테스트
+                </h3>
+                <p className="text-slate-400 text-xs sm:text-sm">
                   기간, 자본금, 유니버스를 직접 설정하여 시뮬레이션해 보세요
                 </p>
               </div>
               <Link href={`/strategies/${id}/backtest`}>
-                <Button className="bg-cyan-600 hover:bg-cyan-700 px-6">커스텀 백테스트 →</Button>
+                <Button className="bg-cyan-600 hover:bg-cyan-700 px-6 text-sm">
+                  커스텀 백테스트 →
+                </Button>
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* 구독 CTA 섹션 */}
-        <Card className="bg-gradient-to-r from-emerald-900/50 to-cyan-900/50 border-emerald-500/30 mt-8">
-          <CardContent className="py-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div>
-                <h3 className="text-2xl font-bold text-white mb-2">
-                  이 전략으로 투자를 시작하세요
+        {/* 구독 CTA 섹션 — 구독 상태에 따라 다르게 표시 */}
+        {isSubscribed ? (
+          <Card className="bg-slate-800/50 border-emerald-500/20 mt-8">
+            <CardContent className="py-8">
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-emerald-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-white">
+                  {strategy.name} 전략을 구독 중입니다
                 </h3>
-                <p className="text-slate-300">
-                  {strategy.isPremium
-                    ? '프리미엄 구독으로 실시간 매매 신호를 받아보세요.'
-                    : '무료로 이 전략의 매매 신호를 받아보세요.'}
+                <p className="text-xs sm:text-sm text-slate-400">
+                  현재 이 전략의 매매 신호를 받고 있습니다
                 </p>
-                <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
-                  <span>✓ 실시간 매매 알림</span>
-                  <span>✓ 포트폴리오 연동</span>
-                  <span>✓ 성과 리포트</span>
+                <div className="flex flex-col sm:flex-row gap-2 mt-2 w-full sm:w-auto">
+                  <Link href="/mypage">
+                    <Button
+                      variant="outline"
+                      className="w-full sm:w-auto border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      내 구독 관리
+                    </Button>
+                  </Link>
+                  <Link href={`/strategies/${id}/backtest`}>
+                    <Button className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700">
+                      커스텀 백테스트 →
+                    </Button>
+                  </Link>
                 </div>
               </div>
-              <div className="flex flex-col items-center gap-3">
-                {strategy.isPremium && <p className="text-slate-400 text-sm">월 29,900원</p>}
-                <Button
-                  size="lg"
-                  className={`px-8 ${
-                    strategy.isPremium
-                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
-                      : 'bg-emerald-600 hover:bg-emerald-700'
-                  }`}
-                  onClick={() => {
-                    setSelectedUniverseType(strategy.recommendedUniverseType ?? 'MARKET');
-                    setShowUniverseModal(true);
-                  }}
-                >
-                  {strategy.isPremium ? '프리미엄 구독하기' : '무료로 구독하기'}
-                </Button>
-                <p className="text-xs text-slate-500">
-                  {strategy.subscribers.toLocaleString()}명이 이미 구독 중
-                </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-gradient-to-r from-emerald-900/50 to-cyan-900/50 border-emerald-500/30 mt-8">
+            <CardContent className="py-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-2">
+                    이 전략으로 투자를 시작하세요
+                  </h3>
+                  <p className="text-slate-300 text-xs sm:text-sm md:text-base">
+                    {!user
+                      ? '로그인 후 무료로 구독할 수 있습니다.'
+                      : strategy.isPremium
+                        ? '프리미엄 구독으로 실시간 매매 신호를 받아보세요.'
+                        : '무료로 이 전략의 매매 신호를 받아보세요.'}
+                  </p>
+                  <div className="flex items-center justify-center md:justify-start gap-2 sm:gap-4 mt-3 text-[11px] sm:text-sm text-slate-400 flex-wrap">
+                    <span className="whitespace-nowrap">✓ 실시간 매매 알림</span>
+                    <span className="whitespace-nowrap">✓ 포트폴리오 연동</span>
+                    <span className="whitespace-nowrap">✓ 성과 리포트</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-3 w-full md:w-auto shrink-0">
+                  {strategy.isPremium && <p className="text-slate-400 text-sm">월 29,900원</p>}
+                  {!user ? (
+                    <Link href={`/auth?returnUrl=/strategies/${id}`} className="w-full md:w-auto">
+                      <Button
+                        size="lg"
+                        className="w-full md:w-auto px-8 bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        로그인 후 구독하기
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button
+                      size="lg"
+                      className={`w-full md:w-auto px-8 ${
+                        strategy.isPremium
+                          ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600'
+                          : 'bg-emerald-600 hover:bg-emerald-700'
+                      }`}
+                      onClick={() => {
+                        setSelectedUniverseType(strategy.recommendedUniverseType ?? 'MARKET');
+                        setShowUniverseModal(true);
+                      }}
+                    >
+                      {strategy.isPremium ? '프리미엄 구독하기' : '무료로 구독하기'}
+                    </Button>
+                  )}
+                  <p className="text-xs text-slate-500">
+                    {strategy.subscribers.toLocaleString()}명이 이미 구독 중
+                  </p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* SCRUM-350: Universe 선택 모달 */}
         {showUniverseModal && (

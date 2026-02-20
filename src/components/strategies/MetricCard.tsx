@@ -49,11 +49,13 @@ export function MetricCard({
           <span className="text-[10px] text-slate-400">{gradeResult.label}</span>
         </div>
       )}
-      <CardContent className="pt-6 text-center">
-        <p className={`text-2xl font-bold ${isNoData ? 'text-slate-500' : valueColor}`}>
+      <CardContent className="px-2 pt-5 pb-4 sm:px-6 sm:pt-6 sm:pb-6 text-center">
+        <p
+          className={`text-base sm:text-2xl font-bold whitespace-nowrap ${isNoData ? 'text-slate-500' : valueColor}`}
+        >
           {displayValue}
         </p>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-[10px] sm:text-xs text-slate-400 mt-1 leading-tight">
           {termKey ? <TermTooltip termKey={termKey}>{label}</TermTooltip> : label}
         </p>
         {isNoData && <p className="text-[10px] text-slate-500 mt-0.5">백테스트 미실행</p>}

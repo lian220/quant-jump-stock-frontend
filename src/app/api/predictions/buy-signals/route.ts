@@ -36,6 +36,16 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     if (process.env.NODE_ENV === 'development') {
       console.log('[Proxy] Backend response item count:', data.buySignals?.length ?? 0);
+      // 목표가 필드 디버그: 첫 번째 종목의 가격 필드 확인
+      const sample = data.buySignals?.[0];
+      if (sample) {
+        console.log('[Proxy] Sample price fields:', {
+          ticker: sample.ticker,
+          currentPrice: sample.currentPrice,
+          targetPrice: sample.targetPrice,
+          upsidePercent: sample.upsidePercent,
+        });
+      }
     }
     // Backend 응답 형식을 Frontend 기대 형식으로 변환 (숫자 필드 정규화)
     const NUMERIC_FIELDS = [
