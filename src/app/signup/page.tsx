@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { SignUpForm } from '@/components/auth/SignUpForm';
-import { getPostLoginRedirect, isOnboardingCompleted } from '@/lib/onboarding';
+import { getPostLoginRedirect, clearOnboardingState } from '@/lib/onboarding';
 import { trackEvent } from '@/lib/analytics';
 
 export default function SignUpPage() {
@@ -39,8 +39,9 @@ export default function SignUpPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-16">
       <SignUpForm
         onSuccess={() => {
-          // 자동 로그인됨 → 온보딩 or 홈으로 이동
-          router.push(isOnboardingCompleted() ? '/' : '/onboarding');
+          // 신규 가입 → 이전 유저의 localStorage 초기화 후 항상 온보딩으로
+          clearOnboardingState();
+          router.push('/onboarding');
         }}
         onSwitchToLogin={() => {
           router.push('/auth');

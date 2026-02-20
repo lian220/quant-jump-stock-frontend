@@ -15,7 +15,9 @@ import {
   InvestmentSummary,
   EquityCurveChart,
   TermTooltip,
+  SubscribeButton,
 } from '@/components/strategies';
+import { getMySubscriptions } from '@/lib/api/subscriptions';
 import {
   getRiskColor,
   getRiskLabel,
@@ -54,6 +56,9 @@ export default function StrategyDetailPage() {
   // SCRUM-350: Universe 선택 모달 상태
   const [showUniverseModal, setShowUniverseModal] = useState(false);
   const [selectedUniverseType, setSelectedUniverseType] = useState<UniverseType>('MARKET');
+  // 구독 상태
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscriptionId, setSubscriptionId] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const fetchStrategy = async () => {
@@ -132,6 +137,25 @@ export default function StrategyDetailPage() {
     }
   }, [id]);
 
+  // 로그인 상태일 때 구독 여부 조회
+  useEffect(() => {
+    if (!user || !id) return;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!token) return;
+
+    getMySubscriptions(token)
+      .then((data) => {
+        const found = data.subscriptions.find((s) => s.strategyId === Number(id));
+        if (found) {
+          setIsSubscribed(true);
+          setSubscriptionId(found.subscriptionId);
+        }
+      })
+      .catch(() => {
+        // 구독 목록 조회 실패는 무시 (비로그인 등)
+      });
+  }, [user, id]);
+
   // 로딩 상태
   if (isLoading) {
     return (
@@ -206,11 +230,21 @@ export default function StrategyDetailPage() {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <div className="flex items-center gap-2 text-sm text-slate-400">
+                <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
                   <span>⭐ {strategy.rating.toFixed(1)}</span>
                   <span>|</span>
                   <span>👥 {strategy.subscribers.toLocaleString()}명 구독</span>
                 </div>
+                <SubscribeButton
+                  strategyId={Number(id)}
+                  initialSubscribed={isSubscribed}
+                  subscriptionId={subscriptionId}
+                  isPremiumStrategy={strategy.isPremium}
+                  onSubscribeChange={(sub, subId) => {
+                    setIsSubscribed(sub);
+                    setSubscriptionId(subId);
+                  }}
+                />
               </div>
             </div>
           </div>

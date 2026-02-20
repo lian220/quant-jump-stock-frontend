@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StrategyGrid } from '@/components/strategies/StrategyGrid';
@@ -19,52 +19,45 @@ import type {
 
 function StrategiesContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
-  // URL 파라미터로만 초기값 결정 (localStorage 자동 필터 제거)
-  const getInitialFilters = (): {
-    category: StrategyCategory;
-    risk: RiskLevel | 'all';
-    sort: SortOption;
-  } => {
-    const urlCategory = searchParams.get('category');
-    const urlRisk = searchParams.get('risk');
+  // URL 파라미터에서 직접 파생 (state 없이 — 항상 URL이 진실의 원천)
+  const validCategories: StrategyCategory[] = [
+    'value',
+    'momentum',
+    'asset_allocation',
+    'quant_composite',
+    'seasonal',
+    'ml_prediction',
+  ];
+  const validRisks: RiskLevel[] = ['low', 'medium', 'high'];
+  const validSorts: SortOption[] = [
+    'popularity',
+    'return_high',
+    'return_low',
+    'latest',
+    'risk_low',
+  ];
 
-    const validCategories: StrategyCategory[] = [
-      'value',
-      'momentum',
-      'asset_allocation',
-      'quant_composite',
-      'seasonal',
-      'ml_prediction',
-    ];
-    const validRisks: RiskLevel[] = ['low', 'medium', 'high'];
+  const urlCategory = searchParams.get('category');
+  const urlRisk = searchParams.get('risk');
+  const urlSort = searchParams.get('sort');
 
-    const category: StrategyCategory =
-      urlCategory && validCategories.includes(urlCategory as StrategyCategory)
-        ? (urlCategory as StrategyCategory)
-        : 'all';
+  const selectedCategory: StrategyCategory =
+    urlCategory && validCategories.includes(urlCategory as StrategyCategory)
+      ? (urlCategory as StrategyCategory)
+      : 'all';
 
-    const risk: RiskLevel | 'all' =
-      urlRisk && validRisks.includes(urlRisk as RiskLevel) ? (urlRisk as RiskLevel) : 'all';
+  const selectedRiskLevel: RiskLevel | 'all' =
+    urlRisk && validRisks.includes(urlRisk as RiskLevel) ? (urlRisk as RiskLevel) : 'all';
 
-    const sort: SortOption = 'return_high';
-
-    return { category, risk, sort };
-  };
+  const selectedSort: SortOption =
+    urlSort && validSorts.includes(urlSort as SortOption) ? (urlSort as SortOption) : 'return_high';
 
   // 데이터 상태
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // 필터 상태 — lazy initializer로 마운트 시 1회만 계산
-  const [selectedCategory, setSelectedCategory] = useState<StrategyCategory>(
-    () => getInitialFilters().category,
-  );
-  const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | 'all'>(
-    () => getInitialFilters().risk,
-  );
-  const [selectedSort, setSelectedSort] = useState<SortOption>(() => getInitialFilters().sort);
 
   // 모바일 필터 토글
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -77,6 +70,34 @@ function StrategiesContent() {
     pageSize: 8,
     totalItems: 0,
   });
+
+  // 필터 URL 업데이트 — URL이 바뀌면 searchParams가 변경되어 자동 리렌더
+  const updateFilters = useCallback(
+    (updates: { category?: StrategyCategory; risk?: RiskLevel | 'all'; sort?: SortOption }) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if ('category' in updates) {
+        updates.category === 'all'
+          ? params.delete('category')
+          : params.set('category', updates.category!);
+      }
+      if ('risk' in updates) {
+        updates.risk === 'all' ? params.delete('risk') : params.set('risk', updates.risk!);
+      }
+      if ('sort' in updates) {
+        updates.sort === 'return_high' ? params.delete('sort') : params.set('sort', updates.sort!);
+      }
+
+      const qs = params.toString();
+      router.replace(`/strategies${qs ? `?${qs}` : ''}`, { scroll: false });
+    },
+    [searchParams, router],
+  );
+
+  // URL 파라미터가 바뀌면(뒤로가기 등) 페이지를 1로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, selectedRiskLevel, selectedSort]);
 
   const pageSize = 8;
 
@@ -147,21 +168,26 @@ function StrategiesContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 필터 변경 시 1페이지로 리셋
+  // 필터 변경 시 URL 업데이트 → searchParams 변경 → 자동 리렌더
   const handleCategoryChange = (category: StrategyCategory) => {
-    setSelectedCategory(category);
+    updateFilters({ category });
     setCurrentPage(1);
   };
 
   const handleRiskLevelChange = (riskLevel: RiskLevel | 'all') => {
-    setSelectedRiskLevel(riskLevel);
+    updateFilters({ risk: riskLevel });
     setCurrentPage(1);
   };
 
   const handleSortChange = (sort: SortOption) => {
-    setSelectedSort(sort);
+    updateFilters({ sort });
     setCurrentPage(1);
   };
+
+  const handleReset = useCallback(() => {
+    updateFilters({ category: 'all', risk: 'all', sort: 'return_high' });
+    setCurrentPage(1);
+  }, [updateFilters]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -273,6 +299,7 @@ function StrategiesContent() {
                     onCategoryChange={handleCategoryChange}
                     onRiskLevelChange={handleRiskLevelChange}
                     onSortChange={handleSortChange}
+                    onReset={handleReset}
                   />
                 </CardContent>
               </Card>
@@ -305,12 +332,7 @@ function StrategiesContent() {
                 primaryAction={{ label: '다시 시도', onClick: () => window.location.reload() }}
                 secondaryAction={{
                   label: '필터 초기화',
-                  onClick: () => {
-                    setSelectedCategory('all');
-                    setSelectedRiskLevel('all');
-                    setSelectedSort('return_high');
-                    setCurrentPage(1);
-                  },
+                  onClick: handleReset,
                   variant: 'ghost',
                 }}
               />

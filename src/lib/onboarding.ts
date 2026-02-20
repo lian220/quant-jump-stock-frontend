@@ -72,6 +72,13 @@ export function setOnboardingCompleted(): void {
   localStorage.setItem(ONBOARDING_KEY, 'true');
 }
 
+/** 로그아웃 또는 신규 가입 시 온보딩 상태를 초기화합니다. */
+export function clearOnboardingState(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(ONBOARDING_KEY);
+  localStorage.removeItem(PREFERENCES_KEY);
+}
+
 export function getUserPreferences(): UserPreferences | null {
   if (typeof window === 'undefined') return null;
   const raw = localStorage.getItem(PREFERENCES_KEY);
