@@ -65,13 +65,15 @@ export function IosInstallGuide() {
                 <p className="text-sm text-slate-400">Alpha Foundry</p>
               </div>
             </div>
-            <button
+            <Button
               onClick={handleDismiss}
-              className="text-slate-400 hover:text-white transition-colors"
+              variant="ghost"
+              size="icon"
+              className="text-slate-400 hover:text-white"
               aria-label="닫기"
             >
               <X className="h-5 w-5" />
-            </button>
+            </Button>
           </div>
 
           <p className="mb-3 text-sm text-slate-300">
@@ -84,7 +86,22 @@ export function IosInstallGuide() {
                 1
               </span>
               <span>
-                하단 공유 버튼 <span className="inline-block text-base leading-none">⎋</span> 탭
+                하단 공유 버튼{' '}
+                <svg
+                  className="inline-block h-4 w-4 align-text-bottom"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>{' '}
+                탭
               </span>
             </div>
             <div className="flex items-center gap-2">
