@@ -72,7 +72,7 @@ export default function MyPage() {
     let mounted = true;
     getMySubscriptions(token)
       .then((data) => {
-        if (mounted) setSubscriptions(data.subscriptions);
+        if (mounted) setSubscriptions(data.subscriptions ?? []);
       })
       .catch(() => {
         if (mounted) setSubscriptionLoadError(true);
