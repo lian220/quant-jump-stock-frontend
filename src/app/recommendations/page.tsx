@@ -59,6 +59,9 @@ export default function RecommendationsPage() {
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
   const [strategiesError, setStrategiesError] = useState<string | null>(null);
 
+  // 카드 클릭 시 종목 이동 중인 ticker 추적
+  const [navigatingTicker, setNavigatingTicker] = useState<string | null>(null);
+
   // 초기 날짜 동기화 완료 여부
   const initialDateSynced = useRef(false);
   const firstViewTracked = useRef(false);
@@ -192,6 +195,8 @@ export default function RecommendationsPage() {
   // 종목 상세 페이지로 이동 (ticker → stock id 조회 후 이동)
   const navigateToStockDetail = useCallback(
     async (ticker: string) => {
+      if (navigatingTicker) return; // 중복 클릭 방지
+      setNavigatingTicker(ticker);
       try {
         const result = await searchStocks({ query: ticker, size: 1 });
         if (result.stocks.length > 0) {
@@ -201,9 +206,11 @@ export default function RecommendationsPage() {
         }
       } catch {
         router.push(`/stocks?query=${ticker}`);
+      } finally {
+        setNavigatingTicker(null);
       }
     },
-    [router],
+    [router, navigatingTicker],
   );
 
   // 인기 전략 가져오기 (구독자순 상위 3개)
@@ -570,10 +577,14 @@ export default function RecommendationsPage() {
                           ? 'bg-cyan-400'
                           : 'bg-slate-400';
 
+                      const isNavigatingThis = navigatingTicker === stock.ticker;
+
                       return (
                         <Card
                           key={stock.ticker}
                           className={`flex flex-col bg-gradient-to-br from-slate-800/80 to-slate-800/50 transition-all hover:shadow-lg cursor-pointer ${
+                            isNavigatingThis ? 'opacity-70 pointer-events-none' : ''
+                          } ${
                             isStrong
                               ? 'border-emerald-500/50 hover:border-emerald-400 hover:shadow-emerald-500/10'
                               : isMedium
@@ -594,11 +605,19 @@ export default function RecommendationsPage() {
                                 {/* #3: compositeGrade 뱃지 */}
                                 <span
                                   className={`text-xl font-black tabular-nums ${
-                                    stock.compositeGrade === 'A' || stock.compositeGrade === 'B'
+                                    stock.compositeGrade === 'A' ||
+                                    stock.compositeGrade === 'B' ||
+                                    stock.compositeGrade === 'EXCELLENT'
                                       ? 'text-emerald-400'
-                                      : stock.compositeGrade === 'C'
+                                      : stock.compositeGrade === 'C' ||
+                                          stock.compositeGrade === 'GOOD'
                                         ? 'text-cyan-400'
-                                        : 'text-slate-400'
+                                        : stock.compositeGrade === 'FAIR'
+                                          ? 'text-yellow-400'
+                                          : stock.compositeGrade === 'D' ||
+                                              stock.compositeGrade === 'LOW'
+                                            ? 'text-red-400'
+                                            : 'text-slate-400'
                                   }`}
                                 >
                                   {stock.compositeGrade}
