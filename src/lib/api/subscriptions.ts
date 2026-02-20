@@ -1,6 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
 function getAuthHeaders(token: string): Record<string, string> {
+  return { Authorization: `Bearer ${token}` };
+}
+
+function getJsonHeaders(token: string): Record<string, string> {
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
@@ -81,7 +85,7 @@ export async function updateSubscriptionAlert(
 ): Promise<void> {
   const res = await fetch(`${API_URL}/api/v1/subscriptions/${subscriptionId}/alert`, {
     method: 'PATCH',
-    headers: getAuthHeaders(token),
+    headers: getJsonHeaders(token),
     body: JSON.stringify({ alertEnabled }),
   });
   if (!res.ok) {

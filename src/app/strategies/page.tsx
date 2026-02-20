@@ -17,42 +17,37 @@ import type {
   PaginationInfo,
 } from '@/types/strategy';
 
+const VALID_CATEGORIES: StrategyCategory[] = [
+  'value',
+  'momentum',
+  'asset_allocation',
+  'quant_composite',
+  'seasonal',
+  'ml_prediction',
+];
+const VALID_RISKS: RiskLevel[] = ['low', 'medium', 'high'];
+const VALID_SORTS: SortOption[] = ['popularity', 'return_high', 'return_low', 'latest', 'risk_low'];
+
 function StrategiesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  // URL 파라미터에서 직접 파생 (state 없이 — 항상 URL이 진실의 원천)
-  const validCategories: StrategyCategory[] = [
-    'value',
-    'momentum',
-    'asset_allocation',
-    'quant_composite',
-    'seasonal',
-    'ml_prediction',
-  ];
-  const validRisks: RiskLevel[] = ['low', 'medium', 'high'];
-  const validSorts: SortOption[] = [
-    'popularity',
-    'return_high',
-    'return_low',
-    'latest',
-    'risk_low',
-  ];
 
   const urlCategory = searchParams.get('category');
   const urlRisk = searchParams.get('risk');
   const urlSort = searchParams.get('sort');
 
   const selectedCategory: StrategyCategory =
-    urlCategory && validCategories.includes(urlCategory as StrategyCategory)
+    urlCategory && VALID_CATEGORIES.includes(urlCategory as StrategyCategory)
       ? (urlCategory as StrategyCategory)
       : 'all';
 
   const selectedRiskLevel: RiskLevel | 'all' =
-    urlRisk && validRisks.includes(urlRisk as RiskLevel) ? (urlRisk as RiskLevel) : 'all';
+    urlRisk && VALID_RISKS.includes(urlRisk as RiskLevel) ? (urlRisk as RiskLevel) : 'all';
 
   const selectedSort: SortOption =
-    urlSort && validSorts.includes(urlSort as SortOption) ? (urlSort as SortOption) : 'return_high';
+    urlSort && VALID_SORTS.includes(urlSort as SortOption)
+      ? (urlSort as SortOption)
+      : 'return_high';
 
   // 데이터 상태
   const [strategies, setStrategies] = useState<Strategy[]>([]);
@@ -77,15 +72,16 @@ function StrategiesContent() {
       const params = new URLSearchParams(searchParams.toString());
 
       if ('category' in updates) {
-        updates.category === 'all'
-          ? params.delete('category')
-          : params.set('category', updates.category!);
+        if (updates.category === 'all') params.delete('category');
+        else params.set('category', updates.category!);
       }
       if ('risk' in updates) {
-        updates.risk === 'all' ? params.delete('risk') : params.set('risk', updates.risk!);
+        if (updates.risk === 'all') params.delete('risk');
+        else params.set('risk', updates.risk!);
       }
       if ('sort' in updates) {
-        updates.sort === 'return_high' ? params.delete('sort') : params.set('sort', updates.sort!);
+        if (updates.sort === 'return_high') params.delete('sort');
+        else params.set('sort', updates.sort!);
       }
 
       const qs = params.toString();
@@ -171,22 +167,18 @@ function StrategiesContent() {
   // 필터 변경 시 URL 업데이트 → searchParams 변경 → 자동 리렌더
   const handleCategoryChange = (category: StrategyCategory) => {
     updateFilters({ category });
-    setCurrentPage(1);
   };
 
   const handleRiskLevelChange = (riskLevel: RiskLevel | 'all') => {
     updateFilters({ risk: riskLevel });
-    setCurrentPage(1);
   };
 
   const handleSortChange = (sort: SortOption) => {
     updateFilters({ sort });
-    setCurrentPage(1);
   };
 
   const handleReset = useCallback(() => {
     updateFilters({ category: 'all', risk: 'all', sort: 'return_high' });
-    setCurrentPage(1);
   }, [updateFilters]);
 
   return (

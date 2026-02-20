@@ -23,6 +23,7 @@ import {
 } from '@/lib/api/subscriptions';
 import type { Strategy, RiskLevel } from '@/types/strategy';
 import { getRiskColor, getRiskLabel, getCategoryLabel } from '@/lib/strategy-helpers';
+import { PageSEO } from '@/components/seo';
 
 export default function MyPage() {
   const { user, loading, signOut } = useAuth();
@@ -35,6 +36,8 @@ export default function MyPage() {
   const [subscriptionsLoading, setSubscriptionsLoading] = React.useState(true);
   const [togglingAlert, setTogglingAlert] = React.useState<number | null>(null);
   const [unsubscribing, setUnsubscribing] = React.useState<number | null>(null);
+  const [subscriptionError, setSubscriptionError] = React.useState<string | null>(null);
+  const [subscriptionLoadError, setSubscriptionLoadError] = React.useState(false);
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -71,7 +74,9 @@ export default function MyPage() {
       .then((data) => {
         if (mounted) setSubscriptions(data.subscriptions);
       })
-      .catch(() => {})
+      .catch(() => {
+        if (mounted) setSubscriptionLoadError(true);
+      })
       .finally(() => {
         if (mounted) setSubscriptionsLoading(false);
       });
@@ -84,11 +89,13 @@ export default function MyPage() {
     const token = localStorage.getItem('auth_token');
     if (!token) return;
     setUnsubscribing(strategyId);
+    setSubscriptionError(null);
     try {
       await unsubscribeStrategy(strategyId, token);
       setSubscriptions((prev) => prev.filter((s) => s.strategyId !== strategyId));
-    } catch {
-      // 실패 시 무시
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '구독 취소에 실패했습니다.';
+      setSubscriptionError(message);
     } finally {
       setUnsubscribing(null);
     }
@@ -98,6 +105,7 @@ export default function MyPage() {
     const token = localStorage.getItem('auth_token');
     if (!token) return;
     setTogglingAlert(subscriptionId);
+    setSubscriptionError(null);
     try {
       await updateSubscriptionAlert(subscriptionId, !current, token);
       setSubscriptions((prev) =>
@@ -105,8 +113,9 @@ export default function MyPage() {
           s.subscriptionId === subscriptionId ? { ...s, alertEnabled: !current } : s,
         ),
       );
-    } catch {
-      // 실패 시 무시
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '알림 설정 변경에 실패했습니다.';
+      setSubscriptionError(message);
     } finally {
       setTogglingAlert(null);
     }
@@ -180,6 +189,10 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
+      <PageSEO
+        title="마이페이지 - Alpha Foundry"
+        description="내 계정 정보, 구독 전략, 투자 성향을 관리하세요."
+      />
       <div className="max-w-lg mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-white text-center">마이페이지</h1>
 
@@ -228,6 +241,18 @@ export default function MyPage() {
                   <div key={i} className="h-16 bg-slate-700/50 rounded-lg animate-pulse" />
                 ))}
               </div>
+            ) : subscriptionLoadError ? (
+              <div className="text-center py-6">
+                <p className="text-red-400 text-sm mb-3">구독 목록을 불러오지 못했습니다</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                  onClick={() => window.location.reload()}
+                >
+                  다시 시도
+                </Button>
+              </div>
             ) : subscriptions.length === 0 ? (
               <div className="text-center py-6">
                 <p className="text-slate-400 text-sm mb-3">구독한 전략이 없습니다</p>
@@ -243,6 +268,9 @@ export default function MyPage() {
               </div>
             ) : (
               <div className="space-y-2">
+                {subscriptionError && (
+                  <p className="text-red-400 text-xs mb-2">{subscriptionError}</p>
+                )}
                 {subscriptions.map((sub) => (
                   <div
                     key={sub.subscriptionId}
@@ -266,6 +294,7 @@ export default function MyPage() {
                           : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
                       }`}
                       title={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
+                      aria-label={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
                     >
                       {togglingAlert === sub.subscriptionId
                         ? '...'
@@ -280,6 +309,7 @@ export default function MyPage() {
                       disabled={unsubscribing === sub.strategyId}
                       className="shrink-0 text-slate-500 hover:text-red-400 transition-colors text-lg leading-none"
                       title="구독 취소"
+                      aria-label="구독 취소"
                     >
                       {unsubscribing === sub.strategyId ? '...' : '×'}
                     </button>

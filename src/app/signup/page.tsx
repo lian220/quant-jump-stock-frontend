@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { SignUpForm } from '@/components/auth/SignUpForm';
@@ -10,9 +10,10 @@ import { trackEvent } from '@/lib/analytics';
 export default function SignUpPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const justSignedUpRef = useRef(false);
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && !justSignedUpRef.current) {
       router.push(getPostLoginRedirect());
     }
   }, [loading, user, router]);
@@ -31,7 +32,7 @@ export default function SignUpPage() {
     );
   }
 
-  if (user) {
+  if (user && !justSignedUpRef.current) {
     return null;
   }
 
@@ -40,6 +41,7 @@ export default function SignUpPage() {
       <SignUpForm
         onSuccess={() => {
           // 신규 가입 → 이전 유저의 localStorage 초기화 후 항상 온보딩으로
+          justSignedUpRef.current = true;
           clearOnboardingState();
           router.push('/onboarding');
         }}

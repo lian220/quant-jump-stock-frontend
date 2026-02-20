@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,7 +58,6 @@ export default function StrategyDetailPage() {
   const [selectedUniverseType, setSelectedUniverseType] = useState<UniverseType>('MARKET');
   // 구독 상태
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [subscriptionId, setSubscriptionId] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const fetchStrategy = async () => {
@@ -139,8 +138,11 @@ export default function StrategyDetailPage() {
 
   // 로그인 상태일 때 구독 여부 조회
   useEffect(() => {
+    // id 변경 시 구독 상태 초기화 (전략 간 이동 시 stale UI 방지)
+    setIsSubscribed(false);
+
     if (!user || !id) return;
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const token = localStorage.getItem('auth_token');
     if (!token) return;
 
     getMySubscriptions(token)
@@ -148,7 +150,6 @@ export default function StrategyDetailPage() {
         const found = data.subscriptions.find((s) => s.strategyId === Number(id));
         if (found) {
           setIsSubscribed(true);
-          setSubscriptionId(found.subscriptionId);
         }
       })
       .catch(() => {
@@ -238,11 +239,9 @@ export default function StrategyDetailPage() {
                 <SubscribeButton
                   strategyId={Number(id)}
                   initialSubscribed={isSubscribed}
-                  subscriptionId={subscriptionId}
                   isPremiumStrategy={strategy.isPremium}
-                  onSubscribeChange={(sub, subId) => {
+                  onSubscribeChange={(sub) => {
                     setIsSubscribed(sub);
-                    setSubscriptionId(subId);
                   }}
                 />
               </div>
