@@ -7,6 +7,7 @@ import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 import { InstallPrompt } from '@/components/pwa/InstallPrompt';
 import { UpdatePrompt } from '@/components/pwa/UpdatePrompt';
 import { IosInstallGuide } from '@/components/pwa/IosInstallGuide';
+import { OfflineBanner } from '@/components/pwa/OfflineBanner';
 
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -136,6 +137,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased select-none`}>
         <CopyProtection />
         <ServiceWorkerRegister />
+        <OfflineBanner />
         <InstallPrompt />
         <IosInstallGuide />
         <UpdatePrompt />

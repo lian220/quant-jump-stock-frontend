@@ -39,10 +39,18 @@ export function InstallPrompt() {
       setShowPrompt(true);
     };
 
+    const installedHandler = () => {
+      console.log('[PWA] 앱이 설치되었습니다.');
+      setDeferredPrompt(null);
+      setShowPrompt(false);
+    };
+
     window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', installedHandler);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
     };
   }, []);
 
