@@ -45,18 +45,26 @@ export default function OnboardingPage() {
       return;
     }
     // 비동기로 온보딩 완료 여부 확인 (localStorage + 백엔드)
+    let cancelled = false;
     isOnboardingCompletedAsync().then((completed) => {
-      if (completed) {
+      if (completed && !cancelled) {
         router.replace('/');
       }
     });
+    return () => {
+      cancelled = true;
+    };
   }, [user, loading, router]);
 
   // 건너뛰기
   const handleSkip = async () => {
     setOnboardingCompleted();
-    // 백엔드에도 빈 성향으로 완료 표시 (실패해도 무시)
-    savePreferences({ investmentCategories: [], markets: [], riskTolerance: null }).catch(() => {});
+    // 백엔드에도 빈 성향으로 완료 표시 (완료 후 이동)
+    try {
+      await savePreferences({ investmentCategories: [], markets: [], riskTolerance: null });
+    } catch {
+      // 백엔드 실패해도 localStorage는 이미 완료 처리됨
+    }
     router.push('/');
   };
 

@@ -180,6 +180,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       setToken(null);
       setUser(null);
+      setError(null);
       setLoading(false);
     }
   };

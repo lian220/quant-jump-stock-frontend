@@ -33,10 +33,31 @@ export async function isOnboardingCompletedAsync(): Promise<boolean> {
       // localStorage에도 동기화
       setOnboardingCompleted();
       if (prefs.riskTolerance) {
+        const validCategories: InvestmentCategory[] = [
+          'value',
+          'momentum',
+          'asset_allocation',
+          'quant_composite',
+          'seasonal',
+          'ml_prediction',
+        ];
+        const validMarkets: MarketPreference[] = ['KR', 'US', 'CRYPTO'];
+        const validRisks: RiskTolerance[] = ['low', 'medium', 'high'];
+
+        const filteredCategories = (prefs.investmentCategories ?? []).filter(
+          (c): c is InvestmentCategory => validCategories.includes(c as InvestmentCategory),
+        );
+        const filteredMarkets = (prefs.markets ?? []).filter((m): m is MarketPreference =>
+          validMarkets.includes(m as MarketPreference),
+        );
+        const validatedRisk = validRisks.includes(prefs.riskTolerance as RiskTolerance)
+          ? (prefs.riskTolerance as RiskTolerance)
+          : 'medium';
+
         setUserPreferences({
-          investmentCategories: prefs.investmentCategories as InvestmentCategory[],
-          markets: prefs.markets as MarketPreference[],
-          riskTolerance: prefs.riskTolerance as RiskTolerance,
+          investmentCategories: filteredCategories,
+          markets: filteredMarkets,
+          riskTolerance: validatedRisk,
         });
       }
       return true;

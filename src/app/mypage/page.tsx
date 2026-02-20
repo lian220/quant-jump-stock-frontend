@@ -34,11 +34,18 @@ export default function MyPage() {
   }, [user, loading, router]);
 
   React.useEffect(() => {
-    if (user) {
-      getPreferences()
-        .then(setPreferences)
-        .finally(() => setPrefsLoading(false));
-    }
+    if (!user) return;
+    let mounted = true;
+    getPreferences()
+      .then((prefs) => {
+        if (mounted) setPreferences(prefs);
+      })
+      .finally(() => {
+        if (mounted) setPrefsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, [user]);
 
   // 성향 기반 전략 추천 로드
@@ -70,7 +77,7 @@ export default function MyPage() {
           setRecommendedStrategies(res.strategies.slice(0, 4));
         }
       })
-      .catch(() => {})
+      .catch((err) => console.error('추천 전략 로드 실패:', err))
       .finally(() => setStrategiesLoading(false));
   }, [preferences]);
 

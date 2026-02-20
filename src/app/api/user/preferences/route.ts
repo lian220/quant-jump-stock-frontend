@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
+const FETCH_TIMEOUT_MS = 30_000;
+
+async function parseErrorResponse(response: Response, fallbackMessage: string) {
+  const text = await response.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  return data ?? { success: false, message: fallbackMessage };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,19 +31,11 @@ export async function GET(request: NextRequest) {
         Authorization: authorization,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      let data;
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        data = null;
-      }
-      if (!data) {
-        data = { success: false, message: '성향 조회에 실패했습니다.' };
-      }
+      const data = await parseErrorResponse(response, '성향 조회에 실패했습니다.');
       return NextResponse.json(data, { status: response.status });
     }
 
@@ -66,19 +70,11 @@ export async function PUT(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      let data;
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        data = null;
-      }
-      if (!data) {
-        data = { success: false, message: '성향 저장에 실패했습니다.' };
-      }
+      const data = await parseErrorResponse(response, '성향 저장에 실패했습니다.');
       return NextResponse.json(data, { status: response.status });
     }
 

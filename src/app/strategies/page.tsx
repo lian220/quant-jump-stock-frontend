@@ -72,17 +72,19 @@ function StrategiesContent() {
     return { category, risk, sort };
   };
 
-  const initial = getInitialFilters();
-
   // 데이터 상태
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 필터 상태
-  const [selectedCategory, setSelectedCategory] = useState<StrategyCategory>(initial.category);
-  const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | 'all'>(initial.risk);
-  const [selectedSort, setSelectedSort] = useState<SortOption>(initial.sort);
+  // 필터 상태 — lazy initializer로 마운트 시 1회만 계산
+  const [selectedCategory, setSelectedCategory] = useState<StrategyCategory>(
+    () => getInitialFilters().category,
+  );
+  const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | 'all'>(
+    () => getInitialFilters().risk,
+  );
+  const [selectedSort, setSelectedSort] = useState<SortOption>(() => getInitialFilters().sort);
 
   // 모바일 필터 토글
   const [isFilterOpen, setIsFilterOpen] = useState(false);
