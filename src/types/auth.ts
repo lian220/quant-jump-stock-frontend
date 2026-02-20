@@ -12,6 +12,7 @@ export interface AuthUser {
 export interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
+  error: string | null;
   signIn: (userId: string, password: string) => Promise<{ error?: string }>;
   signUp: (
     userId: string,

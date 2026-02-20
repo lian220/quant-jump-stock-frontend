@@ -23,6 +23,7 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // 토큰 저장/조회 헬퍼
   const getToken = () => {
@@ -61,16 +62,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setToken(null);
           setUser(null);
         }
-      } catch (error: unknown) {
-        console.error('세션 검증 오류:', error);
-        // 401(인증 만료)일 때만 토큰 삭제, 네트워크 에러 등은 기존 토큰 유지
+      } catch (err: unknown) {
+        console.error('세션 검증 오류:', err);
         const status =
-          error && typeof error === 'object' && 'response' in error
-            ? (error as { response?: { status?: number } }).response?.status
+          err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { status?: number } }).response?.status
             : undefined;
+
         if (status === 401 || status === 403) {
+          // 인증 만료 → 토큰 삭제
           setToken(null);
           setUser(null);
+          setError(null);
+        } else if (status && status >= 500) {
+          // 서버 에러 (500) → 토큰 유지, 에러 상태만 설정
+          setError('서버에 일시적인 문제가 발생했습니다. 일부 기능이 제한될 수 있습니다.');
+        } else {
+          // 네트워크 에러 등 → 토큰 유지
+          setError('서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.');
         }
       } finally {
         setLoading(false);
@@ -94,6 +103,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (data.success && data.token && data.user) {
         setToken(data.token);
         setUser(data.user);
+        setError(null);
         return {};
       }
 
@@ -249,6 +259,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const value: AuthContextType = {
     user,
     loading,
+    error,
     signIn,
     signUp,
     signOut,

@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  isOnboardingCompleted,
+  isOnboardingCompletedAsync,
   setOnboardingCompleted,
   setUserPreferences,
 } from '@/lib/onboarding';
+import { savePreferences } from '@/lib/api/preferences';
 import type {
   InvestmentCategory,
   MarketPreference,
@@ -34,6 +35,8 @@ export default function OnboardingPage() {
   const [markets, setMarkets] = useState<MarketPreference[]>([]);
   const [riskTolerance, setRiskTolerance] = useState<RiskTolerance | null>(null);
 
+  const [saving, setSaving] = useState(false);
+
   // 미로그인 → /auth, 이미 완료 → /
   useEffect(() => {
     if (loading) return;
@@ -41,31 +44,51 @@ export default function OnboardingPage() {
       router.replace('/auth');
       return;
     }
-    if (isOnboardingCompleted()) {
-      router.replace('/');
-    }
+    // 비동기로 온보딩 완료 여부 확인 (localStorage + 백엔드)
+    isOnboardingCompletedAsync().then((completed) => {
+      if (completed) {
+        router.replace('/');
+      }
+    });
   }, [user, loading, router]);
 
   // 건너뛰기
-  const handleSkip = () => {
+  const handleSkip = async () => {
     setOnboardingCompleted();
+    // 백엔드에도 빈 성향으로 완료 표시 (실패해도 무시)
+    savePreferences({ investmentCategories: [], markets: [], riskTolerance: null }).catch(() => {});
     router.push('/');
   };
 
   // 다음 스텝
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1 && categories.length === 0) return;
 
     if (step === 2) {
       if (markets.length === 0 || !riskTolerance) return;
-      // Step 2 → 3: 선호도 저장
-      const prefs: UserPreferences = {
-        investmentCategories: categories,
-        markets,
-        riskTolerance,
-      };
-      setUserPreferences(prefs);
-      setOnboardingCompleted();
+
+      setSaving(true);
+      try {
+        // Step 2 → 3: 선호도 저장
+        const prefs: UserPreferences = {
+          investmentCategories: categories,
+          markets,
+          riskTolerance,
+        };
+
+        // localStorage 저장 (오프라인 폴백)
+        setUserPreferences(prefs);
+        setOnboardingCompleted();
+
+        // 백엔드 API 호출 (실패해도 진행)
+        await savePreferences({
+          investmentCategories: categories,
+          markets,
+          riskTolerance,
+        }).catch(() => {});
+      } finally {
+        setSaving(false);
+      }
     }
 
     if (step < TOTAL_STEPS) {
@@ -82,8 +105,11 @@ export default function OnboardingPage() {
 
   // Step 3 CTA
   const handleGoStrategies = () => {
-    const firstCategory = categories[0];
-    router.push(firstCategory ? `/strategies?category=${firstCategory}` : '/strategies');
+    const params = new URLSearchParams();
+    if (categories[0]) params.set('category', categories[0]);
+    if (riskTolerance) params.set('risk', riskTolerance);
+    const qs = params.toString();
+    router.push(qs ? `/strategies?${qs}` : '/strategies');
   };
 
   const handleGoRecommendations = () => {
@@ -168,10 +194,10 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={handleNext}
-            disabled={!isStepValid()}
+            disabled={!isStepValid() || saving}
             className="w-full rounded-xl bg-emerald-600 px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            다음
+            {saving ? '저장 중...' : '다음'}
           </button>
         </div>
       )}

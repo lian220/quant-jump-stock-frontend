@@ -4,6 +4,7 @@ import type {
   RiskTolerance,
   UserPreferences,
 } from '@/types/onboarding';
+import { getPreferences } from '@/lib/api/preferences';
 
 // localStorage 키
 const ONBOARDING_KEY = 'onboarding_completed';
@@ -15,6 +16,35 @@ const AUTH_RETURN_URL_KEY = 'auth_return_url';
 export function isOnboardingCompleted(): boolean {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem(ONBOARDING_KEY) === 'true';
+}
+
+/**
+ * 온보딩 완료 여부를 비동기로 확인합니다.
+ * localStorage를 우선 확인하고, 없으면 백엔드 API를 확인합니다.
+ */
+export async function isOnboardingCompletedAsync(): Promise<boolean> {
+  // localStorage 우선 확인
+  if (isOnboardingCompleted()) return true;
+
+  // 백엔드에서 확인
+  try {
+    const prefs = await getPreferences();
+    if (prefs?.onboardingCompleted) {
+      // localStorage에도 동기화
+      setOnboardingCompleted();
+      if (prefs.riskTolerance) {
+        setUserPreferences({
+          investmentCategories: prefs.investmentCategories as InvestmentCategory[],
+          markets: prefs.markets as MarketPreference[],
+          riskTolerance: prefs.riskTolerance as RiskTolerance,
+        });
+      }
+      return true;
+    }
+  } catch {
+    // 백엔드 실패 시 localStorage 결과만 사용
+  }
+  return false;
 }
 
 export function setOnboardingCompleted(): void {
