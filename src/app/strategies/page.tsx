@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StrategyGrid } from '@/components/strategies/StrategyGrid';
@@ -8,6 +9,7 @@ import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { StateMessageCard } from '@/components/common/StateMessageCard';
 import { getStrategies } from '@/lib/api/strategies';
+import { getUserPreferences } from '@/lib/onboarding';
 import type {
   Strategy,
   StrategyCategory,
@@ -16,16 +18,73 @@ import type {
   PaginationInfo,
 } from '@/types/strategy';
 
-export default function StrategiesPage() {
+// 리스크 성향 → 기본 정렬 매핑
+const RISK_SORT_MAP: Record<string, SortOption> = {
+  high: 'return_high',
+  low: 'risk_low',
+  medium: 'popularity',
+};
+
+function StrategiesContent() {
+  const searchParams = useSearchParams();
+
+  // URL 파라미터 또는 localStorage 성향으로 초기값 결정
+  const getInitialFilters = (): {
+    category: StrategyCategory;
+    risk: RiskLevel | 'all';
+    sort: SortOption;
+  } => {
+    // 1순위: URL 파라미터
+    const urlCategory = searchParams.get('category');
+    const urlRisk = searchParams.get('risk');
+
+    // 2순위: localStorage 성향
+    const prefs = getUserPreferences();
+
+    const validCategories: StrategyCategory[] = [
+      'value',
+      'momentum',
+      'asset_allocation',
+      'quant_composite',
+      'seasonal',
+      'ml_prediction',
+    ];
+    const validRisks: RiskLevel[] = ['low', 'medium', 'high'];
+
+    const category: StrategyCategory =
+      urlCategory && validCategories.includes(urlCategory as StrategyCategory)
+        ? (urlCategory as StrategyCategory)
+        : prefs?.investmentCategories?.[0] &&
+            validCategories.includes(prefs.investmentCategories[0])
+          ? prefs.investmentCategories[0]
+          : 'all';
+
+    const risk: RiskLevel | 'all' =
+      urlRisk && validRisks.includes(urlRisk as RiskLevel)
+        ? (urlRisk as RiskLevel)
+        : prefs?.riskTolerance && validRisks.includes(prefs.riskTolerance)
+          ? prefs.riskTolerance
+          : 'all';
+
+    // 리스크 성향에 따른 기본 정렬
+    const sort: SortOption = risk !== 'all' ? (RISK_SORT_MAP[risk] ?? 'popularity') : 'popularity';
+
+    return { category, risk, sort };
+  };
+
   // 데이터 상태
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 필터 상태
-  const [selectedCategory, setSelectedCategory] = useState<StrategyCategory>('all');
-  const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | 'all'>('all');
-  const [selectedSort, setSelectedSort] = useState<SortOption>('popularity');
+  // 필터 상태 — lazy initializer로 마운트 시 1회만 계산
+  const [selectedCategory, setSelectedCategory] = useState<StrategyCategory>(
+    () => getInitialFilters().category,
+  );
+  const [selectedRiskLevel, setSelectedRiskLevel] = useState<RiskLevel | 'all'>(
+    () => getInitialFilters().risk,
+  );
+  const [selectedSort, setSelectedSort] = useState<SortOption>(() => getInitialFilters().sort);
 
   // 모바일 필터 토글
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -289,5 +348,19 @@ export default function StrategiesPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function StrategiesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-emerald-500" />
+        </div>
+      }
+    >
+      <StrategiesContent />
+    </Suspense>
   );
 }

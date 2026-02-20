@@ -4,6 +4,7 @@ import type {
   RiskTolerance,
   UserPreferences,
 } from '@/types/onboarding';
+import { getPreferences } from '@/lib/api/preferences';
 
 // localStorage 키
 const ONBOARDING_KEY = 'onboarding_completed';
@@ -15,6 +16,56 @@ const AUTH_RETURN_URL_KEY = 'auth_return_url';
 export function isOnboardingCompleted(): boolean {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem(ONBOARDING_KEY) === 'true';
+}
+
+/**
+ * 온보딩 완료 여부를 비동기로 확인합니다.
+ * localStorage를 우선 확인하고, 없으면 백엔드 API를 확인합니다.
+ */
+export async function isOnboardingCompletedAsync(): Promise<boolean> {
+  // localStorage 우선 확인
+  if (isOnboardingCompleted()) return true;
+
+  // 백엔드에서 확인
+  try {
+    const prefs = await getPreferences();
+    if (prefs?.onboardingCompleted) {
+      // localStorage에도 동기화
+      setOnboardingCompleted();
+      if (prefs.riskTolerance) {
+        const validCategories: InvestmentCategory[] = [
+          'value',
+          'momentum',
+          'asset_allocation',
+          'quant_composite',
+          'seasonal',
+          'ml_prediction',
+        ];
+        const validMarkets: MarketPreference[] = ['KR', 'US', 'CRYPTO'];
+        const validRisks: RiskTolerance[] = ['low', 'medium', 'high'];
+
+        const filteredCategories = (prefs.investmentCategories ?? []).filter(
+          (c): c is InvestmentCategory => validCategories.includes(c as InvestmentCategory),
+        );
+        const filteredMarkets = (prefs.markets ?? []).filter((m): m is MarketPreference =>
+          validMarkets.includes(m as MarketPreference),
+        );
+        const validatedRisk = validRisks.includes(prefs.riskTolerance as RiskTolerance)
+          ? (prefs.riskTolerance as RiskTolerance)
+          : 'medium';
+
+        setUserPreferences({
+          investmentCategories: filteredCategories,
+          markets: filteredMarkets,
+          riskTolerance: validatedRisk,
+        });
+      }
+      return true;
+    }
+  } catch {
+    // 백엔드 실패 시 localStorage 결과만 사용
+  }
+  return false;
 }
 
 export function setOnboardingCompleted(): void {
