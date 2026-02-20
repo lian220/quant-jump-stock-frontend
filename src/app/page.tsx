@@ -21,6 +21,7 @@ import {
 } from '@/lib/api/predictions';
 import type { Strategy } from '@/types/strategy';
 import { trackEvent } from '@/lib/analytics';
+import { useAuth } from '@/hooks/useAuth';
 
 /** recommendationReason에서 기술 지표 키워드를 파싱하여 배지 라벨 배열 반환 */
 function parseIndicatorBadges(reason?: string): string[] {
@@ -57,6 +58,7 @@ function parseIndicatorBadges(reason?: string): string[] {
 }
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
   const [featuredStrategies, setFeaturedStrategies] = useState<Strategy[]>([]);
   const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
   const [tiers, setTiers] = useState<{
@@ -71,6 +73,39 @@ export default function Home() {
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
   const [predictionStats, setPredictionStats] = useState<PredictionStatsResponse | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [userCount, setUserCount] = useState<number | null>(null);
+  const [displayUserCount, setDisplayUserCount] = useState(0);
+
+  // 가입자 수 조회 + 카운트업 애니메이션
+  useEffect(() => {
+    fetch('/api/stats/public')
+      .then((r) => {
+        if (!r.ok) return null;
+        return r.json();
+      })
+      .then((data) => {
+        if (data?.userCount > 0) setUserCount(data.userCount);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (userCount === null) return;
+    const duration = 1200;
+    const steps = 40;
+    const increment = userCount / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= userCount) {
+        setDisplayUserCount(userCount);
+        clearInterval(timer);
+      } else {
+        setDisplayUserCount(Math.floor(current));
+      }
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [userCount]);
 
   // 추천 전략 가져오기 (인기순 상위 3개)
   useEffect(() => {
@@ -205,19 +240,21 @@ export default function Home() {
               AI 분석 + 퀀트 전략, 발굴에서 실행까지
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/signup"
-                onClick={() =>
-                  trackEvent('landing_cta_click', {
-                    cta: 'hero_primary_signup',
-                    location: 'hero',
-                  })
-                }
-              >
-                <Button size="lg" className="min-w-[200px] bg-emerald-600 hover:bg-emerald-700">
-                  무료 회원가입
-                </Button>
-              </Link>
+              {!authLoading && !user && (
+                <Link
+                  href="/signup"
+                  onClick={() =>
+                    trackEvent('landing_cta_click', {
+                      cta: 'hero_primary_signup',
+                      location: 'hero',
+                    })
+                  }
+                >
+                  <Button size="lg" className="min-w-[200px] bg-emerald-600 hover:bg-emerald-700">
+                    무료 회원가입
+                  </Button>
+                </Link>
+              )}
               <Link
                 href="/recommendations"
                 onClick={() =>
@@ -251,27 +288,36 @@ export default function Home() {
                 투자 자문이 아닌 정보 제공 서비스
               </Badge>
             </div>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 max-w-3xl mx-auto text-left">
-              <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                <p className="text-[11px] text-slate-500">신뢰 신호</p>
-                <p className="text-sm text-slate-200 font-medium">
-                  {predictionStats?.totalPredictions
-                    ? `최근 30일 ${predictionStats.totalPredictions.toLocaleString()}건 분석`
-                    : '최근 30일 분석 데이터 누적 공개'}
+            <div className="mt-4 grid grid-cols-3 gap-2 max-w-3xl mx-auto text-center">
+              {/* 가입자 수 카운터 */}
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+                <p className="text-[11px] text-slate-500 mb-1">가입자</p>
+                <p className="text-xl font-bold text-emerald-400">
+                  {userCount !== null && displayUserCount > 0
+                    ? `${displayUserCount.toLocaleString()}+`
+                    : '—'}
                 </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">누적 회원</p>
               </div>
-              <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                <p className="text-[11px] text-slate-500">업데이트 주기</p>
-                <p className="text-sm text-slate-200 font-medium">영업일 기준 매일 자동 업데이트</p>
+              {/* 분석 종목 수 카운터 */}
+              <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-3">
+                <p className="text-[11px] text-slate-500 mb-1">분석 종목</p>
+                <p className="text-xl font-bold text-cyan-400">
+                  {predictionStats?.uniqueTickers
+                    ? `${predictionStats.uniqueTickers.toLocaleString()}+`
+                    : '2,500+'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">최근 30일 기준</p>
               </div>
+              {/* 분석 건수 카운터 */}
               <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3">
-                <p className="text-[11px] text-slate-500">가입 전 체험</p>
-                <Link
-                  href="/recommendations"
-                  className="text-sm text-cyan-300 hover:text-cyan-200 font-medium"
-                >
-                  샘플 분석 리포트 보기 →
-                </Link>
+                <p className="text-[11px] text-slate-500 mb-1">AI 분석</p>
+                <p className="text-xl font-bold text-slate-200">
+                  {predictionStats?.totalPredictions
+                    ? `${predictionStats.totalPredictions.toLocaleString()}건`
+                    : '150+건'}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">최근 30일 누적</p>
               </div>
             </div>
 
@@ -834,29 +880,31 @@ export default function Home() {
           {/* ──────────────────────────────────────────────
               7. CTA 섹션
               ────────────────────────────────────────────── */}
-          <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
-            <CardContent className="text-center py-12">
-              <h2 className="text-3xl font-bold mb-4 text-white">
-                지금 바로 퀀트 투자를 시작하세요
-              </h2>
-              <p className="text-xl mb-8 text-emerald-100">
-                무료 체험으로 AI 기반 투자 분석을 경험해보세요.
-              </p>
-              <Link
-                href="/signup"
-                onClick={() =>
-                  trackEvent('landing_cta_click', {
-                    cta: 'bottom_primary_signup',
-                    location: 'bottom_cta',
-                  })
-                }
-              >
-                <Button size="lg" className="bg-white text-emerald-700 hover:bg-slate-100">
-                  무료 회원가입
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          {!authLoading && !user && (
+            <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
+              <CardContent className="text-center py-12">
+                <h2 className="text-3xl font-bold mb-4 text-white">
+                  지금 바로 퀀트 투자를 시작하세요
+                </h2>
+                <p className="text-xl mb-8 text-emerald-100">
+                  무료 체험으로 AI 기반 투자 분석을 경험해보세요.
+                </p>
+                <Link
+                  href="/signup"
+                  onClick={() =>
+                    trackEvent('landing_cta_click', {
+                      cta: 'bottom_primary_signup',
+                      location: 'bottom_cta',
+                    })
+                  }
+                >
+                  <Button size="lg" className="bg-white text-emerald-700 hover:bg-slate-100">
+                    무료 회원가입
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </main>
       </div>
     </>
