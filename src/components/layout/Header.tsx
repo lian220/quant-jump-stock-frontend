@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InstallButton } from '@/components/pwa/InstallButton';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { cn, isActiveRoute } from '@/lib/utils';
 import { saveAuthReturnUrl } from '@/lib/onboarding';
 
@@ -125,6 +126,9 @@ export function Header() {
               <InstallButton compact />
             </div>
 
+            {/* 알림 벨 (로그인 시만 표시) */}
+            {user && <NotificationBell />}
+
             {user ? (
               <div className="hidden md:flex items-center space-x-4">
                 <Link
@@ -163,7 +167,7 @@ export function Header() {
               </div>
             )}
 
-            {/* 모바일: 앱 설치 버튼 + 메뉴 버튼 */}
+            {/* 모바일: 앱 설치 버튼 + 알림 + 메뉴 버튼 */}
             <div className="flex items-center space-x-2 md:hidden">
               <InstallButton compact />
               <button
