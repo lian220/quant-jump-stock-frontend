@@ -39,8 +39,9 @@ export function useNotifications() {
         const data = await getNotifications(limit);
         setNotifications(data.notifications);
         setUnreadCount(data.unreadCount);
-      } catch {
-        // 무시
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') return;
+        console.error('알림 목록 조회 실패:', e);
       } finally {
         setLoading(false);
       }
@@ -54,8 +55,8 @@ export function useNotifications() {
       await markNotificationAsRead(id);
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
       setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch {
-      // 네트워크 오류 시 상태 변경 없이 무시
+    } catch (e) {
+      console.error('알림 읽음 처리 실패:', e);
     }
   }, []);
 
@@ -65,8 +66,8 @@ export function useNotifications() {
       await markAllNotificationsAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
-    } catch {
-      // 네트워크 오류 시 상태 변경 없이 무시
+    } catch (e) {
+      console.error('전체 읽음 처리 실패:', e);
     }
   }, []);
 

@@ -9,6 +9,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   const authorization = request.headers.get('authorization');
+  const cookie = request.headers.get('cookie');
 
   try {
     const response = await fetch(`${API_URL}/api/v1/notifications/${id}/read`, {
@@ -16,6 +17,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       headers: {
         'Content-Type': 'application/json',
         ...(authorization && { Authorization: authorization }),
+        ...(cookie && { Cookie: cookie }),
       },
       signal: AbortSignal.timeout(10000),
     });

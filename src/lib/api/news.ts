@@ -3,7 +3,7 @@
  * MongoDB에 저장된 뉴스 데이터 조회
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
+import { API_URL } from '@/lib/api/config';
 
 // === 타입 정의 ===
 

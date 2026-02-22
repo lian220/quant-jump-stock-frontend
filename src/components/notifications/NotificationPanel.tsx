@@ -1,10 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import type { UnifiedNotification } from '@/lib/api/notifications';
+import type {
+  UnifiedNotification,
+  NotificationType,
+  NotificationPriority,
+} from '@/lib/api/notifications';
 import { cn, formatRelativeTime } from '@/lib/utils';
 
-const TYPE_ICONS: Record<string, string> = {
+const TYPE_ICONS: Partial<Record<NotificationType, string>> = {
   BACKTEST_COMPLETE: '🔬',
   AI_ANALYSIS_COMPLETE: '🤖',
   NEWS: '📰',
@@ -17,7 +21,7 @@ const TYPE_ICONS: Record<string, string> = {
   WEEKLY_DIGEST: '📋',
 };
 
-const PRIORITY_STYLES: Record<string, string> = {
+const PRIORITY_STYLES: Record<NotificationPriority, string> = {
   CRITICAL: 'border-l-red-500 bg-red-500/5',
   HIGH: 'border-l-orange-500',
   NORMAL: 'border-l-transparent',
@@ -48,7 +52,7 @@ export function NotificationPanel({
     if (notification.actionUrl) {
       onClose();
       if (notification.actionUrl.startsWith('http')) {
-        window.location.href = notification.actionUrl;
+        window.open(notification.actionUrl, '_blank', 'noopener,noreferrer');
       } else {
         router.push(notification.actionUrl);
       }
@@ -59,7 +63,7 @@ export function NotificationPanel({
     <div className="w-[340px] sm:w-[380px] max-h-[480px] flex flex-col">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
-        <span className="text-sm font-semibold text-white">알림</span>
+        <h3 className="text-sm font-semibold text-white">알림</h3>
         <button
           onClick={onMarkAllAsRead}
           className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"

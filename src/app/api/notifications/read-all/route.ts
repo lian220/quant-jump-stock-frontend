@@ -3,6 +3,7 @@ import { API_URL } from '@/lib/api/config';
 
 export async function PATCH(request: NextRequest) {
   const authorization = request.headers.get('authorization');
+  const cookie = request.headers.get('cookie');
 
   try {
     const response = await fetch(`${API_URL}/api/v1/notifications/read-all`, {
@@ -10,6 +11,7 @@ export async function PATCH(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         ...(authorization && { Authorization: authorization }),
+        ...(cookie && { Cookie: cookie }),
       },
       signal: AbortSignal.timeout(10000),
     });
