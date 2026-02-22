@@ -327,25 +327,5 @@ export function getSourceLabel(source: string): string {
   return labels[source] || source;
 }
 
-/** 시간 포맷 (상대 시간) */
-export function formatRelativeTime(dateStr: string | null): string {
-  if (!dateStr) return '';
-
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  if (diffMs < 0) return '방금 전';
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffMin < 1) return '방금 전';
-  if (diffMin < 60) return `${diffMin}분 전`;
-  if (diffHour < 24) return `${diffHour}시간 전`;
-  if (diffDay < 7) return `${diffDay}일 전`;
-
-  return date.toLocaleDateString('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-  });
-}
+/** 시간 포맷 (상대 시간) - @/lib/utils에서 re-export */
+export { formatRelativeTime } from '@/lib/utils';

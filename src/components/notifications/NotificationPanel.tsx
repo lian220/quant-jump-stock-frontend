@@ -1,7 +1,8 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import type { UnifiedNotification } from '@/lib/api/notifications';
-import { cn } from '@/lib/utils';
+import { cn, formatRelativeTime } from '@/lib/utils';
 
 const TYPE_ICONS: Record<string, string> = {
   BACKTEST_COMPLETE: '🔬',
@@ -23,21 +24,6 @@ const PRIORITY_STYLES: Record<string, string> = {
   LOW: 'border-l-transparent opacity-70',
 };
 
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-
-  if (diffMin < 1) return '방금 전';
-  if (diffMin < 60) return `${diffMin}분 전`;
-  const diffHour = Math.floor(diffMin / 60);
-  if (diffHour < 24) return `${diffHour}시간 전`;
-  const diffDay = Math.floor(diffHour / 24);
-  if (diffDay < 7) return `${diffDay}일 전`;
-  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-}
-
 interface NotificationPanelProps {
   notifications: UnifiedNotification[];
   loading: boolean;
@@ -53,13 +39,19 @@ export function NotificationPanel({
   onMarkAllAsRead,
   onClose,
 }: NotificationPanelProps) {
+  const router = useRouter();
+
   const handleClick = (notification: UnifiedNotification) => {
     if (!notification.isRead) {
       onMarkAsRead(notification.id);
     }
     if (notification.actionUrl) {
       onClose();
-      window.location.href = notification.actionUrl;
+      if (notification.actionUrl.startsWith('http')) {
+        window.location.href = notification.actionUrl;
+      } else {
+        router.push(notification.actionUrl);
+      }
     }
   };
 

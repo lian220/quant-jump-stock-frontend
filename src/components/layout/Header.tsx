@@ -127,11 +127,7 @@ export function Header() {
             </div>
 
             {/* 알림 벨 (로그인 시만 표시) */}
-            {user && (
-              <div className="hidden md:block">
-                <NotificationBell />
-              </div>
-            )}
+            {user && <NotificationBell />}
 
             {user ? (
               <div className="hidden md:flex items-center space-x-4">
@@ -174,7 +170,6 @@ export function Header() {
             {/* 모바일: 앱 설치 버튼 + 알림 + 메뉴 버튼 */}
             <div className="flex items-center space-x-2 md:hidden">
               <InstallButton compact />
-              {user && <NotificationBell />}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 text-slate-300 hover:text-emerald-400 rounded-lg transition-colors"

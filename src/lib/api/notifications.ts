@@ -1,9 +1,23 @@
 // 통합 알림 API 클라이언트
 
+export type NotificationType =
+  | 'BACKTEST_COMPLETE'
+  | 'AI_ANALYSIS_COMPLETE'
+  | 'NEWS'
+  | 'TRADING_SIGNAL'
+  | 'ANNOUNCEMENT'
+  | 'PRICE_ALERT'
+  | 'SUBSCRIPTION_EXPIRING'
+  | 'USAGE_LIMIT_REACHED'
+  | 'STRATEGY_PERFORMANCE'
+  | 'WEEKLY_DIGEST';
+
+export type NotificationPriority = 'CRITICAL' | 'HIGH' | 'NORMAL' | 'LOW';
+
 export interface UnifiedNotification {
   id: number;
-  type: string;
-  priority: string;
+  type: NotificationType;
+  priority: NotificationPriority;
   title: string;
   message: string | null;
   actionUrl: string | null;
@@ -17,36 +31,39 @@ export interface UnifiedNotificationListResponse {
   unreadCount: number;
 }
 
-function getAuthHeaders(): Record<string, string> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  return headers;
-}
-
 export async function getNotifications(limit = 20): Promise<UnifiedNotificationListResponse> {
-  const res = await fetch(`/api/notifications?limit=${limit}`, { headers: getAuthHeaders() });
+  const res = await fetch(`/api/notifications?limit=${limit}`, {
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
   if (!res.ok) throw new Error('알림 조회 실패');
   return res.json();
 }
 
 export async function getUnreadCount(): Promise<number> {
-  const res = await fetch('/api/notifications/unread-count', { headers: getAuthHeaders() });
+  const res = await fetch('/api/notifications/unread-count', {
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
   if (!res.ok) return 0;
   const data = await res.json();
   return data.unreadCount ?? 0;
 }
 
 export async function markNotificationAsRead(id: number): Promise<void> {
-  await fetch(`/api/notifications/${id}/read`, {
+  const res = await fetch(`/api/notifications/${id}/read`, {
     method: 'PATCH',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
   });
+  if (!res.ok) throw new Error(`알림 읽음 처리 실패: ${res.status}`);
 }
 
 export async function markAllNotificationsAsRead(): Promise<void> {
-  await fetch('/api/notifications/read-all', {
+  const res = await fetch('/api/notifications/read-all', {
     method: 'PATCH',
-    headers: getAuthHeaders(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
   });
+  if (!res.ok) throw new Error(`전체 읽음 처리 실패: ${res.status}`);
 }

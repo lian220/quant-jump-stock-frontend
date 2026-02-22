@@ -50,16 +50,24 @@ export function useNotifications() {
 
   // 읽음 처리
   const markAsRead = useCallback(async (id: number) => {
-    await markNotificationAsRead(id);
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-    setUnreadCount((prev) => Math.max(0, prev - 1));
+    try {
+      await markNotificationAsRead(id);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // 네트워크 오류 시 상태 변경 없이 무시
+    }
   }, []);
 
   // 전체 읽음
   const markAllAsRead = useCallback(async () => {
-    await markAllNotificationsAsRead();
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    setUnreadCount(0);
+    try {
+      await markAllNotificationsAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch {
+      // 네트워크 오류 시 상태 변경 없이 무시
+    }
   }, []);
 
   // 폴링 시작/중지

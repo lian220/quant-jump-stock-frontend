@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
+import { API_URL } from '@/lib/api/config';
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  if (!/^\d+$/.test(id)) {
+    return NextResponse.json({ error: '잘못된 알림 ID입니다.' }, { status: 400 });
+  }
+
   const authorization = request.headers.get('authorization');
 
   try {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
+import { API_URL } from '@/lib/api/config';
 
 export async function GET(request: NextRequest) {
   const authorization = request.headers.get('authorization');
