@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   saveAuthReturnUrl,
   CATEGORY_OPTIONS,
@@ -26,27 +27,41 @@ import { getRiskColor, getRiskLabel, getCategoryLabel } from '@/lib/strategy-hel
 import { PageSEO } from '@/components/seo';
 
 export default function MyPage() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, resetPassword, updateProfile } = useAuth();
   const router = useRouter();
-  const [preferences, setPreferences] = React.useState<PreferencesData | null>(null);
-  const [prefsLoading, setPrefsLoading] = React.useState(true);
-  const [recommendedStrategies, setRecommendedStrategies] = React.useState<Strategy[]>([]);
-  const [strategiesLoading, setStrategiesLoading] = React.useState(false);
-  const [subscriptions, setSubscriptions] = React.useState<SubscriptionSummary[]>([]);
-  const [subscriptionsLoading, setSubscriptionsLoading] = React.useState(true);
-  const [togglingAlert, setTogglingAlert] = React.useState<number | null>(null);
-  const [unsubscribing, setUnsubscribing] = React.useState<number | null>(null);
-  const [subscriptionError, setSubscriptionError] = React.useState<string | null>(null);
-  const [subscriptionLoadError, setSubscriptionLoadError] = React.useState(false);
+  const [preferences, setPreferences] = useState<PreferencesData | null>(null);
+  const [prefsLoading, setPrefsLoading] = useState(true);
+  const [recommendedStrategies, setRecommendedStrategies] = useState<Strategy[]>([]);
+  const [strategiesLoading, setStrategiesLoading] = useState(false);
+  const [subscriptions, setSubscriptions] = useState<SubscriptionSummary[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
+  const [togglingAlert, setTogglingAlert] = useState<number | null>(null);
+  const [unsubscribing, setUnsubscribing] = useState<number | null>(null);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
+  const [subscriptionLoadError, setSubscriptionLoadError] = useState(false);
 
-  React.useEffect(() => {
+  // 프로필 편집 상태
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  // 비밀번호 재설정 상태
+  const [passwordResetSent, setPasswordResetSent] = useState(false);
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+  const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
+
+  useEffect(() => {
     if (!loading && !user) {
       saveAuthReturnUrl('/mypage');
       router.push('/auth');
     }
   }, [user, loading, router]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!user) return;
     let mounted = true;
     getPreferences()
@@ -62,7 +77,7 @@ export default function MyPage() {
   }, [user]);
 
   // 구독 목록 로드
-  React.useEffect(() => {
+  useEffect(() => {
     if (!user) return;
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
     if (!token) {
@@ -121,16 +136,50 @@ export default function MyPage() {
     }
   }
 
-  // 성향 기반 전략 추천 로드
-  React.useEffect(() => {
-    if (!preferences?.onboardingCompleted) return;
+  const profileMessageTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  async function handleSaveName() {
+    if (!editName.trim()) return;
+    setProfileSaving(true);
+    setProfileMessage(null);
+    const result = await updateProfile({ displayName: editName.trim() });
+    if (result.error) {
+      setProfileMessage({ type: 'error', text: result.error });
+    } else {
+      setProfileMessage({ type: 'success', text: '이름이 변경되었어요' });
+      setIsEditingName(false);
+    }
+    setProfileSaving(false);
+    if (profileMessageTimer.current) clearTimeout(profileMessageTimer.current);
+    profileMessageTimer.current = setTimeout(() => setProfileMessage(null), 3000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (profileMessageTimer.current) clearTimeout(profileMessageTimer.current);
+    };
+  }, []);
+
+  async function handlePasswordReset() {
+    if (!user?.email) return;
+    setPasswordResetLoading(true);
+    setPasswordResetError(null);
+    const result = await resetPassword(user.email);
+    if (result.error) {
+      setPasswordResetError(result.error);
+    } else {
+      setPasswordResetSent(true);
+    }
+    setPasswordResetLoading(false);
+  }
+
+  // 성향 기반 전략 추천 로드
+  useEffect(() => {
+    if (!preferences?.onboardingCompleted) return;
     const firstCategory = preferences.investmentCategories?.[0];
     if (!firstCategory) return;
 
     setStrategiesLoading(true);
-
-    // 리스크 성향에 따른 정렬: 공격형→수익률순, 안정형→구독자순(안정적), 균형형→구독자순
     const sortMap: Record<string, 'cagr' | 'subscribers'> = {
       high: 'cagr',
       low: 'subscribers',
@@ -140,7 +189,6 @@ export default function MyPage() {
 
     getStrategies({ category: firstCategory, sortBy, page: 0, size: 4 })
       .then((res) => {
-        // 리스크 성향에 맞는 전략 우선 필터링
         const risk = preferences.riskTolerance as RiskLevel | undefined;
         if (risk) {
           const matched = res.strategies.filter((s) => s.riskLevel === risk);
@@ -166,15 +214,6 @@ export default function MyPage() {
     return null;
   }
 
-  const infoItems = [
-    { label: '아이디', value: user.userId },
-    { label: '이름', value: user.name || '-' },
-    { label: '이메일', value: user.email },
-    { label: '휴대전화번호', value: user.phone || '-' },
-    { label: '등급', value: user.role === 'ADMIN' ? '관리자' : '일반 회원' },
-    { label: '상태', value: user.status === 'ACTIVE' ? '활성' : user.status },
-  ];
-
   const categoryLabels = (preferences?.investmentCategories ?? [])
     .map((v) => CATEGORY_OPTIONS.find((o) => o.value === v))
     .filter(Boolean)
@@ -196,20 +235,105 @@ export default function MyPage() {
       <div className="max-w-lg mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-white text-center">마이페이지</h1>
 
+        {/* 내 프로필 */}
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-lg text-white">내 정보</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg text-white">내 프로필</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {infoItems.map((item) => (
+          <CardContent className="space-y-3">
+            {profileMessage && (
               <div
-                key={item.label}
-                className="flex justify-between items-center py-2 border-b border-slate-700 last:border-0"
+                className={`text-xs px-3 py-2 rounded-lg ${
+                  profileMessage.type === 'success'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                    : 'bg-red-500/10 text-red-400 border border-red-500/30'
+                }`}
               >
-                <span className="text-slate-400 text-sm">{item.label}</span>
-                <span className="text-white text-sm font-medium">{item.value}</span>
+                {profileMessage.text}
               </div>
-            ))}
+            )}
+
+            {/* 이름 */}
+            <div className="flex justify-between items-center py-2 border-b border-slate-700">
+              <span className="text-slate-400 text-sm">이름</span>
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="h-7 w-32 text-sm bg-slate-700 border-slate-600 text-white"
+                    placeholder="이름 입력"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveName();
+                      if (e.key === 'Escape') setIsEditingName(false);
+                    }}
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700"
+                    onClick={handleSaveName}
+                    disabled={profileSaving || !editName.trim()}
+                  >
+                    {profileSaving ? '...' : '저장'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs text-slate-400 hover:text-white"
+                    onClick={() => setIsEditingName(false)}
+                  >
+                    취소
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-white text-sm font-medium">{user.name || '미설정'}</span>
+                  <button
+                    onClick={() => {
+                      setEditName(user.name || '');
+                      setIsEditingName(true);
+                    }}
+                    className="text-slate-500 hover:text-emerald-400 transition-colors text-xs"
+                  >
+                    수정
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 아이디 */}
+            <div className="flex justify-between items-center py-2 border-b border-slate-700">
+              <span className="text-slate-400 text-sm">아이디</span>
+              <span className="text-white text-sm font-medium">{user.userId}</span>
+            </div>
+
+            {/* 이메일 */}
+            <div className="flex justify-between items-center py-2 border-b border-slate-700">
+              <span className="text-slate-400 text-sm">이메일</span>
+              <span className="text-white text-sm font-medium">{user.email}</span>
+            </div>
+
+            {/* 전화번호 */}
+            <div className="flex justify-between items-center py-2 border-b border-slate-700">
+              <span className="text-slate-400 text-sm">전화번호</span>
+              <span className="text-white text-sm font-medium">{user.phone || '미설정'}</span>
+            </div>
+
+            {/* 등급 */}
+            <div className="flex justify-between items-center py-2">
+              <span className="text-slate-400 text-sm">등급</span>
+              <Badge
+                variant="outline"
+                className={`text-xs ${
+                  user.role === 'ADMIN'
+                    ? 'border-purple-500/30 text-purple-400'
+                    : 'border-slate-600 text-slate-400'
+                }`}
+              >
+                {user.role === 'ADMIN' ? '관리자' : '일반 회원'}
+              </Badge>
+            </div>
           </CardContent>
         </Card>
 
@@ -276,15 +400,12 @@ export default function MyPage() {
                     key={sub.subscriptionId}
                     className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
                   >
-                    {/* 전략 정보 */}
                     <Link href={`/strategies/${sub.strategyId}`} className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium truncate">{sub.strategyName}</p>
                       <p className="text-slate-500 text-xs mt-0.5">
                         {new Date(sub.subscribedAt).toLocaleDateString('ko-KR')} 구독
                       </p>
                     </Link>
-
-                    {/* 알림 토글 */}
                     <button
                       onClick={() => handleToggleAlert(sub.subscriptionId, sub.alertEnabled)}
                       disabled={togglingAlert === sub.subscriptionId}
@@ -302,8 +423,6 @@ export default function MyPage() {
                           ? '🔔'
                           : '🔕'}
                     </button>
-
-                    {/* 구독 취소 */}
                     <button
                       onClick={() => handleUnsubscribe(sub.strategyId)}
                       disabled={unsubscribing === sub.strategyId}
@@ -320,9 +439,21 @@ export default function MyPage() {
           </CardContent>
         </Card>
 
+        {/* 내 투자 성향 */}
         <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-lg text-white">내 투자성향</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg text-white">내 투자 성향</CardTitle>
+            {preferences?.onboardingCompleted && (
+              <Link href="/onboarding">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-emerald-400 hover:text-emerald-300 text-xs"
+                >
+                  다시 설정
+                </Button>
+              </Link>
+            )}
           </CardHeader>
           <CardContent>
             {prefsLoading ? (
@@ -342,7 +473,7 @@ export default function MyPage() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-slate-400 text-sm">리스크 성향</span>
+                  <span className="text-slate-400 text-sm">위험 성향</span>
                   <span className="text-white text-sm font-medium">
                     {riskLabel ? `${riskLabel.icon} ${riskLabel.label}` : '-'}
                   </span>
@@ -430,18 +561,58 @@ export default function MyPage() {
           </Card>
         )}
 
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            onClick={async () => {
-              await signOut();
-              router.push('/');
-            }}
-            className="border-slate-600 text-slate-300 hover:bg-slate-700"
-          >
-            로그아웃
-          </Button>
-        </div>
+        {/* 계정 관리 */}
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-lg text-white">계정 관리</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* 비밀번호 변경 */}
+            <div className="flex justify-between items-center py-2 border-b border-slate-700">
+              <div>
+                <p className="text-slate-300 text-sm">비밀번호 변경</p>
+                <p className="text-slate-500 text-xs mt-0.5">이메일로 재설정 링크를 보내드려요</p>
+                {passwordResetError && (
+                  <p className="text-red-400 text-xs mt-1">{passwordResetError}</p>
+                )}
+              </div>
+              {passwordResetSent ? (
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+                  메일 발송 완료
+                </Badge>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 text-xs"
+                  onClick={handlePasswordReset}
+                  disabled={passwordResetLoading}
+                >
+                  {passwordResetLoading ? '발송 중...' : '재설정 메일 받기'}
+                </Button>
+              )}
+            </div>
+
+            {/* 로그아웃 */}
+            <div className="flex justify-between items-center py-2">
+              <div>
+                <p className="text-slate-300 text-sm">로그아웃</p>
+                <p className="text-slate-500 text-xs mt-0.5">현재 기기에서 로그아웃합니다</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700 text-xs"
+                onClick={async () => {
+                  await signOut();
+                  router.push('/');
+                }}
+              >
+                로그아웃
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

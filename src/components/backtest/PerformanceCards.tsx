@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
+import { TermTooltip } from '@/components/strategies/TermTooltip';
 import type { BacktestMetrics } from '@/types/backtest';
 
 interface PerformanceCardsProps {
@@ -12,27 +13,32 @@ export default function PerformanceCards({ metrics }: PerformanceCardsProps) {
 
   const cards = [
     {
-      label: '연환산 수익률 (CAGR)',
+      label: '연평균 수익률',
+      termKey: 'cagr',
       value: metrics.cagr != null ? `${metrics.cagr > 0 ? '+' : ''}${fmt(metrics.cagr)}%` : '-',
       color: (metrics.cagr ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400',
     },
     {
-      label: '최대 낙폭 (MDD)',
+      label: '최대 손실폭',
+      termKey: 'mdd',
       value: metrics.mdd != null ? `${fmt(metrics.mdd)}%` : '-',
       color: 'text-red-400',
     },
     {
-      label: '샤프 비율',
+      label: '안정성 지수',
+      termKey: 'sharpeRatio',
       value: fmt(metrics.sharpeRatio),
       color: 'text-cyan-400',
     },
     {
       label: '승률',
+      termKey: 'winRate',
       value: metrics.winRate != null ? `${fmt(metrics.winRate, 1)}%` : '-',
       color: 'text-purple-400',
     },
     {
       label: '총 수익률',
+      termKey: 'totalReturn',
       value:
         metrics.totalReturn != null
           ? `${metrics.totalReturn > 0 ? '+' : ''}${fmt(metrics.totalReturn)}%`
@@ -65,7 +71,13 @@ export default function PerformanceCards({ metrics }: PerformanceCardsProps) {
         <Card key={card.label} className="bg-card-surface border-slate-700">
           <CardContent className="pt-6 text-center">
             <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
-            <p className="text-xs text-slate-400 mt-1">{card.label}</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {'termKey' in card && card.termKey ? (
+                <TermTooltip termKey={card.termKey}>{card.label}</TermTooltip>
+              ) : (
+                card.label
+              )}
+            </p>
           </CardContent>
         </Card>
       ))}

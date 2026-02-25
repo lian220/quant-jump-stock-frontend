@@ -86,7 +86,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto mb-3"></div>
-        <p className="text-slate-500 text-sm">백테스트 기록을 불러오는 중...</p>
+        <p className="text-slate-500 text-sm">시뮬레이션 기록을 불러오는 중...</p>
       </div>
     );
   }
@@ -95,7 +95,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
     return (
       <Card className="bg-slate-800/50 border-slate-700">
         <CardContent className="py-10">
-          <p className="text-slate-500 text-center">아직 실행한 커스텀 백테스트가 없습니다.</p>
+          <p className="text-slate-500 text-center">아직 실행한 시뮬레이션이 없습니다.</p>
         </CardContent>
       </Card>
     );
@@ -107,15 +107,15 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
       {summary && (
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader className="pb-3">
-            <CardTitle className="text-white text-base">백테스트 요약</CardTitle>
+            <CardTitle className="text-white text-base">시뮬레이션 요약</CardTitle>
             <CardDescription className="text-slate-400 text-xs">
-              최근 {summary.count}회 커스텀 백테스트 결과 요약
+              최근 {summary.count}회 시뮬레이션 결과 요약
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 rounded-lg bg-slate-900/50">
-                <p className="text-xs text-slate-400 mb-1">최고 CAGR</p>
+                <p className="text-xs text-slate-400 mb-1">최고 연수익률</p>
                 <p className="text-lg font-bold text-emerald-400">
                   {summary.bestCagr != null
                     ? `${summary.bestCagr >= 0 ? '+' : ''}${summary.bestCagr.toFixed(1)}%`
@@ -123,7 +123,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
                 </p>
               </div>
               <div className="text-center p-3 rounded-lg bg-slate-900/50">
-                <p className="text-xs text-slate-400 mb-1">최저 MDD</p>
+                <p className="text-xs text-slate-400 mb-1">최저 손실폭</p>
                 <p className="text-lg font-bold text-red-400">
                   {summary.worstMdd != null ? `${summary.worstMdd.toFixed(1)}%` : '-'}
                 </p>
@@ -135,7 +135,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
                 </p>
               </div>
               <div className="text-center p-3 rounded-lg bg-slate-900/50">
-                <p className="text-xs text-slate-400 mb-1">CAGR 범위</p>
+                <p className="text-xs text-slate-400 mb-1">연수익률 범위</p>
                 <p className="text-sm font-bold text-cyan-400">
                   {summary.cagrRange
                     ? `${summary.cagrRange[0].toFixed(1)}% ~ ${summary.cagrRange[1].toFixed(1)}%`
@@ -150,7 +150,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
       {/* 히스토리 목록 */}
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader className="pb-3">
-          <CardTitle className="text-white text-base">이전 백테스트 기록</CardTitle>
+          <CardTitle className="text-white text-base">이전 시뮬레이션 기록</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -196,7 +196,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
                 {item.status === 'COMPLETED' && (
                   <div className="flex items-center gap-4 text-right">
                     <div>
-                      <p className="text-xs text-slate-500">CAGR</p>
+                      <p className="text-xs text-slate-500">연수익률</p>
                       <p
                         className={`text-sm font-semibold ${
                           (item.cagr ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
@@ -208,7 +208,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">MDD</p>
+                      <p className="text-xs text-slate-500">최대 손실폭</p>
                       <p className="text-sm font-semibold text-red-400">
                         {item.mdd != null ? `${item.mdd.toFixed(1)}%` : '-'}
                       </p>

@@ -70,7 +70,7 @@ export function InvestmentSummary({
           )}
 
           <p className="text-slate-500 text-xs mt-3">
-            📋 위 결과는 {backtestPeriod} 백테스트 기준이며, 실제 투자 성과는 다를 수 있습니다.
+            📋 위 결과는 {backtestPeriod} 시뮬레이션 기준이며, 실제 투자 성과는 다를 수 있습니다.
           </p>
         </div>
       </CardContent>

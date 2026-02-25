@@ -139,6 +139,47 @@ export default function StocksPage() {
           </div>
         </div>
 
+        {/* 인기 검색어 (검색어가 없을 때만 표시) */}
+        {!query && (
+          <div className="mb-6">
+            <p className="text-sm text-slate-400 mb-3">이런 종목을 찾아보세요</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: '애플 (AAPL)', q: 'AAPL' },
+                { label: '테슬라 (TSLA)', q: 'TSLA' },
+                { label: '엔비디아 (NVDA)', q: 'NVDA' },
+                { label: '삼성전자', q: '삼성전자' },
+                { label: '마이크로소프트 (MSFT)', q: 'MSFT' },
+                { label: '아마존 (AMZN)', q: 'AMZN' },
+              ].map((item) => (
+                <Button
+                  key={item.q}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchInput(item.q);
+                    setQuery(item.q);
+                    setCurrentPage(0);
+                  }}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-emerald-400 transition-colors"
+                >
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+            <div className="mt-4 p-3 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+              <p className="text-xs text-slate-500">
+                💡 종목명(한글/영문) 또는 티커(AAPL, 005930)로 검색할 수 있어요. AI가 분석한 추천
+                종목은{' '}
+                <Link href="/recommendations" className="text-emerald-400 hover:underline">
+                  AI 분석 종목
+                </Link>
+                에서 확인하세요.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* 결과 수 */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-slate-400">

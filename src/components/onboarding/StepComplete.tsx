@@ -22,13 +22,13 @@ const GUIDE_STEPS: GuideStep[] = [
   {
     step: '1',
     title: '맞춤 전략 찾기',
-    description: '내 투자 성향에 맞는 검증된 퀀트 전략을 탐색하세요.',
+    description: '내 투자 성향에 맞는 검증된 투자 전략을 탐색하세요.',
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10 border-emerald-500/20',
   },
   {
     step: '2',
-    title: '전략 구독 & 백테스트',
+    title: '전략 구독 & 성과 검증',
     description: '마음에 드는 전략을 구독하고 과거 수익률을 직접 검증하세요.',
     color: 'text-cyan-400',
     bg: 'bg-cyan-500/10 border-cyan-500/20',
@@ -75,8 +75,8 @@ export function StepComplete({
           <p className="text-sm font-semibold text-emerald-400">가입 축하 혜택</p>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed">
-          <span className="font-medium text-white">무료 백테스트 1회</span>가 제공됩니다. 전략을
-          구독한 뒤 백테스트 화면에서 사용하세요.
+          <span className="font-medium text-white">무료 시뮬레이션 1회</span>가 제공됩니다. 전략을
+          구독한 뒤 시뮬레이션 화면에서 사용하세요.
         </p>
       </div>
 
@@ -113,7 +113,7 @@ export function StepComplete({
             </div>
           </div>
           <div>
-            <p className="text-[11px] text-slate-500 mb-1.5">리스크 성향</p>
+            <p className="text-[11px] text-slate-500 mb-1.5">위험 성향</p>
             <Badge
               variant="secondary"
               className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs"

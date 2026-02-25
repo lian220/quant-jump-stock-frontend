@@ -176,15 +176,15 @@ export default function EnhancedPerformanceCards({ enhanced }: EnhancedPerforman
               </p>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 <div className="p-2 bg-slate-700/30 rounded">
-                  <span className="text-slate-300 font-medium">CAGR (연수익률)</span>
+                  <span className="text-slate-300 font-medium">연평균 수익률 (CAGR)</span>
                   <span className="float-right text-emerald-400">30%</span>
                 </div>
                 <div className="p-2 bg-slate-700/30 rounded">
-                  <span className="text-slate-300 font-medium">샤프 비율</span>
+                  <span className="text-slate-300 font-medium">안정성 지수 (샤프)</span>
                   <span className="float-right text-emerald-400">25%</span>
                 </div>
                 <div className="p-2 bg-slate-700/30 rounded">
-                  <span className="text-slate-300 font-medium">MDD (최대낙폭)</span>
+                  <span className="text-slate-300 font-medium">최대 손실폭 (MDD)</span>
                   <span className="float-right text-emerald-400">25%</span>
                 </div>
                 <div className="p-2 bg-slate-700/30 rounded">

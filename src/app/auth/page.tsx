@@ -206,7 +206,7 @@ function AuthPageContent() {
           <div className="flex items-center gap-3 rounded-lg border border-slate-700/50 bg-slate-800/30 px-4 py-3">
             <span className="text-lg">📈</span>
             <div>
-              <p className="text-sm font-medium text-slate-300">전략 백테스트</p>
+              <p className="text-sm font-medium text-slate-300">전략 성과 검증</p>
               <p className="text-xs text-slate-500">과거 데이터로 투자 전략 검증</p>
             </div>
           </div>

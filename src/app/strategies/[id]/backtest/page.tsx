@@ -310,13 +310,13 @@ export default function BacktestPage() {
     <>
       {/* GRW-04: 동적 SEO 메타 */}
       <PageSEO
-        title={strategyName ? `${strategyName} - 백테스트` : '백테스트 실행'}
+        title={strategyName ? `${strategyName} - 성과 시뮬레이션` : '성과 시뮬레이션'}
         description={
           result?.metrics
-            ? `${strategyName} 백테스트 결과: CAGR ${result.metrics.cagr?.toFixed(1)}%, MDD ${result.metrics.mdd?.toFixed(1)}%, 샤프 ${result.metrics.sharpeRatio?.toFixed(2)}`
+            ? `${strategyName} 시뮬레이션 결과: 연평균 수익률 ${result.metrics.cagr?.toFixed(1)}%, 최대 손실폭 ${result.metrics.mdd?.toFixed(1)}%, 안정성 지수 ${result.metrics.sharpeRatio?.toFixed(2)}`
             : '전략의 과거 성과를 시뮬레이션하고 분석합니다'
         }
-        keywords="백테스트, 퀀트 전략, 투자 시뮬레이션, Alpha Foundry"
+        keywords="백테스트, 성과 시뮬레이션, 투자 전략, 투자 시뮬레이션, Alpha Foundry"
       />
       <div className="min-h-screen">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -333,7 +333,7 @@ export default function BacktestPage() {
               </Button>
             </div>
             <h1 className="text-3xl font-bold text-white">
-              {strategyName ? `${strategyName} - 백테스트` : '백테스트 실행'}
+              {strategyName ? `${strategyName} - 성과 시뮬레이션` : '성과 시뮬레이션'}
             </h1>
             <p className="text-slate-400 mt-1">전략의 과거 성과를 시뮬레이션하고 분석합니다</p>
           </div>
@@ -365,7 +365,7 @@ export default function BacktestPage() {
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400 mx-auto mb-4"></div>
               <p className="text-slate-300 text-lg">
-                {status === 'PENDING' ? '백테스트 요청 중...' : LOADING_STEPS[loadingStep]}
+                {status === 'PENDING' ? '시뮬레이션 요청 중...' : LOADING_STEPS[loadingStep]}
               </p>
               {/* 진행 바 */}
               <div className="max-w-xs mx-auto mt-4">
@@ -395,7 +395,7 @@ export default function BacktestPage() {
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-6 text-center mb-8">
               <div className="text-3xl mb-3">&#x23F3;</div>
               <p className="text-amber-400 text-lg font-semibold mb-2">
-                백테스트가 예상보다 오래 걸리고 있습니다
+                시뮬레이션이 예상보다 오래 걸리고 있습니다
               </p>
               <p className="text-slate-400 mb-4">
                 데이터 처리에 시간이 더 필요합니다. 잠시 후 이 페이지를 다시 방문하면 결과를 확인할
@@ -449,7 +449,7 @@ export default function BacktestPage() {
           {showLoginPrompt && !result && (
             <div className="bg-slate-800/50 border border-emerald-500/30 rounded-lg p-6 text-center mb-8">
               <p className="text-white text-lg mb-2">로그인이 필요합니다</p>
-              <p className="text-slate-400 mb-4">백테스트를 실행하려면 먼저 로그인해 주세요.</p>
+              <p className="text-slate-400 mb-4">시뮬레이션을 실행하려면 먼저 로그인해 주세요.</p>
               <Button
                 className="bg-emerald-600 hover:bg-emerald-700"
                 onClick={() => {
@@ -465,7 +465,7 @@ export default function BacktestPage() {
           {/* 에러 상태 */}
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center mb-8">
-              <p className="text-red-400 text-lg mb-2">백테스트 실행 실패</p>
+              <p className="text-red-400 text-lg mb-2">시뮬레이션 실행 실패</p>
               <p className="text-slate-400">{error}</p>
             </div>
           )}
@@ -476,7 +476,7 @@ export default function BacktestPage() {
               {/* FIN-03: 백테스트 한계 고지 */}
               <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg px-4 py-3 mb-6">
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  본 백테스트 결과는 과거 데이터를 기반으로 한 시뮬레이션이며, 미래 수익을 보장하지
+                  본 시뮬레이션 결과는 과거 데이터를 기반으로 한 분석이며, 미래 수익을 보장하지
                   않습니다. 실제 거래에서는 유동성, 시장 충격, 슬리피지 등 추가적인 변수가 영향을
                   미칠 수 있습니다.
                 </p>
@@ -518,7 +518,7 @@ export default function BacktestPage() {
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
                     <p className="text-xs text-amber-400 font-medium">
                       표본 부족 (청산 거래 {roundTrips}건) — 통계적 신뢰도가 낮을 수 있습니다.
-                      백테스트 기간을 늘려 30건 이상의 청산 거래를 확보하는 것을 권장합니다.
+                      시뮬레이션 기간을 늘려 30건 이상의 청산 거래를 확보하는 것을 권장합니다.
                     </p>
                   </div>
                 )}
@@ -556,7 +556,7 @@ export default function BacktestPage() {
                       className="border-slate-600 text-slate-300 hover:bg-slate-700"
                       onClick={() => {
                         const m = result.metrics!;
-                        const text = `[${strategyName}] 백테스트 결과\nCAGR: ${m.cagr?.toFixed(1)}% | MDD: ${m.mdd?.toFixed(1)}% | 샤프: ${m.sharpeRatio?.toFixed(2)} | 승률: ${m.winRate?.toFixed(1)}%\n— Alpha Foundry`;
+                        const text = `[${strategyName}] 시뮬레이션 결과\n연수익률: ${m.cagr?.toFixed(1)}% | 최대 손실폭: ${m.mdd?.toFixed(1)}% | 안정성 지수: ${m.sharpeRatio?.toFixed(2)} | 승률: ${m.winRate?.toFixed(1)}%\n— Alpha Foundry`;
                         navigator.clipboard.writeText(text);
                       }}
                     >
@@ -608,7 +608,7 @@ export default function BacktestPage() {
                         <p className="text-sm text-slate-400">
                           {result.metrics.totalReturn != null && result.metrics.totalReturn > 0
                             ? '비슷한 투자 스타일의 전략을 비교해보세요'
-                            : '다른 퀀트 전략의 성과를 확인해보세요'}
+                            : '다른 투자 전략의 성과를 확인해보세요'}
                         </p>
                       </CardContent>
                     </Card>

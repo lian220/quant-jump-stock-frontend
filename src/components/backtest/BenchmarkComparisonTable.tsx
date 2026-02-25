@@ -194,12 +194,12 @@ export default function BenchmarkComparisonTable({
               <tr className="border-b border-slate-700">
                 <th className="text-left py-2 pr-4 text-slate-400 font-medium">벤치마크</th>
                 <th className="text-right py-2 px-3 text-slate-400 font-medium">수익률</th>
-                <th className="text-right py-2 px-3 text-slate-400 font-medium">CAGR</th>
+                <th className="text-right py-2 px-3 text-slate-400 font-medium">연수익률</th>
                 <th className="text-right py-2 px-3 text-slate-400 font-medium whitespace-nowrap">
                   초과수익
                 </th>
                 <th className="text-right py-2 px-3 text-slate-400 font-medium whitespace-nowrap">
-                  초과 CAGR
+                  초과 연수익률
                 </th>
                 <th className="text-right py-2 px-3 text-slate-400 font-medium">상관계수</th>
                 <th className="text-right py-2 pl-3 text-slate-400 font-medium hidden sm:table-cell">
@@ -273,8 +273,8 @@ export default function BenchmarkComparisonTable({
           </table>
         </div>
         <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-          초과수익 = 전략 수익률 − 벤치마크 수익률 &nbsp;|&nbsp; 상관계수: ±1에 가까울수록 동조, 0에
-          가까울수록 독립
+          초과수익 = 전략 총수익률 − 벤치마크 총수익률 &nbsp;|&nbsp; 초과 연수익률 = 전략 연수익률 −
+          벤치마크 연수익률 &nbsp;|&nbsp; 상관계수: ±1에 가까울수록 동조, 0에 가까울수록 독립
         </p>
       </CardContent>
     </Card>

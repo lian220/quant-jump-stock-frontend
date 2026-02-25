@@ -180,7 +180,7 @@ export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
   // 벤치마크 이름 조합
   const benchmarkNames = benchmarks?.map((bm) => bm.displayName).join(', ') || '';
   const descriptionText = benchmarkOnly
-    ? `${benchmarkNames} 최근 1년 수익률 (백테스트 실행 후 전략과 비교됩니다)`
+    ? `${benchmarkNames} 최근 1년 수익률 (시뮬레이션 실행 후 전략과 비교됩니다)`
     : benchmarkNames
       ? `전략 vs ${benchmarkNames} 누적 수익률 비교`
       : '전략 누적 수익률';
@@ -200,7 +200,7 @@ export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
           <div className="h-[400px] flex items-center justify-center">
             <div className="text-center">
               <p className="text-slate-400 text-lg mb-2">수익 곡선 데이터가 아직 없습니다</p>
-              <p className="text-slate-500 text-sm">백테스트 완료 후 차트가 표시됩니다.</p>
+              <p className="text-slate-500 text-sm">시뮬레이션 완료 후 차트가 표시됩니다.</p>
             </div>
           </div>
         </CardContent>

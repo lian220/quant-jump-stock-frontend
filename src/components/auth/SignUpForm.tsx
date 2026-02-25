@@ -88,7 +88,7 @@ export const SignUpForm = ({ onSuccess, onSwitchToLogin }: SignUpFormProps) => {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold text-white">회원가입</CardTitle>
         <CardDescription className="text-slate-400">
-          새 계정을 만들어 퀀트 투자를 시작하세요
+          새 계정을 만들어 AI 기반 투자 분석을 시작하세요
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

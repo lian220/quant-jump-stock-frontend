@@ -86,7 +86,7 @@ export default function TermsPage() {
                   </div>
                   <ul className="list-disc list-inside text-slate-300 space-y-2">
                     <li>제공되는 데이터 분석 결과의 정확성을 보증하지 않습니다.</li>
-                    <li>과거 백테스트 결과가 미래 수익을 보장하지 않습니다.</li>
+                    <li>과거 성과 시뮬레이션(백테스트) 결과가 미래 수익을 보장하지 않습니다.</li>
                     <li>시스템 오류, 데이터 지연 등으로 인한 손해에 대해 책임을 지지 않습니다.</li>
                   </ul>
                 </section>

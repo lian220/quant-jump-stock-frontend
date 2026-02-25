@@ -8,7 +8,7 @@ interface OnboardingProgressProps {
   totalSteps: 3;
 }
 
-const STEP_LABELS = ['투자 성향', '시장 · 리스크', '완료'];
+const STEP_LABELS = ['투자 성향', '시장 · 위험 성향', '완료'];
 
 export function OnboardingProgress({ currentStep, totalSteps }: OnboardingProgressProps) {
   return (

@@ -28,6 +28,7 @@ export function TermTooltip({ termKey, children }: TermTooltipProps) {
           className="max-w-xs bg-slate-800 text-slate-200 border border-slate-600 px-3 py-2 text-xs leading-relaxed"
         >
           <p className="font-medium text-slate-100 mb-1">{term.label}</p>
+          {term.alias && <p className="text-slate-400 mb-1">= {term.alias}</p>}
           <p>{term.description}</p>
         </TooltipContent>
       </Tooltip>
