@@ -213,6 +213,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   //   }
   // };
 
+  const updateProfile = async (data: { displayName?: string }) => {
+    try {
+      const response = await api.put('/api/user/profile', data);
+      if (response.data.success !== false) {
+        // 로컬 user 상태 업데이트
+        if (data.displayName && user) {
+          setUser({ ...user, name: data.displayName });
+        }
+        return {};
+      }
+      return { error: response.data.message || '프로필 수정에 실패했습니다' };
+    } catch (error: unknown) {
+      console.error('프로필 수정 오류:', error);
+      const errorMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      return { error: errorMessage || '서버 연결에 실패했습니다' };
+    }
+  };
+
   const signInWithNaver = async () => {
     try {
       // /auth 페이지 자체가 아닌 경우에만 현재 URL을 returnUrl로 저장
@@ -271,6 +292,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signUp,
     signOut,
     resetPassword,
+    updateProfile,
     // signInWithGoogle, // 구글 로그인 비활성화
     signInWithNaver,
   };

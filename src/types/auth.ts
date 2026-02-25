@@ -25,6 +25,7 @@ export interface AuthContextType {
   // signInWithGoogle: () => Promise<{ error?: string }>; // 구글 로그인 비활성화
   signInWithNaver: () => Promise<{ error?: string }>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
+  updateProfile: (data: { displayName?: string }) => Promise<{ error?: string }>;
 }
 
 // 로그인/회원가입 폼 타입
