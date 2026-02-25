@@ -341,7 +341,9 @@ export default function StrategyDetailPage() {
                 <CardContent>
                   <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                     <div className="text-center">
-                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">연평균 수익률</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">
+                        <TermTooltip termKey="cagr">연평균 수익률</TermTooltip>
+                      </p>
                       <p
                         className={`text-sm sm:text-lg font-bold ${strategy.canonicalBacktest.cagr >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
                       >
@@ -350,13 +352,17 @@ export default function StrategyDetailPage() {
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">최대 손실폭</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">
+                        <TermTooltip termKey="mdd">최대 손실폭</TermTooltip>
+                      </p>
                       <p className="text-sm sm:text-lg font-bold text-red-400">
                         {strategy.canonicalBacktest.mdd.toFixed(1)}%
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">안정성 지수</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">
+                        <TermTooltip termKey="sharpeRatio">안정성 지수</TermTooltip>
+                      </p>
                       <p className="text-sm sm:text-lg font-bold text-purple-400">
                         {strategy.canonicalBacktest.sharpeRatio?.toFixed(2) ?? 'N/A'}
                       </p>

@@ -54,12 +54,12 @@ export default function RecommendationsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // 가이드 토글 (첫 방문 시 자동 표시)
-  const [showGuide, setShowGuide] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('recommendations-guide-seen') !== 'true';
+  const [showGuide, setShowGuide] = useState(false);
+  useEffect(() => {
+    if (localStorage.getItem('recommendations-guide-seen') !== 'true') {
+      setShowGuide(true);
     }
-    return true;
-  });
+  }, []);
 
   // 관련 뉴스
   const [tickerNews, setTickerNews] = useState<Record<string, NewsArticle[]>>({});
