@@ -103,7 +103,7 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
               valueSize: 'sm',
             },
             {
-              label: '안정성',
+              label: '안정성 지수',
               value: hasData(strategy.sharpeRatio) ? strategy.sharpeRatio : '준비중',
               valueColor: hasData(strategy.sharpeRatio) ? 'text-white' : 'text-slate-500',
               valueSize: 'sm',

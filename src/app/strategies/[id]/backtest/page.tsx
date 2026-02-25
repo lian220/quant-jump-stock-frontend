@@ -313,7 +313,7 @@ export default function BacktestPage() {
         title={strategyName ? `${strategyName} - 성과 시뮬레이션` : '성과 시뮬레이션'}
         description={
           result?.metrics
-            ? `${strategyName} 시뮬레이션 결과: CAGR ${result.metrics.cagr?.toFixed(1)}%, MDD ${result.metrics.mdd?.toFixed(1)}%, 안정성 ${result.metrics.sharpeRatio?.toFixed(2)}`
+            ? `${strategyName} 시뮬레이션 결과: 연평균 수익률 ${result.metrics.cagr?.toFixed(1)}%, 최대 손실폭 ${result.metrics.mdd?.toFixed(1)}%, 안정성 지수 ${result.metrics.sharpeRatio?.toFixed(2)}`
             : '전략의 과거 성과를 시뮬레이션하고 분석합니다'
         }
         keywords="백테스트, 성과 시뮬레이션, 투자 전략, 투자 시뮬레이션, Alpha Foundry"

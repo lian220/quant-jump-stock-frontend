@@ -340,9 +340,13 @@ export default function Home() {
                                 >
                                   {priceRec === '매도'
                                     ? '주의'
-                                    : priceRec === '보유'
-                                      ? '관망'
-                                      : priceRec || grade.grade}
+                                    : priceRec === '강력매수'
+                                      ? '강력 추천'
+                                      : priceRec === '매수'
+                                        ? '추천'
+                                        : priceRec === '보유'
+                                          ? '관망'
+                                          : priceRec || grade.grade}
                                 </Badge>
                               )}
                             </div>
@@ -508,7 +512,13 @@ export default function Home() {
                                 ⚠️ 점검 중
                               </Badge>
                             ) : (
-                              <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-[10px]">
+                              <Badge
+                                className={`text-[10px] ${
+                                  mPriceRec === '매도'
+                                    ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                    : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                                }`}
+                              >
                                 {mPriceRec === '매도'
                                   ? '주의'
                                   : mPriceRec === '강력매수'
