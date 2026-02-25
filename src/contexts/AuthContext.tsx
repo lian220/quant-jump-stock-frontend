@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const updateProfile = async (data: { displayName?: string }) => {
     try {
       const response = await api.put('/api/user/profile', data);
-      if (response.data.success !== false) {
+      if (response.data.success) {
         // 로컬 user 상태 업데이트
         if (data.displayName && user) {
           setUser({ ...user, name: data.displayName });

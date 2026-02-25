@@ -653,7 +653,7 @@ export default function Home() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-slate-400">위험 대비 수익</p>
+                      <p className="text-slate-400">안정성 지수</p>
                       <p className="text-cyan-400 font-semibold">{strategy.sharpeRatio}</p>
                     </div>
                     <div>
@@ -886,8 +886,8 @@ export default function Home() {
                         과거 성과 검증
                       </h3>
                       <p className="text-sm text-slate-400 leading-relaxed">
-                        모든 전략은 과거 데이터로 미리 검증됩니다. 수익률, 위험 대비 수익, 최대
-                        손실폭 등 핵심 성과를 투명하게 공개합니다.
+                        모든 전략은 과거 데이터로 미리 검증됩니다. 수익률, 안정성 지수, 최대 손실폭
+                        등 핵심 성과를 투명하게 공개합니다.
                       </p>
                     </CardContent>
                   </Card>

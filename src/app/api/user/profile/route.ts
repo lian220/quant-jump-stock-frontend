@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { API_URL } from '@/lib/api/config';
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
+const FETCH_TIMEOUT = 10_000; // 10초
 
 export async function PUT(request: NextRequest) {
   try {
@@ -17,6 +18,7 @@ export async function PUT(request: NextRequest) {
     // /api/auth/me에서 userId를 가져오기
     const meRes = await fetch(`${API_URL}/api/v1/auth/me`, {
       headers: { Authorization: authorization, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
     });
 
     if (!meRes.ok) {
@@ -43,6 +45,7 @@ export async function PUT(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
     });
 
     if (!response.ok) {

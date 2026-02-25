@@ -556,7 +556,7 @@ export default function BacktestPage() {
                       className="border-slate-600 text-slate-300 hover:bg-slate-700"
                       onClick={() => {
                         const m = result.metrics!;
-                        const text = `[${strategyName}] 시뮬레이션 결과\n연수익률: ${m.cagr?.toFixed(1)}% | 최대손실: ${m.mdd?.toFixed(1)}% | 안정성: ${m.sharpeRatio?.toFixed(2)} | 승률: ${m.winRate?.toFixed(1)}%\n— Alpha Foundry`;
+                        const text = `[${strategyName}] 시뮬레이션 결과\n연수익률: ${m.cagr?.toFixed(1)}% | 최대 손실폭: ${m.mdd?.toFixed(1)}% | 안정성 지수: ${m.sharpeRatio?.toFixed(2)} | 승률: ${m.winRate?.toFixed(1)}%\n— Alpha Foundry`;
                         navigator.clipboard.writeText(text);
                       }}
                     >

@@ -52,6 +52,7 @@ export default function MyPage() {
   // 비밀번호 재설정 상태
   const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+  const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -135,6 +136,8 @@ export default function MyPage() {
     }
   }
 
+  const profileMessageTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
   async function handleSaveName() {
     if (!editName.trim()) return;
     setProfileSaving(true);
@@ -147,14 +150,24 @@ export default function MyPage() {
       setIsEditingName(false);
     }
     setProfileSaving(false);
-    setTimeout(() => setProfileMessage(null), 3000);
+    if (profileMessageTimer.current) clearTimeout(profileMessageTimer.current);
+    profileMessageTimer.current = setTimeout(() => setProfileMessage(null), 3000);
   }
+
+  useEffect(() => {
+    return () => {
+      if (profileMessageTimer.current) clearTimeout(profileMessageTimer.current);
+    };
+  }, []);
 
   async function handlePasswordReset() {
     if (!user?.email) return;
     setPasswordResetLoading(true);
+    setPasswordResetError(null);
     const result = await resetPassword(user.email);
-    if (!result.error) {
+    if (result.error) {
+      setPasswordResetError(result.error);
+    } else {
       setPasswordResetSent(true);
     }
     setPasswordResetLoading(false);
@@ -559,6 +572,9 @@ export default function MyPage() {
               <div>
                 <p className="text-slate-300 text-sm">비밀번호 변경</p>
                 <p className="text-slate-500 text-xs mt-0.5">이메일로 재설정 링크를 보내드려요</p>
+                {passwordResetError && (
+                  <p className="text-red-400 text-xs mt-1">{passwordResetError}</p>
+                )}
               </div>
               {passwordResetSent ? (
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
