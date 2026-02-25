@@ -136,7 +136,7 @@ function generateTags(backend: BackendStrategy): string[] {
     tags.push('자산배분', '분산투자');
   }
   if (categoryCode === 'QUANT_COMPOSITE') {
-    tags.push('퀀트', '복합전략');
+    tags.push('AI분석', '복합전략');
   }
   if (categoryCode === 'SEASONAL') {
     tags.push('시즌널', '계절성');

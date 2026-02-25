@@ -224,11 +224,13 @@ export default function StrategyDetailPage() {
                 </Badge>
                 <Badge className={getRiskColor(strategy.riskLevel)}>
                   <TermTooltip termKey="riskLevel">
-                    리스크: {getRiskLabel(strategy.riskLevel)}
+                    위험도: {getRiskLabel(strategy.riskLevel)}
                   </TermTooltip>
                 </Badge>
                 <span className="text-slate-400 text-sm">
-                  <TermTooltip termKey="backtest">백테스트: {strategy.backtestPeriod}</TermTooltip>
+                  <TermTooltip termKey="backtest">
+                    시뮬레이션 기간: {strategy.backtestPeriod}
+                  </TermTooltip>
                 </span>
               </div>
               <p className="text-slate-400 max-w-2xl text-sm sm:text-base">
@@ -313,7 +315,7 @@ export default function StrategyDetailPage() {
               value="my-backtests"
               className="text-xs sm:text-sm data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
             >
-              내 백테스트
+              내 시뮬레이션
             </TabsTrigger>
           </TabsList>
 
@@ -324,7 +326,7 @@ export default function StrategyDetailPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-white text-lg">대표 백테스트 성과</CardTitle>
+                      <CardTitle className="text-white text-lg">대표 시뮬레이션 성과</CardTitle>
                       <CardDescription className="text-slate-400 text-xs">
                         {strategy.canonicalBacktest.startDate} ~{' '}
                         {strategy.canonicalBacktest.endDate} | 초기자본{' '}
@@ -339,7 +341,7 @@ export default function StrategyDetailPage() {
                 <CardContent>
                   <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                     <div className="text-center">
-                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">CAGR</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">연평균 수익률</p>
                       <p
                         className={`text-sm sm:text-lg font-bold ${strategy.canonicalBacktest.cagr >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
                       >
@@ -348,13 +350,13 @@ export default function StrategyDetailPage() {
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">MDD</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">최대 손실폭</p>
                       <p className="text-sm sm:text-lg font-bold text-red-400">
                         {strategy.canonicalBacktest.mdd.toFixed(1)}%
                       </p>
                     </div>
                     <div className="text-center">
-                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">샤프 비율</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mb-1">안정성 지수</p>
                       <p className="text-sm sm:text-lg font-bold text-purple-400">
                         {strategy.canonicalBacktest.sharpeRatio?.toFixed(2) ?? 'N/A'}
                       </p>
@@ -401,21 +403,21 @@ export default function StrategyDetailPage() {
               />
               <MetricCard
                 value={strategy.annualReturn}
-                label="CAGR"
+                label="연평균 수익률"
                 termKey="cagr"
                 metricKey="cagr"
                 valueColor="text-cyan-400"
               />
               <MetricCard
                 value={strategy.maxDrawdown}
-                label="MDD"
+                label="최대 손실폭"
                 termKey="mdd"
                 metricKey="mdd"
                 valueColor="text-red-400"
               />
               <MetricCard
                 value={strategy.sharpeRatio}
-                label="샤프 비율"
+                label="안정성 지수"
                 termKey="sharpeRatio"
                 metricKey="sharpeRatio"
                 valueColor="text-purple-400"
@@ -443,7 +445,7 @@ export default function StrategyDetailPage() {
                 <CardContent className="py-12">
                   <div className="text-center">
                     <p className="text-slate-400 mb-2">
-                      로그인하고 나만의 조건으로 백테스트해 보세요
+                      로그인하고 나만의 조건으로 시뮬레이션해 보세요
                     </p>
                     <p className="text-slate-500 text-sm mb-6">
                       기간, 자본금, 벤치마크를 직접 설정하여 시뮬레이션할 수 있습니다
@@ -469,7 +471,9 @@ export default function StrategyDetailPage() {
                         </p>
                       </div>
                       <Link href={`/strategies/${id}/backtest`}>
-                        <Button className="bg-cyan-600 hover:bg-cyan-700">새 백테스트 실행</Button>
+                        <Button className="bg-cyan-600 hover:bg-cyan-700">
+                          새 시뮬레이션 실행
+                        </Button>
                       </Link>
                     </div>
                   </CardContent>
@@ -660,7 +664,7 @@ export default function StrategyDetailPage() {
               <CardHeader>
                 <CardTitle className="text-white">거래 내역</CardTitle>
                 <CardDescription className="text-slate-400">
-                  백테스트 기간 동안의 매매 기록
+                  시뮬레이션 기간 동안의 매매 기록
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -876,7 +880,7 @@ export default function StrategyDetailPage() {
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-white mb-1">
-                  내 설정으로 백테스트
+                  내 설정으로 시뮬레이션
                 </h3>
                 <p className="text-slate-400 text-xs sm:text-sm">
                   기간, 자본금, 유니버스를 직접 설정하여 시뮬레이션해 보세요
@@ -884,7 +888,7 @@ export default function StrategyDetailPage() {
               </div>
               <Link href={`/strategies/${id}/backtest`}>
                 <Button className="bg-cyan-600 hover:bg-cyan-700 px-6 text-sm">
-                  커스텀 백테스트 →
+                  직접 시뮬레이션 →
                 </Button>
               </Link>
             </div>
@@ -928,7 +932,7 @@ export default function StrategyDetailPage() {
                   </Link>
                   <Link href={`/strategies/${id}/backtest`}>
                     <Button className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700">
-                      커스텀 백테스트 →
+                      직접 시뮬레이션 →
                     </Button>
                   </Link>
                 </div>

@@ -12,17 +12,17 @@ export default function PerformanceCards({ metrics }: PerformanceCardsProps) {
 
   const cards = [
     {
-      label: '연환산 수익률 (CAGR)',
+      label: '연평균 수익률',
       value: metrics.cagr != null ? `${metrics.cagr > 0 ? '+' : ''}${fmt(metrics.cagr)}%` : '-',
       color: (metrics.cagr ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400',
     },
     {
-      label: '최대 낙폭 (MDD)',
+      label: '최대 손실폭',
       value: metrics.mdd != null ? `${fmt(metrics.mdd)}%` : '-',
       color: 'text-red-400',
     },
     {
-      label: '샤프 비율',
+      label: '안정성 지수',
       value: fmt(metrics.sharpeRatio),
       color: 'text-cyan-400',
     },

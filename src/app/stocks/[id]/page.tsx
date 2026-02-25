@@ -454,7 +454,7 @@ export default function StockDetailPage() {
               <CardContent className="pt-4 pb-4 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-slate-300">전략 둘러보기</p>
-                  <p className="text-xs text-slate-500">검증된 퀀트 전략을 탐색하세요</p>
+                  <p className="text-xs text-slate-500">검증된 투자 전략을 탐색하세요</p>
                 </div>
                 <span className="text-slate-500 text-sm">→</span>
               </CardContent>

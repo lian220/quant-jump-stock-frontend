@@ -58,7 +58,7 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
                 {getCategoryLabel(strategy.category)}
               </Badge>
               <Badge className={`${getRiskColor(strategy.riskLevel)} text-xs`}>
-                리스크: {getRiskLabel(strategy.riskLevel)}
+                위험도: {getRiskLabel(strategy.riskLevel)}
               </Badge>
               {strategy.isPremium && (
                 <Badge className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 border-yellow-500/30 text-xs">
@@ -103,7 +103,7 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
               valueSize: 'sm',
             },
             {
-              label: '샤프 비율',
+              label: '안정성',
               value: hasData(strategy.sharpeRatio) ? strategy.sharpeRatio : '준비중',
               valueColor: hasData(strategy.sharpeRatio) ? 'text-white' : 'text-slate-500',
               valueSize: 'sm',
@@ -115,7 +115,7 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
 
         {/* 위험 지표 */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-400">최대 낙폭</span>
+          <span className="text-slate-400">최대 손실폭</span>
           <span className="text-red-400 font-mono">
             {strategy.maxDrawdown && strategy.maxDrawdown !== '-' && strategy.maxDrawdown !== 'N/A'
               ? strategy.maxDrawdown
@@ -158,7 +158,7 @@ export function StrategyCard({ strategy }: StrategyCardProps) {
             size="sm"
             className="text-slate-400 hover:text-slate-200 text-xs shrink-0"
           >
-            <Link href={`/strategies/${strategy.id}/backtest`}>백테스트 →</Link>
+            <Link href={`/strategies/${strategy.id}/backtest`}>성과 검증 →</Link>
           </Button>
         </div>
       </CardContent>

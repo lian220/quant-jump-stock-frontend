@@ -8,7 +8,7 @@ export const mockStrategies: Strategy[] = [
     description:
       '상대 모멘텀과 절대 모멘텀을 결합한 전략으로 시장 상황에 따라 유연하게 대응합니다.',
     category: 'momentum',
-    author: '김퀀트',
+    author: '알파운드리',
     authorAvatar: '',
     totalReturn: '+187.4%',
     annualReturn: '+30.1%',
@@ -247,7 +247,7 @@ export const mockStrategies: Strategy[] = [
   },
   {
     id: '12',
-    name: 'AI 기반 퀀트',
+    name: 'AI 자동 분석',
     description: '머신러닝 알고리즘으로 패턴을 학습하여 매매 신호를 생성하는 전략입니다.',
     category: 'ml_prediction',
     author: '조AI',

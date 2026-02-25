@@ -194,12 +194,12 @@ export default function BenchmarkComparisonTable({
               <tr className="border-b border-slate-700">
                 <th className="text-left py-2 pr-4 text-slate-400 font-medium">벤치마크</th>
                 <th className="text-right py-2 px-3 text-slate-400 font-medium">수익률</th>
-                <th className="text-right py-2 px-3 text-slate-400 font-medium">CAGR</th>
+                <th className="text-right py-2 px-3 text-slate-400 font-medium">연수익률</th>
                 <th className="text-right py-2 px-3 text-slate-400 font-medium whitespace-nowrap">
                   초과수익
                 </th>
                 <th className="text-right py-2 px-3 text-slate-400 font-medium whitespace-nowrap">
-                  초과 CAGR
+                  초과 수익률
                 </th>
                 <th className="text-right py-2 px-3 text-slate-400 font-medium">상관계수</th>
                 <th className="text-right py-2 pl-3 text-slate-400 font-medium hidden sm:table-cell">

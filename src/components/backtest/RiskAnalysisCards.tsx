@@ -34,13 +34,13 @@ export default function RiskAnalysisCards({ metrics }: RiskAnalysisCardsProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-white">리스크 분석</h3>
+      <h3 className="text-lg font-semibold text-white">위험 분석</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* 리스크 지표 카드 */}
+        {/* 위험 지표 카드 */}
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-slate-400">리스크 지표</CardTitle>
+            <CardTitle className="text-sm text-slate-400">위험 지표</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">

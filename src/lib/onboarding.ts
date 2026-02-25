@@ -143,7 +143,7 @@ export const CATEGORY_OPTIONS: {
   { value: 'value', label: '가치투자', icon: '💎', description: '저평가 종목 발굴' },
   { value: 'momentum', label: '모멘텀', icon: '🚀', description: '상승 추세 추종' },
   { value: 'asset_allocation', label: '자산배분', icon: '⚖️', description: '분산 투자 전략' },
-  { value: 'quant_composite', label: '퀀트 복합', icon: '🧮', description: '다중 팩터 분석' },
+  { value: 'quant_composite', label: 'AI 복합', icon: '🧮', description: '다중 팩터 분석' },
   { value: 'seasonal', label: '시즌널', icon: '📅', description: '계절/이벤트 패턴' },
   { value: 'ml_prediction', label: 'AI 예측', icon: '🤖', description: 'AI 기반 매매 신호' },
 ];

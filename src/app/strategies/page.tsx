@@ -198,7 +198,7 @@ function StrategiesContent() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">🎯 전략 마켓플레이스</h1>
           <p className="text-lg text-slate-400">
-            검증된 퀀트 투자 전략을 탐색하고 나에게 맞는 전략을 선택하세요.
+            검증된 투자 전략을 탐색하고 나에게 맞는 전략을 선택하세요.
           </p>
         </div>
 
@@ -346,7 +346,7 @@ function StrategiesContent() {
                           value: '가치투자',
                           momentum: '모멘텀',
                           asset_allocation: '자산배분',
-                          quant_composite: '퀀트 복합',
+                          quant_composite: 'AI 복합',
                           seasonal: '시즌널',
                           ml_prediction: 'AI 예측',
                           all: '',
@@ -368,7 +368,7 @@ function StrategiesContent() {
                       }}
                       className="cursor-pointer bg-cyan-600/20 text-cyan-400 border-cyan-600/40 hover:bg-cyan-600/30 active:scale-90 transition-all gap-1"
                     >
-                      리스크: {{ low: '낮음', medium: '중간', high: '높음' }[selectedRiskLevel]}
+                      위험도: {{ low: '낮음', medium: '중간', high: '높음' }[selectedRiskLevel]}
                       <span className="text-cyan-400/60">✕</span>
                     </Badge>
                   )}

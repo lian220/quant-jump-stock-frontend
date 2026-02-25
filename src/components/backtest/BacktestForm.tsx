@@ -53,7 +53,7 @@ const backtestFormSchema = z
       return diffDays <= MAX_BACKTEST_DAYS;
     },
     {
-      message: `백테스트 기간은 최대 1년(${MAX_BACKTEST_DAYS}일)까지 가능합니다`,
+      message: `시뮬레이션 기간은 최대 1년(${MAX_BACKTEST_DAYS}일)까지 가능합니다`,
       path: ['endDate'],
     },
   );
@@ -482,9 +482,9 @@ export default function BacktestForm({
   return (
     <Card className="bg-slate-800/50 border-slate-700">
       <CardHeader>
-        <CardTitle className="text-white">백테스트 설정</CardTitle>
+        <CardTitle className="text-white">시뮬레이션 설정</CardTitle>
         <CardDescription className="text-slate-400">
-          백테스트 조건을 설정하고 실행하세요 (최대 1년)
+          조건을 설정하고 시뮬레이션을 실행하세요 (최대 1년)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -674,8 +674,8 @@ export default function BacktestForm({
             {supportedUniverseTypes && supportedUniverseTypes.length > 1 && (
               <div className="space-y-2">
                 <Label className="text-slate-300 flex items-center">
-                  백테스트 대상
-                  <InfoTip text="백테스트에 사용할 종목 범위를 선택합니다. 전체 시장: 등록된 모든 종목, 전략 기본 종목: 전략에 설정된 포트폴리오 종목" />
+                  시뮬레이션 대상
+                  <InfoTip text="시뮬레이션에 사용할 종목 범위를 선택합니다. 전체 시장: 등록된 모든 종목, 전략 기본 종목: 전략에 설정된 포트폴리오 종목" />
                 </Label>
                 <Select
                   value={universeType || recommendedUniverseType || 'MARKET'}
@@ -998,10 +998,10 @@ export default function BacktestForm({
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                백테스트 실행 중...
+                시뮬레이션 실행 중...
               </span>
             ) : (
-              '백테스트 실행'
+              '시뮬레이션 실행'
             )}
           </Button>
         </form>

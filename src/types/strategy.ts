@@ -7,7 +7,7 @@ export type StrategyCategory =
   | 'value' // 가치투자
   | 'momentum' // 모멘텀
   | 'asset_allocation' // 자산배분
-  | 'quant_composite' // 퀀트 복합
+  | 'quant_composite' // AI 복합
   | 'seasonal' // 시즌널
   | 'ml_prediction' // AI 예측
   | 'all'; // 전체

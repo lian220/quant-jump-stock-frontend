@@ -58,7 +58,7 @@ export function MetricCard({
         <p className="text-[10px] sm:text-xs text-slate-400 mt-1 leading-tight">
           {termKey ? <TermTooltip termKey={termKey}>{label}</TermTooltip> : label}
         </p>
-        {isNoData && <p className="text-[10px] text-slate-500 mt-0.5">백테스트 미실행</p>}
+        {isNoData && <p className="text-[10px] text-slate-500 mt-0.5">데이터 없음</p>}
       </CardContent>
     </Card>
   );

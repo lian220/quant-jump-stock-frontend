@@ -99,6 +99,50 @@ export function getTierInfo(tier: SignalTier) {
   }
 }
 
+// === 예측 신뢰도 검증 ===
+
+/**
+ * 예측가와 현재가의 괴리율(%)을 계산.
+ * 양수 = 예측가 > 현재가, 음수 = 예측가 < 현재가
+ */
+export function getPriceDivergence(
+  signal: Pick<BuySignal, 'currentPrice' | 'targetPrice'>,
+): number | null {
+  if (signal.currentPrice == null || signal.targetPrice == null || signal.currentPrice === 0) {
+    return null;
+  }
+  return ((signal.targetPrice - signal.currentPrice) / signal.currentPrice) * 100;
+}
+
+/**
+ * 예측 데이터의 신뢰도 상태를 반환.
+ * aiScore가 높은데 upsidePercent가 크게 마이너스인 경우 → 예측 갱신 필요
+ */
+export type PredictionReliability = 'reliable' | 'stale' | 'conflict';
+
+export function checkPredictionReliability(
+  signal: Pick<BuySignal, 'aiScore' | 'upsidePercent' | 'currentPrice' | 'targetPrice'>,
+): { status: PredictionReliability; message: string | null } {
+  const divergence = getPriceDivergence(signal);
+
+  // 데이터 부족
+  if (divergence == null || signal.upsidePercent == null) {
+    return { status: 'reliable', message: null };
+  }
+
+  // aiScore 높은데(≥7) upsidePercent가 크게 마이너스(≤-30%) → 모순
+  if (signal.aiScore >= 7 && signal.upsidePercent <= -30) {
+    return { status: 'conflict', message: '예측이 오래되어 부정확할 수 있어요' };
+  }
+
+  // 괴리율이 -50% 이상 → 예측 자체가 오래됨
+  if (divergence <= -50) {
+    return { status: 'stale', message: '예측 데이터가 오래됐어요' };
+  }
+
+  return { status: 'reliable', message: null };
+}
+
 // === 추가 타입 정의 ===
 
 export interface PredictionStatsResponse {
@@ -322,9 +366,10 @@ export const CONFIDENCE_GRADE_THRESHOLDS = {
 /**
  * 종합 점수 등급 기준
  *
- * 현재 상태: AI/감정 분석 통합 완료
+ * 현재 상태: AI 통합 완료, 감정 분석 미반영 (sentimentScore = 0)
  * - 계산식: 0.3 × aiScore + 0.4 × techScore + 0.3 × sentimentScore
- * - 현재 범위: ~0.6 ~ 3.5
+ * - 현재 범위: ~0.4 ~ 4.0 (감성 반영 시 최대 7.0)
+ * - 프론트 표시: 100점 만점 변환 (score / 4.0 × 100)
  *
  * TODO: Admin 페이지에서 동적 관리
  */

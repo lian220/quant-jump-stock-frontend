@@ -29,7 +29,7 @@ export function StrategyFilter({
     { value: 'value', label: '가치투자' },
     { value: 'momentum', label: '모멘텀' },
     { value: 'asset_allocation', label: '자산배분' },
-    { value: 'quant_composite', label: '퀀트 복합' },
+    { value: 'quant_composite', label: 'AI 복합' },
     { value: 'seasonal', label: '시즌널' },
     { value: 'ml_prediction', label: 'AI 예측' },
   ];
@@ -46,7 +46,7 @@ export function StrategyFilter({
     { value: 'return_high', label: '수익률 높은순' },
     { value: 'return_low', label: '수익률 낮은순' },
     { value: 'latest', label: '최신순' },
-    { value: 'risk_low', label: '리스크 낮은순' },
+    { value: 'risk_low', label: '위험도 낮은순' },
   ];
 
   // 토글 동작: 이미 선택된 필터를 다시 클릭하면 해제 (→ 'all')
@@ -90,7 +90,7 @@ export function StrategyFilter({
 
       {/* 리스크 레벨 필터 */}
       <div>
-        <h3 className="text-sm font-semibold text-white mb-3">리스크 레벨</h3>
+        <h3 className="text-sm font-semibold text-white mb-3">위험도</h3>
         <div className="flex flex-wrap gap-2">
           {riskLevels.map((risk) => (
             <Badge

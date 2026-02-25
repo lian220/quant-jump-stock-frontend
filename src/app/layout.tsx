@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     template: '%s | Alpha Foundry',
   },
   description:
-    'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼.',
+    'AI가 매일 종목을 분석하고, 검증된 투자 전략을 제공합니다. 주식 초보도 쉽게 시작할 수 있는 데이터 기반 투자 플랫폼.',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -51,16 +51,16 @@ export const metadata: Metadata = {
     telephone: false,
   },
   keywords: [
-    '퀀트투자',
+    'AI주식분석',
     '주식투자',
     'AI투자',
-    '알고리즘트레이딩',
-    '백테스팅',
-    '실시간시세',
+    '주식초보',
+    '종목추천',
+    '투자전략',
     '주식분석',
-    '퀀트전략',
+    '주식데이터',
     '모멘텀투자',
-    '자동매매',
+    '투자플랫폼',
   ],
   authors: [{ name: 'Alpha Foundry' }],
   creator: 'Alpha Foundry',
@@ -83,7 +83,7 @@ export const metadata: Metadata = {
     siteName: 'Alpha Foundry',
     title: 'Alpha Foundry - AI 기반 스마트 투자 플랫폼',
     description:
-      'AI와 빅데이터 분석으로 최적의 매매 타이밍을 포착하세요. 실시간 시세, 퀀트 전략, 백테스팅까지 데이터 기반 체계적인 주식 투자 플랫폼.',
+      'AI가 매일 종목을 분석하고, 검증된 투자 전략을 제공합니다. 주식 초보도 쉽게 시작할 수 있는 데이터 기반 투자 플랫폼.',
     images: [
       {
         url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://alphafoundry.co.kr'}/og-image.png`,

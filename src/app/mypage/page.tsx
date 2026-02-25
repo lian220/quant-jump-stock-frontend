@@ -342,7 +342,7 @@ export default function MyPage() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-slate-400 text-sm">리스크 성향</span>
+                  <span className="text-slate-400 text-sm">위험 성향</span>
                   <span className="text-white text-sm font-medium">
                     {riskLabel ? `${riskLabel.icon} ${riskLabel.label}` : '-'}
                   </span>

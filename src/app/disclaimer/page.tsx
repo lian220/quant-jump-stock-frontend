@@ -73,7 +73,9 @@ export default function DisclaimerPage() {
                 </section>
 
                 <section className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-4">3. 백테스트 결과</h2>
+                  <h2 className="text-2xl font-bold text-white mb-4">
+                    3. 성과 시뮬레이션(백테스트) 결과
+                  </h2>
                   <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4">
                     <p className="text-yellow-300 font-semibold mb-2">
                       ⚠️ 과거 성과는 미래 수익을 보장하지 않습니다
