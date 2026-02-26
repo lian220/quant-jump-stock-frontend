@@ -23,7 +23,7 @@ import {
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
 import type { StrategyListParams, DefaultStockListResponse } from '@/types/api';
-import type { StrategyDetail, BenchmarkResponse } from '@/types/strategy';
+import type { Strategy, StrategyDetail, BenchmarkResponse } from '@/types/strategy';
 
 // ─── Predictions ───
 
@@ -60,7 +60,7 @@ export function useLatestPredictions() {
 // ─── Strategies ───
 
 type StrategiesResult = {
-  strategies: import('@/types/strategy').Strategy[];
+  strategies: Strategy[];
   totalPages: number;
   totalItems: number;
 };
