@@ -15,17 +15,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PageSEO } from '@/components/seo';
-import {
-  getBuySignals,
-  getScoreGrade,
-  TIER_THRESHOLDS,
-  checkPredictionReliability,
-} from '@/lib/api/predictions';
-import { getStrategies } from '@/lib/api/strategies';
+import { getScoreGrade, TIER_THRESHOLDS, checkPredictionReliability } from '@/lib/api/predictions';
 import { getNewsByTickers, formatRelativeTime } from '@/lib/api/news';
+import { useBuySignals, useStrategies } from '@/hooks/useData';
 
-import type { BuySignal } from '@/lib/api/predictions';
-import type { Strategy } from '@/types/strategy';
 import type { NewsArticle } from '@/lib/api/news';
 import { trackEvent } from '@/lib/analytics';
 import { searchStocks } from '@/lib/api/stocks';
@@ -36,14 +29,8 @@ const ITEMS_PER_PAGE = 12;
 export default function RecommendationsPage() {
   const router = useRouter();
 
-  // 종목 추천 상태
-  const [recommendations, setRecommendations] = useState<BuySignal[]>([]);
-  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
-  const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
-
   // 필터/정렬 상태
   const [selectedDate, setSelectedDate] = useState<string>(''); // 빈값 = 백엔드에서 최신 날짜 자동 조회
-  const [displayDate, setDisplayDate] = useState<string>(''); // 실제 응답된 날짜 (표시용)
   const [sortBy, setSortBy] = useState<string>('compositeScore');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
@@ -61,51 +48,52 @@ export default function RecommendationsPage() {
     }
   }, []);
 
+  // SWR: 종목 분석 데이터 (날짜 변경 시 자동 재조회)
+  const buySignalsParams = useMemo(
+    () => ({ date: selectedDate || undefined, minConfidence: 0.1 }),
+    [selectedDate],
+  );
+  const {
+    data: buySignalsData,
+    isLoading: isLoadingRecommendations,
+    error: buySignalsError,
+  } = useBuySignals(buySignalsParams);
+  const recommendations = useMemo(() => buySignalsData?.data ?? [], [buySignalsData?.data]);
+  const displayDate = buySignalsData?.date ?? '';
+  const recommendationsError = buySignalsError
+    ? 'AI 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.'
+    : null;
+
+  // SWR: 인기 전략 (구독자순 상위 10개 → 클라이언트에서 필터)
+  const {
+    data: strategiesData,
+    isLoading: isLoadingStrategies,
+    error: strategiesError,
+  } = useStrategies({ sortBy: 'subscribers', page: 0, size: 10 });
+  const popularStrategies = useMemo(
+    () =>
+      (strategiesData?.strategies ?? [])
+        .filter((s) => parseFloat(String(s.annualReturn)) >= 0)
+        .slice(0, 3),
+    [strategiesData],
+  );
+
   // 관련 뉴스
   const [tickerNews, setTickerNews] = useState<Record<string, NewsArticle[]>>({});
-
-  // 인기 전략 상태
-  const [popularStrategies, setPopularStrategies] = useState<Strategy[]>([]);
-  const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
-  const [strategiesError, setStrategiesError] = useState<string | null>(null);
 
   // 카드 클릭 시 종목 이동 중인 ticker 추적
   const [navigatingTicker, setNavigatingTicker] = useState<string | null>(null);
 
-  // 초기 날짜 동기화 완료 여부
-  const initialDateSynced = useRef(false);
   const firstViewTracked = useRef(false);
 
-  // 종목 분석 데이터 가져오기 (날짜 변경 시 자동 재조회)
+  // 초기 로드 시 날짜 선택기를 백엔드 응답 날짜로 동기화 (한 번만)
+  const initialDateSynced = useRef(false);
   useEffect(() => {
-    const fetchRecommendations = async () => {
-      setIsLoadingRecommendations(true);
-      setRecommendationsError(null);
-      try {
-        const response = await getBuySignals({
-          date: selectedDate || undefined,
-          minConfidence: 0.1,
-        });
-        setRecommendations(response.data ?? []);
-        // 백엔드가 실제 조회한 날짜로 표시 업데이트
-        if (response.date) {
-          setDisplayDate(response.date);
-          // 초기 로드 시 날짜 선택기도 동기화 (한 번만)
-          if (!initialDateSynced.current && !selectedDate) {
-            initialDateSynced.current = true;
-            setSelectedDate(response.date);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch recommendations:', error);
-        setRecommendationsError('AI 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해주세요.');
-      } finally {
-        setIsLoadingRecommendations(false);
-      }
-    };
-
-    fetchRecommendations();
-  }, [selectedDate]);
+    if (buySignalsData?.date && !initialDateSynced.current && !selectedDate) {
+      initialDateSynced.current = true;
+      setSelectedDate(buySignalsData.date);
+    }
+  }, [buySignalsData?.date, selectedDate]);
 
   useEffect(() => {
     if (!isLoadingRecommendations && !firstViewTracked.current) {
@@ -222,29 +210,6 @@ export default function RecommendationsPage() {
     },
     [router, navigatingTicker],
   );
-
-  // 인기 전략 가져오기 (구독자순 상위 3개)
-  useEffect(() => {
-    const fetchPopularStrategies = async () => {
-      try {
-        const response = await getStrategies({
-          sortBy: 'subscribers',
-          page: 0,
-          size: 10,
-        });
-        setPopularStrategies(
-          response.strategies.filter((s) => parseFloat(String(s.annualReturn)) >= 0).slice(0, 3),
-        );
-      } catch (error) {
-        console.error('Failed to fetch strategies:', error);
-        setStrategiesError('전략을 불러오는데 실패했습니다.');
-      } finally {
-        setIsLoadingStrategies(false);
-      }
-    };
-
-    fetchPopularStrategies();
-  }, []);
 
   return (
     <>

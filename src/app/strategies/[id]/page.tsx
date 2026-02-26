@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -28,14 +28,9 @@ import {
   getUniverseColor,
 } from '@/lib/strategy-helpers';
 import type { UniverseType } from '@/types/strategy';
-import {
-  getStrategyById,
-  getStrategyDefaultStocks,
-  getBenchmarkSeries,
-} from '@/lib/api/strategies';
+import { useStrategy, useStrategyDefaultStocks, useBenchmarkSeries } from '@/hooks/useData';
 import { PageSEO } from '@/components/seo';
-import type { StrategyDetail, StrategyCategory, BenchmarkSeries } from '@/types/strategy';
-import type { DefaultStockResponse } from '@/types/api';
+import type { StrategyCategory } from '@/types/strategy';
 
 const BacktestHistoryList = dynamic(() => import('@/components/backtest/BacktestHistoryList'), {
   ssr: false,
@@ -47,95 +42,51 @@ export default function StrategyDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const id = params.id as string;
 
-  const [strategy, setStrategy] = useState<StrategyDetail | null>(null);
-  const [defaultStocks, setDefaultStocks] = useState<DefaultStockResponse[]>([]);
-  const [defaultStocksTotalWeight, setDefaultStocksTotalWeight] = useState(0);
-  const [benchmarks, setBenchmarks] = useState<BenchmarkSeries[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // SWR 기반 전략 상세 조회
+  const { data: strategy, isLoading: strategyLoading, error: strategyError } = useStrategy(id);
+
+  // PORTFOLIO 타입이면 기본 종목도 조회 (전략 데이터 로드 후 조건부)
+  const { data: defaultStocksData } = useStrategyDefaultStocks(
+    strategy?.stockSelectionType === 'PORTFOLIO' ? id : null,
+  );
+  const defaultStocks = defaultStocksData?.stocks ?? [];
+  const defaultStocksTotalWeight = defaultStocksData?.totalWeight ?? 0;
+
+  // 벤치마크 파라미터: 전략의 equityCurve 기반으로 계산
+  const benchmarkParams = useMemo(() => {
+    if (!strategy) return null;
+    if (strategy.equityCurve && strategy.equityCurve.length > 0) {
+      const dates = strategy.equityCurve.map((p) => p.date).sort();
+      const startDate = dates[0];
+      const endDate = dates[dates.length - 1];
+      const startPoint = strategy.equityCurve.find((p) => p.date === startDate);
+      const initialCapital = startPoint?.value ?? 10000000;
+      return { tickers: ['SPY', 'QQQ'], startDate, endDate, initialCapital };
+    }
+    // equityCurve가 없으면 최근 1년
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDateObj = new Date();
+    startDateObj.setFullYear(startDateObj.getFullYear() - 1);
+    const startDate = startDateObj.toISOString().split('T')[0];
+    return { tickers: ['SPY', 'QQQ'], startDate, endDate, initialCapital: 10000000 };
+  }, [strategy]);
+
+  const { data: benchmarkData } = useBenchmarkSeries(benchmarkParams);
+  const benchmarks = benchmarkData?.benchmarks ?? [];
+
+  const isLoading = strategyLoading;
+  const error = strategyError
+    ? strategyError instanceof Error
+      ? strategyError.message
+      : '전략 정보를 불러오는데 실패했습니다.'
+    : null;
+
   // SCRUM-350: Universe 선택 모달 상태
   const [showUniverseModal, setShowUniverseModal] = useState(false);
   const [selectedUniverseType, setSelectedUniverseType] = useState<UniverseType>('MARKET');
   // 구독 상태
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionSummary | null>(null);
-
-  useEffect(() => {
-    const fetchStrategy = async () => {
-      // 전략 전환 시 이전 데이터 초기화
-      setStrategy(null);
-      setDefaultStocks([]);
-      setDefaultStocksTotalWeight(0);
-      setBenchmarks([]);
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = await getStrategyById(id);
-        setStrategy(data);
-
-        // PORTFOLIO 타입이면 기본 종목도 조회
-        if (data.stockSelectionType === 'PORTFOLIO') {
-          try {
-            const stocksData = await getStrategyDefaultStocks(id);
-            setDefaultStocks(stocksData.stocks);
-            setDefaultStocksTotalWeight(stocksData.totalWeight);
-          } catch {
-            setDefaultStocks([]);
-          }
-        }
-
-        // 벤치마크 시계열 조회
-        if (data.equityCurve && data.equityCurve.length > 0) {
-          // equityCurve가 있으면 해당 기간으로 조회
-          const dates = data.equityCurve.map((p) => p.date).sort();
-          const startDate = dates[0];
-          const endDate = dates[dates.length - 1];
-          const startPoint = data.equityCurve.find((p) => p.date === startDate);
-          const initialCapital = startPoint?.value ?? 10000000;
-
-          try {
-            const bmData = await getBenchmarkSeries({
-              tickers: ['SPY', 'QQQ'],
-              startDate,
-              endDate,
-              initialCapital,
-            });
-            setBenchmarks(bmData.benchmarks);
-          } catch {
-            setBenchmarks([]);
-          }
-        } else {
-          // equityCurve가 없으면 최근 1년 기간으로 벤치마크만 조회
-          const endDate = new Date().toISOString().split('T')[0];
-          const startDateObj = new Date();
-          startDateObj.setFullYear(startDateObj.getFullYear() - 1);
-          const startDate = startDateObj.toISOString().split('T')[0];
-
-          try {
-            const bmData = await getBenchmarkSeries({
-              tickers: ['SPY', 'QQQ'],
-              startDate,
-              endDate,
-              initialCapital: 10000000,
-            });
-            setBenchmarks(bmData.benchmarks);
-          } catch {
-            setBenchmarks([]);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch strategy:', err);
-        setError(err instanceof Error ? err.message : '전략 정보를 불러오는데 실패했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchStrategy();
-    }
-  }, [id]);
 
   // 로그인 상태일 때 구독 여부 조회
   useEffect(() => {
