@@ -14,7 +14,6 @@ import {
   getNewsByTags,
   getNewsByTickers,
   getNewsByCategory,
-  getCategories,
   getImportanceInfo,
   getSourceLabel,
   formatRelativeTime,
@@ -25,7 +24,8 @@ import {
   getUnreadCount,
   markAllNotificationsRead,
 } from '@/lib/api/news';
-import type { NewsArticle, CategoryGroup, Subscription, Notification } from '@/lib/api/news';
+import type { NewsArticle, Subscription, Notification } from '@/lib/api/news';
+import { useNewsCategories } from '@/hooks/useData';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -53,8 +53,9 @@ export default function NewsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 카테고리
-  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
+  // 카테고리 (SWR 캐싱 — 고정 데이터이므로 페이지 이동 후에도 즉시 표시)
+  const { data: categoriesData } = useNewsCategories();
+  const categoryGroups = useMemo(() => categoriesData?.groups ?? [], [categoriesData]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // 필터
@@ -110,13 +111,6 @@ export default function NewsPage() {
       .flatMap((g) => g.categories)
       .filter((cat) => !subscribedCategories.has(cat.name));
   }, [categoryGroups, subscribedCategories]);
-
-  // 카테고리 로드
-  useEffect(() => {
-    getCategories()
-      .then((res) => setCategoryGroups(res.groups))
-      .catch((err) => console.error('카테고리 로드 실패:', err));
-  }, []);
 
   // 구독 + 알림 로드 (로그인 시)
   useEffect(() => {

@@ -22,6 +22,7 @@ import {
   getStrategyDefaultStocks,
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
+import { getCategories, type CategoryListResponse } from '@/lib/api/news';
 import type { StrategyListParams, DefaultStockListResponse } from '@/types/api';
 import type { Strategy, StrategyDetail, BenchmarkResponse } from '@/types/strategy';
 
@@ -98,6 +99,17 @@ export function useStrategyDefaultStocks(id: string | null) {
       keepPreviousData: true,
     },
   );
+}
+
+// ─── News ───
+
+/** 뉴스 카테고리 (고정 데이터, 1시간 캐시) */
+export function useNewsCategories() {
+  return useSWR<CategoryListResponse>('news-categories', () => getCategories(), {
+    dedupingInterval: 60 * 60 * 1000, // 1시간
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
 }
 
 // ─── Benchmarks ───
