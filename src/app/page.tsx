@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,21 +8,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 import { PageSEO } from '@/components/seo';
 import { pageDefaults } from '@/lib/seo/config';
-import { getStrategies } from '@/lib/api/strategies';
 import { getCategoryLabel } from '@/lib/strategy-helpers';
 import {
-  getBuySignals,
   classifyByTier,
   getScoreGrade,
-  getPredictionStats,
-  getLatestPredictions,
   checkPredictionReliability,
   type BuySignal,
-  type PredictionStatsResponse,
 } from '@/lib/api/predictions';
-import type { Strategy } from '@/types/strategy';
 import { trackEvent } from '@/lib/analytics';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  useBuySignals,
+  usePredictionStats,
+  useLatestPredictions,
+  useStrategies,
+} from '@/hooks/useData';
 
 /** recommendationReason에서 기술 지표 키워드를 파싱하여 배지 라벨 배열 반환 */
 function parseIndicatorBadges(reason?: string): string[] {
@@ -58,77 +58,35 @@ function parseIndicatorBadges(reason?: string): string[] {
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
-  const [featuredStrategies, setFeaturedStrategies] = useState<Strategy[]>([]);
-  const [isLoadingStrategies, setIsLoadingStrategies] = useState(true);
-  const [tiers, setTiers] = useState<{
-    strong: BuySignal[];
-    medium: BuySignal[];
-    weak: BuySignal[];
-  }>({
-    strong: [],
-    medium: [],
-    weak: [],
+
+  // SWR 훅: 페이지 이동 후 돌아와도 캐시된 데이터 즉시 표시
+  const { data: strategiesData, isLoading: isLoadingStrategies } = useStrategies({
+    sortBy: 'subscribers',
+    page: 0,
+    size: 10,
   });
-  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
-  const [predictionStats, setPredictionStats] = useState<PredictionStatsResponse | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const { data: predictionStats } = usePredictionStats(30);
+  const { data: latestData } = useLatestPredictions();
+  const {
+    data: buySignalsData,
+    isLoading: isLoadingRecommendations,
+    error: buySignalsError,
+  } = useBuySignals({
+    minConfidence: 0.05,
+  });
 
-  // 추천 전략 가져오기 (인기순 상위 3개)
-  useEffect(() => {
-    const fetchFeaturedStrategies = async () => {
-      try {
-        const response = await getStrategies({
-          sortBy: 'subscribers',
-          page: 0,
-          size: 10,
-        });
-        setFeaturedStrategies(response.strategies.slice(0, 3));
-      } catch (error) {
-        console.warn('Failed to fetch featured strategies:', error);
-      } finally {
-        setIsLoadingStrategies(false);
-      }
-    };
-
-    fetchFeaturedStrategies();
-  }, []);
-
-  // 예측 통계 및 최신 분석 데이터 가져오기
-  useEffect(() => {
-    const fetchStatsAndLatest = async () => {
-      const [statsRes, latestRes] = await Promise.allSettled([
-        getPredictionStats(30),
-        getLatestPredictions(),
-      ]);
-      if (statsRes.status === 'fulfilled') {
-        setPredictionStats(statsRes.value);
-      }
-      if (latestRes.status === 'fulfilled') {
-        setLastUpdated(latestRes.value.analysisDate);
-      }
-    };
-
-    fetchStatsAndLatest();
-  }, []);
-
-  // 종목 분석 데이터 Tier별 분류
-  useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        const response = await getBuySignals({ minConfidence: 0.05 });
-        if (response.data && response.data.length > 0) {
-          const classified = classifyByTier(response.data);
-          setTiers(classified);
-        }
-      } catch (error) {
-        console.error('Failed to fetch recommendations:', error);
-      } finally {
-        setIsLoadingRecommendations(false);
-      }
-    };
-
-    fetchRecommendations();
-  }, []);
+  const featuredStrategies = useMemo(
+    () => strategiesData?.strategies.slice(0, 3) ?? [],
+    [strategiesData],
+  );
+  const lastUpdated = latestData?.analysisDate ?? null;
+  const tiers = useMemo(
+    () =>
+      buySignalsData?.data && buySignalsData.data.length > 0
+        ? classifyByTier(buySignalsData.data)
+        : { strong: [] as BuySignal[], medium: [] as BuySignal[], weak: [] as BuySignal[] },
+    [buySignalsData],
+  );
 
   const aGradeRatio = predictionStats?.gradeDistribution
     ? (() => {
@@ -260,6 +218,22 @@ export default function Home() {
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
           <p className="text-slate-400 mt-4">AI 분석 데이터 로딩 중...</p>
+        </div>
+      ) : buySignalsError ? (
+        <div className="text-center py-12">
+          <Card className="bg-slate-800/30 border-slate-700 max-w-lg mx-auto">
+            <CardContent className="pt-6 text-center">
+              <p className="text-lg text-slate-300 mb-2">AI 분석 데이터를 불러오지 못했어요</p>
+              <p className="text-sm text-slate-500 mb-4">잠시 후 다시 시도해주세요.</p>
+              <Button
+                variant="outline"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                onClick={() => window.location.reload()}
+              >
+                다시 시도
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <>

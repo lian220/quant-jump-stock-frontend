@@ -15,6 +15,7 @@ import { Footer } from '@/components/layout/Footer';
 import { CopyProtection } from '@/components/CopyProtection';
 import { Toaster } from 'sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { SWRProvider } from '@/lib/swr-provider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -143,16 +144,18 @@ export default function RootLayout({
         <UpdatePrompt />
 
         <Toaster position="top-center" richColors />
-        <AuthProvider>
-          <TooltipProvider>
-            <Header />
-            <div className="pb-16 md:pb-0">
-              {children}
-              <Footer />
-            </div>
-            <BottomNav />
-          </TooltipProvider>
-        </AuthProvider>
+        <SWRProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Header />
+              <div className="pb-16 md:pb-0">
+                {children}
+                <Footer />
+              </div>
+              <BottomNav />
+            </TooltipProvider>
+          </AuthProvider>
+        </SWRProvider>
       </body>
     </html>
   );

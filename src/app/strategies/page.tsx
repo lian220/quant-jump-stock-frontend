@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,14 +8,8 @@ import { StrategyGrid } from '@/components/strategies/StrategyGrid';
 import { StrategyFilter } from '@/components/strategies/StrategyFilter';
 import { StrategyPagination } from '@/components/strategies/StrategyPagination';
 import { StateMessageCard } from '@/components/common/StateMessageCard';
-import { getStrategies } from '@/lib/api/strategies';
-import type {
-  Strategy,
-  StrategyCategory,
-  RiskLevel,
-  SortOption,
-  PaginationInfo,
-} from '@/types/strategy';
+import { useStrategies } from '@/hooks/useData';
+import type { StrategyCategory, RiskLevel, SortOption, PaginationInfo } from '@/types/strategy';
 
 const VALID_CATEGORIES: StrategyCategory[] = [
   'value',
@@ -27,6 +21,14 @@ const VALID_CATEGORIES: StrategyCategory[] = [
 ];
 const VALID_RISKS: RiskLevel[] = ['low', 'medium', 'high'];
 const VALID_SORTS: SortOption[] = ['popularity', 'return_high', 'return_low', 'latest', 'risk_low'];
+
+const SORT_BY_MAPPING: Record<SortOption, 'subscribers' | 'cagr' | 'sharpe' | 'recent'> = {
+  popularity: 'subscribers',
+  return_high: 'cagr',
+  return_low: 'cagr',
+  latest: 'recent',
+  risk_low: 'subscribers', // 백엔드에 리스크 정렬이 없으므로 구독자순으로
+};
 
 function StrategiesContent() {
   const searchParams = useSearchParams();
@@ -49,22 +51,11 @@ function StrategiesContent() {
       ? (urlSort as SortOption)
       : 'return_high';
 
-  // 데이터 상태
-  const [strategies, setStrategies] = useState<Strategy[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   // 모바일 필터 토글
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
-  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
-    currentPage: 1,
-    totalPages: 1,
-    pageSize: 8,
-    totalItems: 0,
-  });
 
   // 필터 URL 업데이트 — URL이 바뀌면 searchParams가 변경되어 자동 리렌더
   const updateFilters = useCallback(
@@ -97,66 +88,49 @@ function StrategiesContent() {
 
   const pageSize = 8;
 
-  // API 호출
-  useEffect(() => {
-    const fetchStrategies = async () => {
-      setIsLoading(true);
-      setError(null);
+  // SWR 기반 전략 목록 조회
+  const {
+    data: strategiesData,
+    isLoading,
+    error: swrError,
+  } = useStrategies({
+    category: selectedCategory,
+    sortBy: SORT_BY_MAPPING[selectedSort],
+    page: currentPage - 1, // 백엔드는 0부터 시작
+    size: pageSize,
+  });
 
-      try {
-        const sortByMapping: Record<SortOption, 'subscribers' | 'cagr' | 'sharpe' | 'recent'> = {
-          popularity: 'subscribers',
-          return_high: 'cagr',
-          return_low: 'cagr',
-          latest: 'recent',
-          risk_low: 'subscribers', // 백엔드에 리스크 정렬이 없으므로 구독자순으로
-        };
+  const error = swrError ? '전략 목록을 불러오는데 실패했습니다. 나중에 다시 시도해주세요.' : null;
 
-        const response = await getStrategies({
-          category: selectedCategory,
-          sortBy: sortByMapping[selectedSort],
-          page: currentPage - 1, // 백엔드는 0부터 시작
-          size: pageSize,
-        });
+  // 프론트엔드에서 리스크 레벨 필터링 + 정렬
+  // NOTE: 백엔드 API에 riskLevel 필터 파라미터가 없어 클라이언트에서 처리.
+  // 현재 페이지 내 필터링이므로 totalItems/totalPages와 불일치할 수 있음.
+  // 백엔드에 riskLevel 파라미터 추가 시 서버 사이드로 전환 필요.
+  const strategies = useMemo(() => {
+    if (!strategiesData) return [];
+    let filtered = strategiesData.strategies;
+    if (selectedRiskLevel !== 'all') {
+      filtered = filtered.filter((strategy) => strategy.riskLevel === selectedRiskLevel);
+    }
+    if (selectedSort === 'return_low') {
+      filtered = [...filtered].reverse();
+    }
+    if (selectedSort === 'risk_low') {
+      const riskOrder = { low: 1, medium: 2, high: 3 };
+      filtered = [...filtered].sort((a, b) => riskOrder[a.riskLevel] - riskOrder[b.riskLevel]);
+    }
+    return filtered;
+  }, [strategiesData, selectedRiskLevel, selectedSort]);
 
-        // 프론트엔드에서 리스크 레벨 필터링
-        let filteredStrategies = response.strategies;
-        if (selectedRiskLevel !== 'all') {
-          filteredStrategies = filteredStrategies.filter(
-            (strategy) => strategy.riskLevel === selectedRiskLevel,
-          );
-        }
-
-        // return_low 정렬은 프론트엔드에서 처리 (백엔드는 높은순만 지원)
-        if (selectedSort === 'return_low') {
-          filteredStrategies = [...filteredStrategies].reverse();
-        }
-
-        // 리스크 낮은순 정렬은 프론트엔드에서 처리
-        if (selectedSort === 'risk_low') {
-          const riskOrder = { low: 1, medium: 2, high: 3 };
-          filteredStrategies = [...filteredStrategies].sort(
-            (a, b) => riskOrder[a.riskLevel] - riskOrder[b.riskLevel],
-          );
-        }
-
-        setStrategies(filteredStrategies);
-        setPaginationInfo({
-          currentPage,
-          totalPages: response.totalPages,
-          pageSize,
-          totalItems: response.totalItems,
-        });
-      } catch (err) {
-        console.error('Failed to fetch strategies:', err);
-        setError('전략 목록을 불러오는데 실패했습니다. 나중에 다시 시도해주세요.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStrategies();
-  }, [selectedCategory, selectedRiskLevel, selectedSort, currentPage]);
+  const paginationInfo: PaginationInfo = useMemo(
+    () => ({
+      currentPage,
+      totalPages: strategiesData?.totalPages ?? 1,
+      pageSize,
+      totalItems: strategiesData?.totalItems ?? 0,
+    }),
+    [currentPage, strategiesData, pageSize],
+  );
 
   // 페이지 변경 핸들러
   const handlePageChange = (page: number) => {
