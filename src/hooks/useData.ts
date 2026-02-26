@@ -33,6 +33,7 @@ export function useBuySignals(params?: GetBuySignalsParams) {
   return useSWR<BuySignalsResponse>(key, () => getBuySignals(params), {
     dedupingInterval: 5 * 60 * 1000, // 5분
     revalidateOnFocus: false,
+    keepPreviousData: true,
   });
 }
 
@@ -70,6 +71,7 @@ export function useStrategies(params?: StrategyListParams, config?: SWRConfigura
   return useSWR<StrategiesResult>(key, () => getStrategies(params!), {
     dedupingInterval: 5 * 60 * 1000, // 5분
     revalidateOnFocus: false,
+    keepPreviousData: true,
     ...config,
   });
 }
@@ -79,6 +81,7 @@ export function useStrategy(id: string | null) {
   return useSWR<StrategyDetail>(id ? ['strategy', id] : null, () => getStrategyById(id!), {
     dedupingInterval: 30 * 60 * 1000, // 30분
     revalidateOnFocus: false,
+    keepPreviousData: true,
   });
 }
 
@@ -90,6 +93,7 @@ export function useStrategyDefaultStocks(id: string | null) {
     {
       dedupingInterval: 30 * 60 * 1000, // 30분
       revalidateOnFocus: false,
+      keepPreviousData: true,
     },
   );
 }
@@ -104,5 +108,6 @@ export function useBenchmarkSeries(
   return useSWR<BenchmarkResponse>(key, () => getBenchmarkSeries(params!), {
     dedupingInterval: 60 * 60 * 1000, // 1시간
     revalidateOnFocus: false,
+    keepPreviousData: true,
   });
 }

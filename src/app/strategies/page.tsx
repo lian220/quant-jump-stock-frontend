@@ -22,6 +22,14 @@ const VALID_CATEGORIES: StrategyCategory[] = [
 const VALID_RISKS: RiskLevel[] = ['low', 'medium', 'high'];
 const VALID_SORTS: SortOption[] = ['popularity', 'return_high', 'return_low', 'latest', 'risk_low'];
 
+const SORT_BY_MAPPING: Record<SortOption, 'subscribers' | 'cagr' | 'sharpe' | 'recent'> = {
+  popularity: 'subscribers',
+  return_high: 'cagr',
+  return_low: 'cagr',
+  latest: 'recent',
+  risk_low: 'subscribers', // 백엔드에 리스크 정렬이 없으므로 구독자순으로
+};
+
 function StrategiesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -81,21 +89,13 @@ function StrategiesContent() {
   const pageSize = 8;
 
   // SWR 기반 전략 목록 조회
-  const sortByMapping: Record<SortOption, 'subscribers' | 'cagr' | 'sharpe' | 'recent'> = {
-    popularity: 'subscribers',
-    return_high: 'cagr',
-    return_low: 'cagr',
-    latest: 'recent',
-    risk_low: 'subscribers', // 백엔드에 리스크 정렬이 없으므로 구독자순으로
-  };
-
   const {
     data: strategiesData,
     isLoading,
     error: swrError,
   } = useStrategies({
     category: selectedCategory,
-    sortBy: sortByMapping[selectedSort],
+    sortBy: SORT_BY_MAPPING[selectedSort],
     page: currentPage - 1, // 백엔드는 0부터 시작
     size: pageSize,
   });
