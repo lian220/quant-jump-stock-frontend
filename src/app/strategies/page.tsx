@@ -103,6 +103,9 @@ function StrategiesContent() {
   const error = swrError ? '전략 목록을 불러오는데 실패했습니다. 나중에 다시 시도해주세요.' : null;
 
   // 프론트엔드에서 리스크 레벨 필터링 + 정렬
+  // NOTE: 백엔드 API에 riskLevel 필터 파라미터가 없어 클라이언트에서 처리.
+  // 현재 페이지 내 필터링이므로 totalItems/totalPages와 불일치할 수 있음.
+  // 백엔드에 riskLevel 파라미터 추가 시 서버 사이드로 전환 필요.
   const strategies = useMemo(() => {
     if (!strategiesData) return [];
     let filtered = strategiesData.strategies;

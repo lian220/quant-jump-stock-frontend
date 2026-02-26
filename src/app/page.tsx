@@ -67,7 +67,11 @@ export default function Home() {
   });
   const { data: predictionStats } = usePredictionStats(30);
   const { data: latestData } = useLatestPredictions();
-  const { data: buySignalsData, isLoading: isLoadingRecommendations } = useBuySignals({
+  const {
+    data: buySignalsData,
+    isLoading: isLoadingRecommendations,
+    error: buySignalsError,
+  } = useBuySignals({
     minConfidence: 0.05,
   });
 
@@ -214,6 +218,22 @@ export default function Home() {
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
           <p className="text-slate-400 mt-4">AI 분석 데이터 로딩 중...</p>
+        </div>
+      ) : buySignalsError ? (
+        <div className="text-center py-12">
+          <Card className="bg-slate-800/30 border-slate-700 max-w-lg mx-auto">
+            <CardContent className="pt-6 text-center">
+              <p className="text-lg text-slate-300 mb-2">AI 분석 데이터를 불러오지 못했어요</p>
+              <p className="text-sm text-slate-500 mb-4">잠시 후 다시 시도해주세요.</p>
+              <Button
+                variant="outline"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                onClick={() => window.location.reload()}
+              >
+                다시 시도
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       ) : (
         <>

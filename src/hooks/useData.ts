@@ -45,6 +45,7 @@ export function usePredictionStats(days: number = 30) {
     {
       dedupingInterval: 60 * 60 * 1000, // 1시간
       revalidateOnFocus: false,
+      keepPreviousData: true,
     },
   );
 }
@@ -54,6 +55,7 @@ export function useLatestPredictions() {
   return useSWR<LatestPredictionsResponse>('latest-predictions', () => getLatestPredictions(), {
     dedupingInterval: 60 * 60 * 1000, // 1시간
     revalidateOnFocus: false,
+    keepPreviousData: true,
   });
 }
 

@@ -86,15 +86,6 @@ export default function RecommendationsPage() {
 
   const firstViewTracked = useRef(false);
 
-  // 초기 로드 시 날짜 선택기를 백엔드 응답 날짜로 동기화 (한 번만)
-  const initialDateSynced = useRef(false);
-  useEffect(() => {
-    if (buySignalsData?.date && !initialDateSynced.current && !selectedDate) {
-      initialDateSynced.current = true;
-      setSelectedDate(buySignalsData.date);
-    }
-  }, [buySignalsData?.date, selectedDate]);
-
   useEffect(() => {
     if (!isLoadingRecommendations && !firstViewTracked.current) {
       firstViewTracked.current = true;
@@ -425,7 +416,7 @@ export default function RecommendationsPage() {
                   <div className="flex items-center gap-2 bg-slate-800/50 border border-slate-700 rounded-lg px-3 py-2.5">
                     <Input
                       type="date"
-                      value={selectedDate}
+                      value={selectedDate || displayDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
                       className="bg-slate-900/50 border-slate-600 text-white flex-1 h-9"
                       max={new Date().toISOString().split('T')[0]}
