@@ -260,7 +260,20 @@ export default function Home() {
                 {tiers.strong.slice(0, 3).map((stock) => {
                   const grade = getScoreGrade(stock.compositeScore);
                   const indicators = parseIndicatorBadges(stock.recommendationReason);
-                  const gaugeMax = stock.sentimentScore > 0 ? 7.0 : 4.0;
+                  // 백엔드 동적 가중치 재분배 반영
+                  const gaugeMax = (() => {
+                    const hA = stock.aiScore > 0;
+                    const hS = stock.sentimentScore > 0;
+                    const hT = stock.techScore > 0;
+                    const w: [boolean, number, number][] = [
+                      [hT, 0.4, 3.5],
+                      [hA, 0.3, 10],
+                      [hS, 0.3, 10],
+                    ];
+                    const a = w.filter(([h]) => h);
+                    const tw = a.reduce((s, [, wt]) => s + wt, 0) || 1;
+                    return a.reduce((s, [, wt, mx]) => s + (wt / tw) * mx, 0) || 4.0;
+                  })();
                   const displayScore = Math.min(
                     Math.round((stock.compositeScore / gaugeMax) * 100),
                     100,
@@ -451,7 +464,20 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 max-w-4xl mx-auto">
                 {tiers.medium.slice(0, 4).map((stock) => {
                   const grade = getScoreGrade(stock.compositeScore);
-                  const mGaugeMax = stock.sentimentScore > 0 ? 7.0 : 4.0;
+                  // 백엔드 동적 가중치 재분배 반영
+                  const mGaugeMax = (() => {
+                    const hA = stock.aiScore > 0;
+                    const hS = stock.sentimentScore > 0;
+                    const hT = stock.techScore > 0;
+                    const w: [boolean, number, number][] = [
+                      [hT, 0.4, 3.5],
+                      [hA, 0.3, 10],
+                      [hS, 0.3, 10],
+                    ];
+                    const a = w.filter(([h]) => h);
+                    const tw = a.reduce((s, [, wt]) => s + wt, 0) || 1;
+                    return a.reduce((s, [, wt, mx]) => s + (wt / tw) * mx, 0) || 4.0;
+                  })();
                   const mDisplayScore = Math.min(
                     Math.round((stock.compositeScore / mGaugeMax) * 100),
                     100,

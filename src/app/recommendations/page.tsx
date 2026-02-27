@@ -546,10 +546,22 @@ export default function RecommendationsPage() {
                       const score = stock.compositeScore;
                       const isStrong = score >= TIER_THRESHOLDS.STRONG;
                       const isMedium = score >= TIER_THRESHOLDS.MEDIUM;
-                      // 100점 만점 변환 (감성 반영 시 최대 7.0, 미반영 시 최대 4.0)
-                      const gaugeMax = stock.sentimentScore > 0 ? 7.0 : 4.0;
-                      const displayScore = Math.round((score / gaugeMax) * 100);
-                      const gaugePercent = Math.min(displayScore, 100);
+                      // 100점 만점 변환: 백엔드 동적 가중치 재분배 반영
+                      const gaugeMax = (() => {
+                        const hasAi = stock.aiScore > 0;
+                        const hasSent = stock.sentimentScore > 0;
+                        const hasTech = stock.techScore > 0;
+                        const w: [boolean, number, number][] = [
+                          [hasTech, 0.4, 3.5],
+                          [hasAi, 0.3, 10],
+                          [hasSent, 0.3, 10],
+                        ];
+                        const active = w.filter(([h]) => h);
+                        const tw = active.reduce((s, [, wt]) => s + wt, 0) || 1;
+                        return active.reduce((s, [, wt, mx]) => s + (wt / tw) * mx, 0) || 4.0;
+                      })();
+                      const displayScore = Math.min(Math.round((score / gaugeMax) * 100), 100);
+                      const gaugePercent = displayScore;
                       const gaugeColor = isStrong
                         ? 'bg-emerald-400'
                         : isMedium
