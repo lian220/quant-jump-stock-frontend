@@ -20,6 +20,11 @@ export interface BuySignal {
   aiScore: number;
   techScore: number;
   sentimentScore: number;
+  // 정규화 점수 (0-100): 백엔드에서 계산
+  techScoreDisplay: number;
+  aiScoreDisplay: number;
+  sentimentScoreDisplay: number;
+  compositeScoreDisplay: number;
   isRecommended: boolean;
   recommendationReason?: string;
   currentPrice?: number;

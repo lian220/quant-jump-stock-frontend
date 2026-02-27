@@ -260,24 +260,7 @@ export default function Home() {
                 {tiers.strong.slice(0, 3).map((stock) => {
                   const grade = getScoreGrade(stock.compositeScore);
                   const indicators = parseIndicatorBadges(stock.recommendationReason);
-                  // 백엔드 동적 가중치 재분배 반영
-                  const gaugeMax = (() => {
-                    const hA = stock.aiScore > 0;
-                    const hS = stock.sentimentScore > 0;
-                    const hT = stock.techScore > 0;
-                    const w: [boolean, number, number][] = [
-                      [hT, 0.4, 3.5],
-                      [hA, 0.3, 10],
-                      [hS, 0.3, 10],
-                    ];
-                    const a = w.filter(([h]) => h);
-                    const tw = a.reduce((s, [, wt]) => s + wt, 0) || 1;
-                    return a.reduce((s, [, wt, mx]) => s + (wt / tw) * mx, 0) || 4.0;
-                  })();
-                  const displayScore = Math.min(
-                    Math.round((stock.compositeScore / gaugeMax) * 100),
-                    100,
-                  );
+                  const displayScore = stock.compositeScoreDisplay;
                   // 예측 신뢰도 검증 (P0-1: 모순 데이터 감지)
                   const reliability = checkPredictionReliability(stock);
                   const isUnreliable = reliability.status !== 'reliable';
@@ -389,13 +372,13 @@ export default function Home() {
                                   차트 분석
                                 </p>
                                 <p className="text-sm sm:text-base font-bold text-cyan-400 tabular-nums">
-                                  {Math.min(Math.round((stock.techScore / 2.5) * 100), 100)}점
+                                  {stock.techScoreDisplay}점
                                 </p>
                               </div>
                               <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
                                 <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">AI 예측</p>
                                 <p className="text-sm sm:text-base font-bold text-purple-400 tabular-nums">
-                                  {Math.min(Math.round((stock.aiScore / 10) * 100), 100)}점
+                                  {stock.aiScoreDisplay}점
                                 </p>
                               </div>
                               {stock.sentimentScore > 0 && (
@@ -404,7 +387,7 @@ export default function Home() {
                                     뉴스 분위기
                                   </p>
                                   <p className="text-sm sm:text-base font-bold text-yellow-400 tabular-nums">
-                                    {Math.min(Math.round((stock.sentimentScore / 10) * 100), 100)}점
+                                    {stock.sentimentScoreDisplay}점
                                   </p>
                                 </div>
                               )}
@@ -464,24 +447,7 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 max-w-4xl mx-auto">
                 {tiers.medium.slice(0, 4).map((stock) => {
                   const grade = getScoreGrade(stock.compositeScore);
-                  // 백엔드 동적 가중치 재분배 반영
-                  const mGaugeMax = (() => {
-                    const hA = stock.aiScore > 0;
-                    const hS = stock.sentimentScore > 0;
-                    const hT = stock.techScore > 0;
-                    const w: [boolean, number, number][] = [
-                      [hT, 0.4, 3.5],
-                      [hA, 0.3, 10],
-                      [hS, 0.3, 10],
-                    ];
-                    const a = w.filter(([h]) => h);
-                    const tw = a.reduce((s, [, wt]) => s + wt, 0) || 1;
-                    return a.reduce((s, [, wt, mx]) => s + (wt / tw) * mx, 0) || 4.0;
-                  })();
-                  const mDisplayScore = Math.min(
-                    Math.round((stock.compositeScore / mGaugeMax) * 100),
-                    100,
-                  );
+                  const mDisplayScore = stock.compositeScoreDisplay;
                   const mPriceRec = stock.priceRecommendation;
                   const mReliability = checkPredictionReliability(stock);
                   const mIsUnreliable = mReliability.status !== 'reliable';
