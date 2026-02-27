@@ -546,21 +546,7 @@ export default function RecommendationsPage() {
                       const score = stock.compositeScore;
                       const isStrong = score >= TIER_THRESHOLDS.STRONG;
                       const isMedium = score >= TIER_THRESHOLDS.MEDIUM;
-                      // 100점 만점 변환: 백엔드 동적 가중치 재분배 반영
-                      const gaugeMax = (() => {
-                        const hasAi = stock.aiScore > 0;
-                        const hasSent = stock.sentimentScore > 0;
-                        const hasTech = stock.techScore > 0;
-                        const w: [boolean, number, number][] = [
-                          [hasTech, 0.4, 3.5],
-                          [hasAi, 0.3, 10],
-                          [hasSent, 0.3, 10],
-                        ];
-                        const active = w.filter(([h]) => h);
-                        const tw = active.reduce((s, [, wt]) => s + wt, 0) || 1;
-                        return active.reduce((s, [, wt, mx]) => s + (wt / tw) * mx, 0) || 4.0;
-                      })();
-                      const displayScore = Math.min(Math.round((score / gaugeMax) * 100), 100);
+                      const displayScore = stock.compositeScoreDisplay;
                       const gaugePercent = displayScore;
                       const gaugeColor = isStrong
                         ? 'bg-emerald-400'
@@ -769,18 +755,6 @@ export default function RecommendationsPage() {
                               className={`grid ${stock.sentimentScore > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:gap-2 mb-3 sm:mb-4`}
                             >
                               {(() => {
-                                const techDisplay = Math.min(
-                                  Math.round((stock.techScore / 2.5) * 100),
-                                  100,
-                                );
-                                const aiDisplay = Math.min(
-                                  Math.round((stock.aiScore / 10) * 100),
-                                  100,
-                                );
-                                const sentimentDisplay = Math.min(
-                                  Math.round((stock.sentimentScore / 10) * 100),
-                                  100,
-                                );
                                 const subScoreColor = (val: number) =>
                                   val >= 80
                                     ? 'text-emerald-400'
@@ -794,9 +768,9 @@ export default function RecommendationsPage() {
                                         차트 분석
                                       </p>
                                       <p
-                                        className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(techDisplay)}`}
+                                        className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(stock.techScoreDisplay)}`}
                                       >
-                                        {techDisplay}점
+                                        {stock.techScoreDisplay}점
                                       </p>
                                     </div>
                                     <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
@@ -804,9 +778,9 @@ export default function RecommendationsPage() {
                                         AI 예측
                                       </p>
                                       <p
-                                        className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(aiDisplay)}`}
+                                        className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(stock.aiScoreDisplay)}`}
                                       >
-                                        {aiDisplay}점
+                                        {stock.aiScoreDisplay}점
                                       </p>
                                     </div>
                                     {stock.sentimentScore > 0 && (
@@ -815,9 +789,9 @@ export default function RecommendationsPage() {
                                           뉴스 분위기
                                         </p>
                                         <p
-                                          className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(sentimentDisplay)}`}
+                                          className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(stock.sentimentScoreDisplay)}`}
                                         >
-                                          {sentimentDisplay}점
+                                          {stock.sentimentScoreDisplay}점
                                         </p>
                                       </div>
                                     )}
