@@ -6,7 +6,6 @@ import { clientApi as api } from '@/lib/api-client';
 import { saveAuthReturnUrl } from '@/lib/onboarding';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -236,53 +235,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signInWithNaver = async () => {
     try {
+      const clientId = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID;
+      if (!clientId) {
+        return { error: '네이버 로그인 설정이 올바르지 않습니다' };
+      }
+
       // /auth 페이지 자체가 아닌 경우에만 현재 URL을 returnUrl로 저장
       saveAuthReturnUrl(window.location.href);
-      window.location.href = `${BACKEND_URL}/api/v1/auth/oauth2/authorize/naver`;
+
+      // CSRF 방지용 state 생성 및 저장
+      const state = Math.random().toString(36).substring(2);
+      sessionStorage.setItem('oauth_state', state);
+
+      const redirectUri =
+        process.env.NEXT_PUBLIC_NAVER_REDIRECT_URI ||
+        `${window.location.origin}/auth/callback/naver`;
+
+      const params = new URLSearchParams({
+        response_type: 'code',
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        state,
+      });
+
+      window.location.href = `https://nid.naver.com/oauth2.0/authorize?${params.toString()}`;
       return {};
     } catch (error) {
       console.error('네이버 로그인 오류:', error);
       return { error: '네이버 로그인에 실패했습니다' };
     }
   };
-
-  // OAuth 콜백 처리 (/auth/callback 페이지에서는 callback 페이지가 직접 처리)
-  useEffect(() => {
-    const handleOAuthCallback = async () => {
-      if (typeof window === 'undefined') return;
-
-      // /auth/callback 페이지에서는 callback 페이지가 직접 처리하므로 중복 방지
-      if (window.location.pathname === '/auth/callback') return;
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const error = urlParams.get('error');
-
-      if (error) {
-        console.error('OAuth 오류:', error);
-        window.history.replaceState({}, document.title, window.location.pathname);
-        return;
-      }
-
-      if (token) {
-        setToken(token);
-
-        try {
-          const response = await api.get<LoginResponse>('/api/auth/me');
-
-          if (response.data.success && response.data.user) {
-            setUser(response.data.user);
-          }
-        } catch (err) {
-          console.error('사용자 정보 조회 오류:', err);
-        }
-
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    };
-
-    handleOAuthCallback();
-  }, []);
 
   const value: AuthContextType = {
     user,
