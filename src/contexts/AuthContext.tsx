@@ -243,8 +243,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // /auth 페이지 자체가 아닌 경우에만 현재 URL을 returnUrl로 저장
       saveAuthReturnUrl(window.location.href);
 
-      // CSRF 방지용 state 생성 및 저장
-      const state = Math.random().toString(36).substring(2);
+      // CSRF 방지용 state 생성 및 저장 (암호학적으로 안전한 난수)
+      const state = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
       sessionStorage.setItem('oauth_state', state);
 
       const redirectUri =

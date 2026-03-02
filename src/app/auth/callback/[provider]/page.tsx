@@ -42,9 +42,9 @@ export default function OAuthCallbackPage() {
         return;
       }
 
-      // state 검증 (CSRF 방지)
+      // state 검증 (CSRF 방지) - savedState 없어도 실패 처리
       const savedState = sessionStorage.getItem('oauth_state');
-      if (savedState && state !== savedState) {
+      if (!savedState || state !== savedState) {
         setStatus('error');
         setMessage('보안 검증에 실패했습니다. 다시 시도해주세요.');
         sessionStorage.removeItem('oauth_state');
@@ -117,7 +117,7 @@ export default function OAuthCallbackPage() {
         )}
         {status === 'success' && <div className="text-emerald-500 text-5xl mb-4">✓</div>}
         {status === 'error' && <div className="text-red-500 text-5xl mb-4">✗</div>}
-        <p
+        <h1
           className={`text-lg ${
             status === 'success'
               ? 'text-emerald-400'
@@ -127,7 +127,7 @@ export default function OAuthCallbackPage() {
           }`}
         >
           {message}
-        </p>
+        </h1>
       </div>
     </div>
   );
