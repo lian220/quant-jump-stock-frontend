@@ -6,6 +6,13 @@ import type {
 } from '@/types/onboarding';
 import { getPreferences } from '@/lib/api/preferences';
 
+// 백엔드 → 프론트엔드 risk tolerance 역매핑
+const BACKEND_TO_RISK: Record<string, RiskTolerance> = {
+  CONSERVATIVE: 'low',
+  MODERATE: 'medium',
+  AGGRESSIVE: 'high',
+};
+
 // localStorage 키
 const ONBOARDING_KEY = 'onboarding_completed';
 const PREFERENCES_KEY = 'user_preferences';
@@ -50,8 +57,9 @@ export async function isOnboardingCompletedAsync(): Promise<boolean> {
         const filteredMarkets = (prefs.markets ?? []).filter((m): m is MarketPreference =>
           validMarkets.includes(m as MarketPreference),
         );
-        const validatedRisk = validRisks.includes(prefs.riskTolerance as RiskTolerance)
-          ? (prefs.riskTolerance as RiskTolerance)
+        const mappedRisk = BACKEND_TO_RISK[prefs.riskTolerance] ?? prefs.riskTolerance;
+        const validatedRisk = validRisks.includes(mappedRisk as RiskTolerance)
+          ? (mappedRisk as RiskTolerance)
           : 'medium';
 
         setUserPreferences({
