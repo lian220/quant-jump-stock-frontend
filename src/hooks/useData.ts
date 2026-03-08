@@ -22,7 +22,12 @@ import {
   getStrategyDefaultStocks,
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
-import { getCategories, type CategoryListResponse } from '@/lib/api/news';
+import {
+  getCategories,
+  getRecentNews,
+  type CategoryListResponse,
+  type NewsListResponse,
+} from '@/lib/api/news';
 import type { StrategyListParams, DefaultStockListResponse } from '@/types/api';
 import type { Strategy, StrategyDetail, BenchmarkResponse } from '@/types/strategy';
 
@@ -102,6 +107,15 @@ export function useStrategyDefaultStocks(id: string | null) {
 }
 
 // ─── News ───
+
+/** 최신 뉴스 (5분 캐시) */
+export function useRecentNews(limit: number = 5) {
+  return useSWR<NewsListResponse>(['recent-news', limit], () => getRecentNews(limit), {
+    dedupingInterval: 5 * 60 * 1000,
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
+}
 
 /** 뉴스 카테고리 (고정 데이터, 1시간 캐시) */
 export function useNewsCategories() {

@@ -37,7 +37,7 @@ export function BottomNav() {
                 isActive ? 'text-emerald-400' : 'text-slate-500',
               )}
             >
-              <Icon size={20} />
+              <Icon size={22} />
               <span className="text-[10px] mt-0.5">{label}</span>
             </Link>
           );
@@ -53,7 +53,7 @@ export function BottomNav() {
               : 'text-slate-500',
           )}
         >
-          <User size={20} />
+          <User size={22} />
           <span className="text-[10px] mt-0.5">MY</span>
         </Link>
       </div>
