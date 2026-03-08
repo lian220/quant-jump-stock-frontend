@@ -24,6 +24,13 @@ import { ChevronLeft } from 'lucide-react';
 
 const TOTAL_STEPS = 3;
 
+// 프론트엔드 → 백엔드 risk tolerance 매핑
+const RISK_TO_BACKEND: Record<string, string> = {
+  low: 'CONSERVATIVE',
+  medium: 'MODERATE',
+  high: 'AGGRESSIVE',
+};
+
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
@@ -62,8 +69,8 @@ export default function OnboardingPage() {
     // 백엔드에도 빈 성향으로 완료 표시 (완료 후 이동)
     try {
       await savePreferences({ investmentCategories: [], markets: [], riskTolerance: null });
-    } catch {
-      // 백엔드 실패해도 localStorage는 이미 완료 처리됨
+    } catch (err) {
+      console.error('온보딩 건너뛰기 저장 실패:', err);
     }
     router.push('/');
   };
@@ -92,8 +99,10 @@ export default function OnboardingPage() {
         await savePreferences({
           investmentCategories: categories,
           markets,
-          riskTolerance,
-        }).catch(() => {});
+          riskTolerance: riskTolerance ? (RISK_TO_BACKEND[riskTolerance] ?? riskTolerance) : null,
+        }).catch((err) => {
+          console.error('투자 성향 저장 실패:', err);
+        });
       } finally {
         setSaving(false);
       }
