@@ -459,3 +459,58 @@ export function getScoreGrade(score: number): {
     badge: CURRENT_SCORE_MODE === 'CURRENT' ? 'BETA' : '',
   };
 }
+
+/** priceRecommendation을 사용자 친화적 라벨로 변환 */
+export function getPriceRecLabel(priceRec: string | undefined, fallback: string): string {
+  switch (priceRec) {
+    case '매도':
+      return '주의';
+    case '강력매수':
+      return '강력 추천';
+    case '매수':
+      return '추천';
+    case '보유':
+      return '관망';
+    default:
+      return priceRec ?? fallback;
+  }
+}
+
+/** recommendationReason에서 기술 지표 키워드를 파싱하여 배지 라벨 배열 반환 */
+export function parseIndicatorBadges(reason?: string): string[] {
+  if (!reason) return [];
+  const badges: string[] = [];
+  const lower = reason.toLowerCase();
+  if (
+    lower.includes('골든크로스') ||
+    lower.includes('golden_cross') ||
+    lower.includes('golden cross')
+  ) {
+    badges.push('골든크로스');
+  }
+  if (lower.includes('rsi')) {
+    if (lower.includes('과매수') || lower.includes('overbought')) {
+      badges.push('RSI 과열');
+    } else {
+      badges.push('RSI 저점');
+    }
+  }
+  if (lower.includes('macd')) {
+    if (lower.includes('매도') || lower.includes('sell') || lower.includes('bearish')) {
+      badges.push('MACD 하락');
+    } else {
+      badges.push('MACD 상승');
+    }
+  }
+  if (lower.includes('볼린저') || lower.includes('bollinger')) {
+    badges.push('볼린저 하단');
+  }
+  return badges;
+}
+
+/** 등급 분포에서 우수+양호 비율 계산 */
+export function computeAGradeRatio(dist: Record<string, number>): number | null {
+  const total = Object.values(dist).reduce((sum, v) => sum + v, 0);
+  const excellent = (dist['EXCELLENT'] ?? 0) + (dist['GOOD'] ?? 0);
+  return total > 0 ? Math.round((excellent / total) * 100) : null;
+}

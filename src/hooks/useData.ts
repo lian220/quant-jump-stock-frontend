@@ -28,6 +28,7 @@ import {
   type CategoryListResponse,
   type NewsListResponse,
 } from '@/lib/api/news';
+import { getDashboard, type DashboardResponse } from '@/lib/api/dashboard';
 import type { StrategyListParams, DefaultStockListResponse } from '@/types/api';
 import type { Strategy, StrategyDetail, BenchmarkResponse } from '@/types/strategy';
 
@@ -124,6 +125,21 @@ export function useNewsCategories() {
     revalidateOnFocus: false,
     keepPreviousData: true,
   });
+}
+
+// ─── Dashboard ───
+
+/** 대시보드 요약 (로그인 사용자 전용, 1분 캐시) */
+export function useDashboard(token: string | null) {
+  return useSWR<DashboardResponse>(
+    token ? ['dashboard', token] : null,
+    () => getDashboard(token!),
+    {
+      dedupingInterval: 60 * 1000, // 1분
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    },
+  );
 }
 
 // ─── Benchmarks ───

@@ -13,6 +13,9 @@ import {
   classifyByTier,
   getScoreGrade,
   checkPredictionReliability,
+  getPriceRecLabel,
+  parseIndicatorBadges,
+  computeAGradeRatio,
   type BuySignal,
 } from '@/lib/api/predictions';
 import { trackEvent } from '@/lib/analytics';
@@ -25,38 +28,6 @@ import {
   useRecentNews,
 } from '@/hooks/useData';
 import { Newspaper } from 'lucide-react';
-
-/** recommendationReason에서 기술 지표 키워드를 파싱하여 배지 라벨 배열 반환 */
-function parseIndicatorBadges(reason?: string): string[] {
-  if (!reason) return [];
-  const badges: string[] = [];
-  const lower = reason.toLowerCase();
-  if (
-    lower.includes('골든크로스') ||
-    lower.includes('golden_cross') ||
-    lower.includes('golden cross')
-  ) {
-    badges.push('골든크로스');
-  }
-  if (lower.includes('rsi')) {
-    if (lower.includes('과매수') || lower.includes('overbought')) {
-      badges.push('RSI 과열');
-    } else {
-      badges.push('RSI 저점');
-    }
-  }
-  if (lower.includes('macd')) {
-    if (lower.includes('매도') || lower.includes('sell') || lower.includes('bearish')) {
-      badges.push('MACD 하락');
-    } else {
-      badges.push('MACD 상승');
-    }
-  }
-  if (lower.includes('볼린저') || lower.includes('bollinger')) {
-    badges.push('볼린저 하단');
-  }
-  return badges;
-}
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -73,6 +44,7 @@ export default function Home() {
     data: buySignalsData,
     isLoading: isLoadingRecommendations,
     error: buySignalsError,
+    mutate: mutateBuySignals,
   } = useBuySignals({
     minConfidence: 0.05,
   });
@@ -91,13 +63,14 @@ export default function Home() {
     [buySignalsData],
   );
 
+  const displayStocks = useMemo(
+    () => (tiers.strong.length > 0 ? tiers.strong : tiers.medium.slice(0, 3)),
+    [tiers],
+  );
+  const isFallback = tiers.strong.length === 0 && displayStocks.length > 0;
+
   const aGradeRatio = predictionStats?.gradeDistribution
-    ? (() => {
-        const dist = predictionStats.gradeDistribution;
-        const total = Object.values(dist).reduce((sum, v) => sum + v, 0);
-        const excellent = (dist['EXCELLENT'] || 0) + (dist['GOOD'] || 0);
-        return total > 0 ? Math.round((excellent / total) * 100) : null;
-      })()
+    ? computeAGradeRatio(predictionStats.gradeDistribution)
     : null;
 
   /* ──────────────────────────────────────────────
@@ -180,7 +153,7 @@ export default function Home() {
               <Button
                 variant="outline"
                 className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                onClick={() => window.location.reload()}
+                onClick={() => mutateBuySignals()}
               >
                 다시 시도
               </Button>
@@ -190,294 +163,272 @@ export default function Home() {
       ) : (
         <>
           {/* Tier 1: 강한 신호 (없으면 중간 신호 fallback) */}
-          {(() => {
-            const displayStocks = tiers.strong.length > 0 ? tiers.strong : tiers.medium.slice(0, 3);
-            const isFallback = tiers.strong.length === 0 && displayStocks.length > 0;
-            return displayStocks.length > 0 ? (
-              <div className="mb-10 md:mb-12">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-white mb-2">
-                  {isFallback ? '📊 AI 분석 종목' : '🔥 AI 주목 종목'}
-                </h2>
-                <p className="text-center text-slate-400 text-sm md:text-base mb-2">
-                  {isFallback
-                    ? '오늘 AI가 분석한 종목이에요 — 참고 정보입니다'
-                    : 'AI가 오늘 가장 유망하다고 판단한 종목이에요'}
+          {displayStocks.length > 0 ? (
+            <div className="mb-10 md:mb-12">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-white mb-2">
+                {isFallback ? '📊 AI 분석 종목' : '🔥 AI 주목 종목'}
+              </h2>
+              <p className="text-center text-slate-400 text-sm md:text-base mb-2">
+                {isFallback
+                  ? '오늘 AI가 분석한 종목이에요 — 참고 정보입니다'
+                  : 'AI가 오늘 가장 유망하다고 판단한 종목이에요'}
+              </p>
+              {lastUpdated && (
+                <p className="hidden sm:block text-center text-slate-500 text-xs mb-1">
+                  마지막 업데이트: {new Date(lastUpdated).toLocaleDateString('ko-KR')}
                 </p>
-                {lastUpdated && (
-                  <p className="hidden sm:block text-center text-slate-500 text-xs mb-1">
-                    마지막 업데이트: {new Date(lastUpdated).toLocaleDateString('ko-KR')}
-                  </p>
-                )}
-                <p className="text-center mb-4 md:mb-8">
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] sm:text-xs">
-                    차트 패턴 + AI 예측 종합 분석
-                  </Badge>
-                </p>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-5 lg:gap-6">
-                  {displayStocks.slice(0, 3).map((stock) => {
-                    const grade = getScoreGrade(stock.compositeScore);
-                    const indicators = parseIndicatorBadges(stock.recommendationReason);
-                    const displayScore = stock.compositeScoreDisplay;
-                    // 예측 신뢰도 검증 (P0-1: 모순 데이터 감지)
-                    const reliability = checkPredictionReliability(stock);
-                    const isUnreliable = reliability.status !== 'reliable';
-                    const priceRec = stock.priceRecommendation;
-                    // 모순 데이터인 경우 매도/매수 배지 무시
-                    const isSellSignal = !isUnreliable && priceRec === '매도';
-                    const isBuySignal =
-                      !isUnreliable && (priceRec === '강력매수' || priceRec === '매수');
-                    return (
-                      <Link key={stock.ticker} href="/recommendations">
-                        <Card
-                          className={`bg-slate-800/50 transition-all active:scale-[0.98] hover:shadow-lg cursor-pointer ${
-                            isUnreliable
-                              ? 'border-amber-500/30 hover:border-amber-400'
-                              : isSellSignal
-                                ? 'border-red-500/30 hover:border-red-400'
-                                : 'border-emerald-500/50 hover:border-emerald-400'
-                          }`}
-                        >
-                          {/* ── 모바일: 컴팩트 카드 ── */}
-                          <div className="sm:hidden px-3 py-2.5 space-y-2">
-                            {/* 상단: 종목 정보 + 점수/배지 */}
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-baseline gap-1.5 mb-0.5">
-                                  <span className="text-[15px] font-bold text-white truncate">
-                                    {stock.stockName}
-                                  </span>
-                                  <span className="text-[10px] text-slate-500 shrink-0">
-                                    {stock.ticker}
-                                  </span>
-                                </div>
-                                {/* 가격 행 */}
-                                <div className="flex items-center gap-1.5">
-                                  {stock.currentPrice != null && (
-                                    <span className="text-[13px] font-semibold text-slate-200 font-mono tabular-nums">
-                                      ${stock.currentPrice.toFixed(2)}
-                                    </span>
-                                  )}
-                                  {stock.upsidePercent != null && (
-                                    <span
-                                      className={`text-[11px] font-semibold ${stock.upsidePercent > 0 ? 'text-emerald-400' : 'text-red-400'}`}
-                                    >
-                                      {stock.upsidePercent > 0 ? '+' : ''}
-                                      {stock.upsidePercent.toFixed(1)}%
-                                    </span>
-                                  )}
-                                  {stock.targetPrice != null && (
-                                    <span className="text-[10px] text-slate-500 font-mono">
-                                      → ${stock.targetPrice.toFixed(0)}
-                                    </span>
-                                  )}
-                                </div>
+              )}
+              <p className="text-center mb-4 md:mb-8">
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] sm:text-xs">
+                  차트 패턴 + AI 예측 종합 분석
+                </Badge>
+              </p>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-5 lg:gap-6">
+                {displayStocks.slice(0, 3).map((stock) => {
+                  const grade = getScoreGrade(stock.compositeScore);
+                  const indicators = parseIndicatorBadges(stock.recommendationReason);
+                  const displayScore = stock.compositeScoreDisplay;
+                  // 예측 신뢰도 검증 (P0-1: 모순 데이터 감지)
+                  const reliability = checkPredictionReliability(stock);
+                  const isUnreliable = reliability.status !== 'reliable';
+                  const priceRec = stock.priceRecommendation;
+                  // 모순 데이터인 경우 매도/매수 배지 무시
+                  const isSellSignal = !isUnreliable && priceRec === '매도';
+                  const isBuySignal =
+                    !isUnreliable && (priceRec === '강력매수' || priceRec === '매수');
+                  return (
+                    <Link key={stock.ticker} href="/recommendations">
+                      <Card
+                        className={`bg-slate-800/50 transition-all active:scale-[0.98] hover:shadow-lg cursor-pointer ${
+                          isUnreliable
+                            ? 'border-amber-500/30 hover:border-amber-400'
+                            : isSellSignal
+                              ? 'border-red-500/30 hover:border-red-400'
+                              : 'border-emerald-500/50 hover:border-emerald-400'
+                        }`}
+                      >
+                        {/* ── 모바일: 컴팩트 카드 ── */}
+                        <div className="sm:hidden px-3 py-2.5 space-y-2">
+                          {/* 상단: 종목 정보 + 점수/배지 */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline gap-1.5 mb-0.5">
+                                <span className="text-[15px] font-bold text-white truncate">
+                                  {stock.stockName}
+                                </span>
+                                <span className="text-[10px] text-slate-500 shrink-0">
+                                  {stock.ticker}
+                                </span>
                               </div>
-                              {/* 점수 + 배지 */}
-                              <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                                <div className={`text-xl font-bold leading-none ${grade.color}`}>
-                                  {displayScore}점
-                                </div>
-                                {isUnreliable ? (
-                                  <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">
-                                    ⚠️ 점검 중
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    className={`text-[10px] ${
-                                      isSellSignal
-                                        ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                                        : isBuySignal
-                                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                          : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                                    }`}
+                              {/* 가격 행 */}
+                              <div className="flex items-center gap-1.5">
+                                {stock.currentPrice != null && (
+                                  <span className="text-[13px] font-semibold text-slate-200 font-mono tabular-nums">
+                                    ${stock.currentPrice.toFixed(2)}
+                                  </span>
+                                )}
+                                {stock.upsidePercent != null && (
+                                  <span
+                                    className={`text-[11px] font-semibold ${stock.upsidePercent > 0 ? 'text-emerald-400' : 'text-red-400'}`}
                                   >
-                                    {priceRec === '매도'
-                                      ? '주의'
-                                      : priceRec === '강력매수'
-                                        ? '강력 추천'
-                                        : priceRec === '매수'
-                                          ? '추천'
-                                          : priceRec === '보유'
-                                            ? '관망'
-                                            : priceRec || grade.grade}
-                                  </Badge>
+                                    {stock.upsidePercent > 0 ? '+' : ''}
+                                    {stock.upsidePercent.toFixed(1)}%
+                                  </span>
+                                )}
+                                {stock.targetPrice != null && (
+                                  <span className="text-[10px] text-slate-500 font-mono">
+                                    → ${stock.targetPrice.toFixed(0)}
+                                  </span>
                                 )}
                               </div>
                             </div>
-                            {/* 하단: 추천이유 + 지표 */}
+                            {/* 점수 + 배지 */}
+                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                              <div className={`text-xl font-bold leading-none ${grade.color}`}>
+                                {displayScore}점
+                              </div>
+                              {isUnreliable ? (
+                                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">
+                                  ⚠️ 점검 중
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  className={`text-[10px] ${
+                                    isSellSignal
+                                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                      : isBuySignal
+                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                        : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                  }`}
+                                >
+                                  {getPriceRecLabel(priceRec, grade.grade)}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          {/* 하단: 추천이유 + 지표 */}
+                          {stock.recommendationReason && (
+                            <div className="bg-slate-700/20 rounded-md px-2 py-1.5">
+                              <p className="text-[11px] text-slate-300 leading-snug line-clamp-1">
+                                💡 {stock.recommendationReason}
+                              </p>
+                            </div>
+                          )}
+                          {indicators.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {indicators.map((label) => (
+                                <span
+                                  key={label}
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                >
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* ── 데스크탑: 기존 상세 카드 ── */}
+                        <CardHeader className="hidden sm:block px-6 py-4 pb-2">
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0">
+                              <CardTitle className="text-lg text-white truncate">
+                                {stock.stockName}
+                              </CardTitle>
+                              <p className="text-xs text-slate-500">{stock.ticker}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className={`text-2xl font-bold ${grade.color}`}>
+                                {displayScore}점
+                              </div>
+                              {isUnreliable ? (
+                                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 whitespace-nowrap">
+                                  ⚠️ 예측 점검 중
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  className={
+                                    isSellSignal
+                                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                                      : isBuySignal
+                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                        : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                  }
+                                >
+                                  {getPriceRecLabel(priceRec, grade.grade)}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="hidden sm:block px-6 pb-6">
+                          <div className="space-y-3">
                             {stock.recommendationReason && (
-                              <div className="bg-slate-700/20 rounded-md px-2 py-1.5">
-                                <p className="text-[11px] text-slate-300 leading-snug line-clamp-1">
+                              <div className="bg-slate-700/20 rounded-lg p-2.5">
+                                <p className="text-sm text-slate-200 leading-relaxed">
                                   💡 {stock.recommendationReason}
                                 </p>
                               </div>
                             )}
                             {indicators.length > 0 && (
-                              <div className="flex flex-wrap gap-1">
+                              <div className="flex flex-wrap gap-1.5">
                                 {indicators.map((label) => (
                                   <span
                                     key={label}
-                                    className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                                   >
                                     {label}
                                   </span>
                                 ))}
                               </div>
                             )}
-                          </div>
-
-                          {/* ── 데스크탑: 기존 상세 카드 ── */}
-                          <CardHeader className="hidden sm:block px-6 py-4 pb-2">
-                            <div className="flex justify-between items-start gap-2">
-                              <div className="min-w-0">
-                                <CardTitle className="text-lg text-white truncate">
-                                  {stock.stockName}
-                                </CardTitle>
-                                <p className="text-xs text-slate-500">{stock.ticker}</p>
-                              </div>
-                              <div className="text-right shrink-0">
-                                <div className={`text-2xl font-bold ${grade.color}`}>
-                                  {displayScore}점
-                                </div>
-                                {isUnreliable ? (
-                                  <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 whitespace-nowrap">
-                                    ⚠️ 예측 점검 중
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    className={
-                                      isSellSignal
-                                        ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                                        : isBuySignal
-                                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                          : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                                    }
-                                  >
-                                    {priceRec === '매도'
-                                      ? '주의'
-                                      : priceRec === '강력매수'
-                                        ? '강력 추천'
-                                        : priceRec === '매수'
-                                          ? '추천'
-                                          : priceRec === '보유'
-                                            ? '관망'
-                                            : priceRec || grade.grade}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="hidden sm:block px-6 pb-6">
-                            <div className="space-y-3">
-                              {stock.recommendationReason && (
-                                <div className="bg-slate-700/20 rounded-lg p-2.5">
-                                  <p className="text-sm text-slate-200 leading-relaxed">
-                                    💡 {stock.recommendationReason}
-                                  </p>
-                                </div>
-                              )}
-                              {indicators.length > 0 && (
-                                <div className="flex flex-wrap gap-1.5">
-                                  {indicators.map((label) => (
-                                    <span
-                                      key={label}
-                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                    >
-                                      {label}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                              {stock.currentPrice != null && (
-                                <div className="bg-slate-700/20 p-3 rounded-lg">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <p className="text-xl font-bold text-white font-mono tabular-nums">
-                                        ${stock.currentPrice.toFixed(2)}
-                                      </p>
-                                    </div>
-                                    {stock.upsidePercent != null && (
-                                      <Badge
-                                        className={`${stock.upsidePercent > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'} text-xs`}
-                                      >
-                                        {stock.upsidePercent > 0 ? '+' : ''}
-                                        {stock.upsidePercent.toFixed(1)}%
-                                      </Badge>
-                                    )}
+                            {stock.currentPrice != null && (
+                              <div className="bg-slate-700/20 p-3 rounded-lg">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="text-xl font-bold text-white font-mono tabular-nums">
+                                      ${stock.currentPrice.toFixed(2)}
+                                    </p>
                                   </div>
-                                  {stock.targetPrice != null && (
-                                    <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between">
-                                      <p className="text-[10px] text-slate-500">목표가</p>
-                                      <p className="text-sm font-semibold text-slate-300 font-mono tabular-nums">
-                                        ${stock.targetPrice.toFixed(2)}
-                                      </p>
-                                    </div>
+                                  {stock.upsidePercent != null && (
+                                    <Badge
+                                      className={`${stock.upsidePercent > 0 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'} text-xs`}
+                                    >
+                                      {stock.upsidePercent > 0 ? '+' : ''}
+                                      {stock.upsidePercent.toFixed(1)}%
+                                    </Badge>
                                   )}
                                 </div>
-                              )}
-                              {/* 세부 점수 — 모바일에서는 숨기고 데스크탑에서만 표시 */}
-                              <div
-                                className={`hidden sm:grid ${stock.sentimentScore > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:gap-2`}
-                              >
-                                <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                  <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
-                                    차트 패턴
-                                  </p>
-                                  <p className="text-sm sm:text-base font-bold text-cyan-400 tabular-nums">
-                                    {stock.techScoreDisplay}점
-                                  </p>
-                                </div>
-                                <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                  <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
-                                    AI 예측
-                                  </p>
-                                  <p className="text-sm sm:text-base font-bold text-purple-400 tabular-nums">
-                                    {stock.aiScoreDisplay}점
-                                  </p>
-                                </div>
-                                {stock.sentimentScore > 0 && (
-                                  <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                    <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
-                                      뉴스 반응
-                                    </p>
-                                    <p className="text-sm sm:text-base font-bold text-yellow-400 tabular-nums">
-                                      {stock.sentimentScoreDisplay}점
+                                {stock.targetPrice != null && (
+                                  <div className="mt-2 pt-2 border-t border-slate-700/50 flex items-center justify-between">
+                                    <p className="text-[10px] text-slate-500">목표가</p>
+                                    <p className="text-sm font-semibold text-slate-300 font-mono tabular-nums">
+                                      ${stock.targetPrice.toFixed(2)}
                                     </p>
                                   </div>
                                 )}
                               </div>
+                            )}
+                            {/* 세부 점수 — 모바일에서는 숨기고 데스크탑에서만 표시 */}
+                            <div
+                              className={`hidden sm:grid ${stock.sentimentScore > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:gap-2`}
+                            >
+                              <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
+                                <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
+                                  차트 패턴
+                                </p>
+                                <p className="text-sm sm:text-base font-bold text-cyan-400 tabular-nums">
+                                  {stock.techScoreDisplay}점
+                                </p>
+                              </div>
+                              <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
+                                <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">AI 예측</p>
+                                <p className="text-sm sm:text-base font-bold text-purple-400 tabular-nums">
+                                  {stock.aiScoreDisplay}점
+                                </p>
+                              </div>
+                              {stock.sentimentScore > 0 && (
+                                <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
+                                  <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
+                                    뉴스 반응
+                                  </p>
+                                  <p className="text-sm sm:text-base font-bold text-yellow-400 tabular-nums">
+                                    {stock.sentimentScoreDisplay}점
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    );
-                  })}
-                </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
-            ) : (
-              <div className="mb-10 md:mb-12">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-white mb-2">
-                  오늘의 시장 인사이트
-                </h2>
-                <div className="max-w-2xl mx-auto mt-8">
-                  <Card className="bg-slate-800/30 border-slate-700">
-                    <CardContent className="pt-6 text-center">
-                      <p className="text-lg text-slate-300 mb-3">AI가 종목을 분석하고 있어요</p>
-                      <p className="text-sm text-slate-500 mb-4">곧 새로운 분석 결과가 나옵니다.</p>
-                      <Link href="/recommendations">
-                        <Button
-                          variant="outline"
-                          className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
-                        >
-                          이전 분석 결과 보기 →
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                </div>
+            </div>
+          ) : (
+            <div className="mb-10 md:mb-12">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-white mb-2">
+                오늘의 시장 인사이트
+              </h2>
+              <div className="max-w-2xl mx-auto mt-8">
+                <Card className="bg-slate-800/30 border-slate-700">
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-lg text-slate-300 mb-3">AI가 종목을 분석하고 있어요</p>
+                    <p className="text-sm text-slate-500 mb-4">곧 새로운 분석 결과가 나옵니다.</p>
+                    <Link href="/recommendations">
+                      <Button
+                        variant="outline"
+                        className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10"
+                      >
+                        이전 분석 결과 보기 →
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
               </div>
-            );
-          })()}
+            </div>
+          )}
 
           {/* Tier 2: 중간 신호 (참고용 — strong이 있을 때만 별도 표시) */}
           {tiers.strong.length > 0 && tiers.medium.length > 0 && (
@@ -529,15 +480,7 @@ export default function Home() {
                                     : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
                                 }`}
                               >
-                                {mPriceRec === '매도'
-                                  ? '주의'
-                                  : mPriceRec === '강력매수'
-                                    ? '강력 추천'
-                                    : mPriceRec === '매수'
-                                      ? '추천'
-                                      : mPriceRec === '보유'
-                                        ? '관망'
-                                        : mPriceRec || grade.grade}
+                                {getPriceRecLabel(mPriceRec, grade.grade)}
                               </Badge>
                             )}
                           </div>
@@ -723,7 +666,7 @@ export default function Home() {
         </Link>
       </div>
       <div className="space-y-2.5">
-        {recentNewsData.news.slice(0, 3).map((article) => (
+        {recentNewsData.news.map((article) => (
           <Link
             key={article.id ?? article.title}
             href={article.sourceUrl ?? '/news'}
