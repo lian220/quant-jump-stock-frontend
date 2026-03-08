@@ -1,5 +1,4 @@
 /* eslint-disable react/no-unescaped-entities */
-/* eslint-disable prettier/prettier */
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageSEO } from '@/components/seo';

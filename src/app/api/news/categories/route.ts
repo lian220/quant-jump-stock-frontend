@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const response = await fetch(`${API_URL}/api/v1/news/categories`, {
       method: 'GET',
