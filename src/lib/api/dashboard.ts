@@ -3,7 +3,7 @@
  * 로그인 사용자의 대시보드 요약 데이터 조회
  */
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
+import { API_URL } from './config';
 
 function getDashboardUrl(): string {
   const isBrowser = typeof window !== 'undefined';
@@ -70,13 +70,13 @@ export interface DashboardAiUsage {
 
 // === API 함수 ===
 
-export async function getDashboard(token: string): Promise<DashboardResponse> {
+export async function getDashboard(): Promise<DashboardResponse> {
   const url = getDashboardUrl();
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
     },
+    credentials: 'include',
     cache: 'no-store',
   });
 

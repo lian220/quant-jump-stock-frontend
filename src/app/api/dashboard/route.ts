@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         Authorization: authorization,
       },
       cache: 'no-store',
+      signal: AbortSignal.timeout(10_000),
     });
 
     if (!response.ok) {
@@ -36,9 +37,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, { headers: NO_CACHE_HEADERS });
   } catch (error) {
     console.error('Failed to fetch dashboard:', error);
+    const isTimeout = error instanceof DOMException && error.name === 'TimeoutError';
     return NextResponse.json(
-      { error: '백엔드 서버에 연결할 수 없습니다.' },
-      { status: 503, headers: NO_CACHE_HEADERS },
+      {
+        error: isTimeout
+          ? '백엔드 응답 시간이 초과되었습니다.'
+          : '백엔드 서버에 연결할 수 없습니다.',
+      },
+      { status: isTimeout ? 504 : 503, headers: NO_CACHE_HEADERS },
     );
   }
 }

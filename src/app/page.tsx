@@ -666,35 +666,50 @@ export default function Home() {
         </Link>
       </div>
       <div className="space-y-2.5">
-        {recentNewsData.news.map((article) => (
-          <Link
-            key={article.id ?? article.title}
-            href={article.sourceUrl ?? '/news'}
-            target={article.sourceUrl ? '_blank' : undefined}
-            rel={article.sourceUrl ? 'noopener noreferrer' : undefined}
-          >
-            <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-3 sm:p-4 hover:border-slate-600 transition-colors">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm sm:text-base text-slate-200 font-medium line-clamp-1">
-                    {article.title}
-                  </p>
-                  {article.summary && (
-                    <p className="text-xs text-slate-500 mt-1 line-clamp-1">{article.summary}</p>
-                  )}
+        {recentNewsData.news.map((article) => {
+          let safeUrl = '/news';
+          let isExternal = false;
+          if (article.sourceUrl) {
+            try {
+              const parsed = new URL(article.sourceUrl);
+              if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+                safeUrl = article.sourceUrl;
+                isExternal = true;
+              }
+            } catch {
+              // invalid URL → fallback to /news
+            }
+          }
+          return (
+            <Link
+              key={article.id ?? article.title}
+              href={safeUrl}
+              target={isExternal ? '_blank' : undefined}
+              rel={isExternal ? 'noopener noreferrer' : undefined}
+            >
+              <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-3 sm:p-4 hover:border-slate-600 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm sm:text-base text-slate-200 font-medium line-clamp-1">
+                      {article.title}
+                    </p>
+                    {article.summary && (
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">{article.summary}</p>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-slate-600 whitespace-nowrap shrink-0 mt-0.5">
+                    {article.createdAt
+                      ? new Date(article.createdAt).toLocaleDateString('ko-KR', {
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : ''}
+                  </span>
                 </div>
-                <span className="text-[10px] text-slate-600 whitespace-nowrap shrink-0 mt-0.5">
-                  {article.createdAt
-                    ? new Date(article.createdAt).toLocaleDateString('ko-KR', {
-                        month: 'short',
-                        day: 'numeric',
-                      })
-                    : ''}
-                </span>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

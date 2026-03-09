@@ -130,16 +130,12 @@ export function useNewsCategories() {
 // ─── Dashboard ───
 
 /** 대시보드 요약 (로그인 사용자 전용, 1분 캐시) */
-export function useDashboard(token: string | null) {
-  return useSWR<DashboardResponse>(
-    token ? ['dashboard', token] : null,
-    () => getDashboard(token!),
-    {
-      dedupingInterval: 60 * 1000, // 1분
-      revalidateOnFocus: false,
-      keepPreviousData: true,
-    },
-  );
+export function useDashboard(isLoggedIn: boolean) {
+  return useSWR<DashboardResponse>(isLoggedIn ? 'dashboard' : null, () => getDashboard(), {
+    dedupingInterval: 60 * 1000, // 1분
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
 }
 
 // ─── Benchmarks ───

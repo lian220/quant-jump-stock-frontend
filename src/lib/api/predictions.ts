@@ -491,19 +491,33 @@ export function parseIndicatorBadges(reason?: string): string[] {
   if (lower.includes('rsi')) {
     if (lower.includes('과매수') || lower.includes('overbought')) {
       badges.push('RSI 과열');
-    } else {
+    } else if (lower.includes('과매도') || lower.includes('oversold') || lower.includes('저점')) {
       badges.push('RSI 저점');
     }
   }
   if (lower.includes('macd')) {
-    if (lower.includes('매도') || lower.includes('sell') || lower.includes('bearish')) {
+    if (
+      lower.includes('매도') ||
+      lower.includes('sell') ||
+      lower.includes('bearish') ||
+      lower.includes('하락')
+    ) {
       badges.push('MACD 하락');
-    } else {
+    } else if (
+      lower.includes('매수') ||
+      lower.includes('buy') ||
+      lower.includes('bullish') ||
+      lower.includes('상승')
+    ) {
       badges.push('MACD 상승');
     }
   }
   if (lower.includes('볼린저') || lower.includes('bollinger')) {
-    badges.push('볼린저 하단');
+    if (lower.includes('하단') || lower.includes('lower') || lower.includes('below')) {
+      badges.push('볼린저 하단');
+    } else if (lower.includes('상단') || lower.includes('upper') || lower.includes('above')) {
+      badges.push('볼린저 상단');
+    }
   }
   return badges;
 }
