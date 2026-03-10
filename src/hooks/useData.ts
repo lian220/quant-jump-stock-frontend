@@ -22,7 +22,13 @@ import {
   getStrategyDefaultStocks,
   getBenchmarkSeries,
 } from '@/lib/api/strategies';
-import { getCategories, type CategoryListResponse } from '@/lib/api/news';
+import {
+  getCategories,
+  getRecentNews,
+  type CategoryListResponse,
+  type NewsListResponse,
+} from '@/lib/api/news';
+import { getDashboard, type DashboardResponse } from '@/lib/api/dashboard';
 import type { StrategyListParams, DefaultStockListResponse } from '@/types/api';
 import type { Strategy, StrategyDetail, BenchmarkResponse } from '@/types/strategy';
 
@@ -103,10 +109,30 @@ export function useStrategyDefaultStocks(id: string | null) {
 
 // ─── News ───
 
+/** 최신 뉴스 (5분 캐시) */
+export function useRecentNews(limit: number = 5) {
+  return useSWR<NewsListResponse>(['recent-news', limit], () => getRecentNews(limit), {
+    dedupingInterval: 5 * 60 * 1000,
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
+}
+
 /** 뉴스 카테고리 (고정 데이터, 1시간 캐시) */
 export function useNewsCategories() {
   return useSWR<CategoryListResponse>('news-categories', () => getCategories(), {
     dedupingInterval: 60 * 60 * 1000, // 1시간
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
+}
+
+// ─── Dashboard ───
+
+/** 대시보드 요약 (로그인 사용자 전용, 1분 캐시) */
+export function useDashboard(isLoggedIn: boolean) {
+  return useSWR<DashboardResponse>(isLoggedIn ? 'dashboard' : null, () => getDashboard(), {
+    dedupingInterval: 60 * 1000, // 1분
     revalidateOnFocus: false,
     keepPreviousData: true,
   });
