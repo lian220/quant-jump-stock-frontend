@@ -5,6 +5,17 @@
 
 import { API_URL } from './config';
 
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
+
 function getDashboardUrl(): string {
   const isBrowser = typeof window !== 'undefined';
   return isBrowser ? '/api/dashboard' : `${API_URL}/api/v1/dashboard`;
@@ -73,9 +84,7 @@ export interface DashboardAiUsage {
 export async function getDashboard(): Promise<DashboardResponse> {
   const url = getDashboardUrl();
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     credentials: 'include',
     cache: 'no-store',
   });
