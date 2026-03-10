@@ -18,6 +18,7 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isHome = pathname === '/';
 
   const isActive = (path: string) => isActiveRoute(pathname, path);
 
@@ -51,10 +52,10 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-3 sm:py-4">
           {/* 왼쪽: 로고 */}
-          <div className="flex items-center space-x-2">
-            <Link href="/" className="flex items-center space-x-2">
+          <div className="flex min-w-0 items-center space-x-2">
+            <Link href="/" className="flex min-w-0 items-center space-x-2">
               <Image
                 src="/main_logo.png"
                 alt="Alpha Foundry Logo"
@@ -62,7 +63,7 @@ export function Header() {
                 height={36}
                 className="rounded-lg"
               />
-              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer whitespace-nowrap">
+              <span className="max-w-[150px] truncate text-lg sm:max-w-none sm:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent cursor-pointer whitespace-nowrap">
                 Alpha Foundry
               </span>
             </Link>
@@ -169,13 +170,15 @@ export function Header() {
 
             {/* 모바일: 앱 설치 버튼 + 알림 + 메뉴 버튼 */}
             <div className="flex items-center space-x-2 md:hidden">
-              <InstallButton compact />
+              {!isHome && <InstallButton compact />}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-slate-300 hover:text-emerald-400 rounded-lg transition-colors"
-                aria-label="메뉴"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-3 py-2 text-slate-300 hover:text-emerald-400 transition-colors"
+                aria-label={mobileMenuOpen ? '메뉴 닫기' : '메뉴 열기'}
                 aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-nav-menu"
               >
+                {!mobileMenuOpen && <span className="text-sm font-medium">메뉴</span>}
                 {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
@@ -184,7 +187,26 @@ export function Header() {
 
         {/* 모바일 메뉴 */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-700 py-6 animate-in slide-in-from-top-2">
+          <div
+            id="mobile-nav-menu"
+            className="md:hidden border-t border-slate-700 py-5 animate-in slide-in-from-top-2"
+          >
+            {!user && isHome && (
+              <div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                <p className="text-sm font-semibold text-white">
+                  오늘의 AI 추천부터 바로 볼 수 있어요
+                </p>
+                <p className="mt-1 text-xs text-slate-300">
+                  가입 전에도 메인 추천을 보고, 필요할 때 맞춤 추천으로 확장할 수 있습니다.
+                </p>
+                <Link href="/recommendations" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="mt-3 w-full bg-emerald-600 hover:bg-emerald-700">
+                    AI 추천 바로 보기
+                  </Button>
+                </Link>
+                <InstallButton className="mt-2 w-full justify-center" />
+              </div>
+            )}
             <nav className="flex flex-col gap-4">
               <Link
                 href="/recommendations"

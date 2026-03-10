@@ -27,7 +27,16 @@ import {
   useStrategies,
   useRecentNews,
 } from '@/hooks/useData';
-import { Newspaper } from 'lucide-react';
+import {
+  ArrowRight,
+  BellRing,
+  CheckCircle2,
+  LineChart,
+  Newspaper,
+  ShieldCheck,
+  Sparkles,
+  Target,
+} from 'lucide-react';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -72,6 +81,7 @@ export default function Home() {
   const aGradeRatio = predictionStats?.gradeDistribution
     ? computeAGradeRatio(predictionStats.gradeDistribution)
     : null;
+  const heroPreviewStock = displayStocks[0] ?? tiers.medium[0] ?? null;
 
   /* ──────────────────────────────────────────────
      공통 섹션: AI 분석 미니 대시보드
@@ -739,32 +749,105 @@ export default function Home() {
             <>
               {/* 1. 대시보드 헤더 */}
               <div className="mb-8 md:mb-12">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6">
-                  <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-white">오늘의 AI 분석</h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+                  <div className="rounded-3xl border border-slate-700/70 bg-slate-800/40 p-5 sm:p-7">
+                    <Badge className="mb-4 bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+                      오늘 가장 먼저 볼 것
+                    </Badge>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
+                      오늘의 AI 분석을 한 번에 확인하고
+                      <br className="hidden sm:block" /> 바로 유망 종목으로 이동하세요
+                    </h1>
+                    <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
                       {lastUpdated
-                        ? `${new Date(lastUpdated).toLocaleDateString('ko-KR')} 업데이트`
-                        : 'AI가 매일 종목을 분석합니다'}
+                        ? `${new Date(lastUpdated).toLocaleDateString('ko-KR')} 기준으로 업데이트된 요약입니다.`
+                        : 'AI가 오늘 분석한 결과를 기준으로 핵심 종목부터 빠르게 확인할 수 있어요.'}
                     </p>
-                  </div>
-                  <div className="flex gap-2 mt-3 sm:mt-0">
-                    <Link href="/recommendations">
-                      <Button className="bg-emerald-600 hover:bg-emerald-700 text-sm h-10 px-4">
-                        전체 분석 보기
-                      </Button>
-                    </Link>
-                    <Link href="/strategies">
-                      <Button
-                        variant="outline"
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700 text-sm h-10 px-4"
+                    <div className="mt-5 flex flex-col sm:flex-row gap-3">
+                      <Link href="/recommendations">
+                        <Button className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 h-11 px-5">
+                          전체 분석 보기
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link
+                        href="/strategies"
+                        className="inline-flex items-center justify-center text-sm text-slate-300 hover:text-white transition-colors"
                       >
-                        전략 둘러보기
-                      </Button>
-                    </Link>
+                        전략은 나중에 볼게요
+                      </Link>
+                    </div>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-3">
+                        <p className="text-xs text-slate-400">강한 신호 종목</p>
+                        <p className="mt-1 text-xl font-bold text-emerald-400">
+                          {tiers.strong.length}개
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-3">
+                        <p className="text-xs text-slate-400">좋은 평가 비율</p>
+                        <p className="mt-1 text-xl font-bold text-cyan-400">
+                          {aGradeRatio !== null ? `${aGradeRatio}%` : '집계 중'}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-3">
+                        <p className="text-xs text-slate-400">오늘 분석 종목 수</p>
+                        <p className="mt-1 text-xl font-bold text-white">
+                          {predictionStats?.uniqueTickers ?? '...'}개
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-slate-700/70 bg-slate-900/70 p-5 sm:p-6">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
+                      <Sparkles className="h-4 w-4 text-emerald-400" />
+                      처음이라면 이렇게 시작하세요
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <Target className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            1. 오늘의 대표 종목 3개 확인
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            추천 이유와 목표가를 먼저 보고 감을 잡으세요.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <BellRing className="mt-0.5 h-4 w-4 text-cyan-400 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-white">2. 관심 종목과 알림 설정</p>
+                          <p className="text-xs text-slate-400">
+                            자주 보는 종목부터 개인화 흐름을 시작하는 게 좋습니다.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <LineChart className="mt-0.5 h-4 w-4 text-purple-400 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            3. 전략은 비교용으로만 보기
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            첫 화면에서는 종목 이해가 우선이고 전략은 이후 단계가 적합합니다.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-5 rounded-2xl border border-slate-700/60 bg-slate-800/60 p-4">
+                      <p className="text-xs font-medium text-slate-300">오늘의 요약 기준</p>
+                      <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                        {lastUpdated
+                          ? `${new Date(lastUpdated).toLocaleDateString('ko-KR')} 업데이트 · AI 분석과 차트 신호를 함께 반영`
+                          : 'AI 분석과 차트 신호를 함께 반영한 일일 요약'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                {miniDashboard}
+                <div className="mt-4">{miniDashboard}</div>
               </div>
 
               {/* 2. AI 주목 종목 */}
@@ -785,70 +868,156 @@ export default function Home() {
                ══════════════════════════════════════ */
             <>
               {/* 1. 컴팩트 히어로 */}
-              <div className="text-center mb-6 md:mb-10">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
-                  주식,{' '}
-                  <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                    뭘 사야 할지
-                  </span>{' '}
-                  모르겠다면
-                </h1>
-                <p className="hidden sm:block text-base md:text-lg text-slate-400 mb-5 md:mb-6 max-w-2xl mx-auto">
-                  AI가 매일 종목을 분석하고, 좋은 종목을 골라드립니다.
-                  <br />
-                  초보자도 쉽게 시작할 수 있어요.
-                </p>
-                <p className="sm:hidden text-sm text-slate-400 mb-4">
-                  AI가 매일 종목을 분석하고 골라드립니다
-                </p>
-                <Link
-                  href="/recommendations"
-                  onClick={() =>
-                    trackEvent('landing_cta_click', {
-                      cta: 'hero_primary_recommendations',
-                      location: 'hero',
-                    })
-                  }
-                >
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto min-w-[220px] bg-emerald-600 hover:bg-emerald-700 h-12 sm:h-11 text-base"
-                  >
-                    오늘의 AI 추천 보기 →
-                  </Button>
-                </Link>
-                <div className="mt-3">
-                  <Link
-                    href="/signup"
-                    onClick={() =>
-                      trackEvent('landing_cta_click', {
-                        cta: 'hero_secondary_signup',
-                        location: 'hero',
-                      })
-                    }
-                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    회원가입하면 맞춤 추천을 받을 수 있어요
-                  </Link>
-                </div>
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-400">
-                  {predictionStats?.uniqueTickers ? (
-                    <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
-                      매일 {predictionStats.uniqueTickers}개 종목 분석 중
+              <div className="mb-8 md:mb-12">
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+                  <div className="rounded-3xl border border-slate-700/70 bg-slate-800/40 p-5 sm:p-7">
+                    <Badge className="mb-4 bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+                      오늘의 AI 브리프
                     </Badge>
-                  ) : (
-                    <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
-                      매일 종목 자동 분석
-                    </Badge>
-                  )}
-                  {predictionStats?.totalPredictions ? (
-                    <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
-                      최근 30일 {predictionStats.totalPredictions.toLocaleString()}건 분석 완료
-                    </Badge>
-                  ) : null}
-                  <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
-                    투자 권유가 아닌 참고 정보
-                  </Badge>
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
+                      주식, 뭘 사야 할지 모르겠다면
+                      <span className="block bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                        AI가 먼저 좁혀드립니다
+                      </span>
+                    </h1>
+                    <p className="mt-4 text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl leading-relaxed">
+                      매일 분석한 종목 중에서 왜 지금 봐야 하는지 설명이 붙은 추천만 먼저
+                      보여드립니다.
+                    </p>
+                    <div className="mt-5 flex flex-col sm:flex-row gap-3">
+                      <Link
+                        href="/recommendations"
+                        onClick={() =>
+                          trackEvent('landing_cta_click', {
+                            cta: 'hero_primary_recommendations',
+                            location: 'hero',
+                          })
+                        }
+                      >
+                        <Button
+                          size="lg"
+                          className="w-full sm:w-auto min-w-[220px] bg-emerald-600 hover:bg-emerald-700 h-12 text-base"
+                        >
+                          오늘의 AI 추천 보기
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link
+                        href="/signup"
+                        onClick={() =>
+                          trackEvent('landing_cta_click', {
+                            cta: 'hero_secondary_signup',
+                            location: 'hero',
+                          })
+                        }
+                        className="inline-flex items-center justify-center text-sm text-slate-300 hover:text-white transition-colors"
+                      >
+                        회원가입하고 맞춤 추천 받기
+                      </Link>
+                    </div>
+                    <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-3">
+                        <p className="text-xs text-slate-400">매일 분석 종목</p>
+                        <p className="mt-1 text-xl font-bold text-white">
+                          {predictionStats?.uniqueTickers ?? '...'}개
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-3">
+                        <p className="text-xs text-slate-400">좋은 평가 비율</p>
+                        <p className="mt-1 text-xl font-bold text-cyan-400">
+                          {aGradeRatio !== null ? `${aGradeRatio}%` : '집계 중'}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-3">
+                        <p className="text-xs text-slate-400">최근 30일 분석</p>
+                        <p className="mt-1 text-xl font-bold text-emerald-400">
+                          {predictionStats?.totalPredictions
+                            ? `${predictionStats.totalPredictions.toLocaleString()}건`
+                            : '누적 중'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-400">
+                      <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
+                        추천 근거 제공
+                      </Badge>
+                      <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
+                        매일 자동 업데이트
+                      </Badge>
+                      <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
+                        투자 권유가 아닌 참고 정보
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="rounded-3xl border border-slate-700/70 bg-slate-900/70 p-5 sm:p-6">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
+                      <Sparkles className="h-4 w-4 text-emerald-400" />왜 이 화면이 유용한가요?
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            오늘 봐야 할 종목부터 좁혀줍니다
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            전체 시장을 뒤지기 전에 유망 후보를 먼저 확인할 수 있어요.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-cyan-400 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            추천 이유가 함께 보입니다
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            점수만이 아니라 차트, AI 예측, 뉴스 반응을 같이 봅니다.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <ShieldCheck className="mt-0.5 h-4 w-4 text-purple-400 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            과도한 확신 대신 참고 정보로 제공합니다
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            초보자도 부담 없이 탐색하고, 최종 판단은 직접 할 수 있게 돕습니다.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 rounded-2xl border border-slate-700/60 bg-slate-800/60 p-4">
+                      <p className="text-xs text-slate-400">오늘의 대표 미리보기</p>
+                      {heroPreviewStock ? (
+                        <div className="mt-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-lg font-semibold text-white truncate">
+                                {heroPreviewStock.stockName}
+                              </p>
+                              <p className="text-xs text-slate-500">{heroPreviewStock.ticker}</p>
+                            </div>
+                            <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+                              {heroPreviewStock.compositeScoreDisplay}점
+                            </Badge>
+                          </div>
+                          {heroPreviewStock.recommendationReason && (
+                            <p className="mt-3 text-sm text-slate-300 line-clamp-2 leading-relaxed">
+                              {heroPreviewStock.recommendationReason}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="mt-3 text-sm text-slate-400">
+                          분석이 완료되면 오늘의 대표 종목을 여기서 바로 보여드릴게요.
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
