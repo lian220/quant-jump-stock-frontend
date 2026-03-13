@@ -26,7 +26,15 @@ import {
   useLatestPredictions,
   useStrategies,
   useRecentNews,
+  useDashboard,
 } from '@/hooks/useData';
+import {
+  PersonalDashboard,
+  PersonalDashboardSkeleton,
+  MarketWidget,
+  MarketWidgetSkeleton,
+  ScoreBar,
+} from '@/components/dashboard';
 import { Newspaper } from 'lucide-react';
 
 export default function Home() {
@@ -49,6 +57,7 @@ export default function Home() {
     minConfidence: 0.05,
   });
   const { data: recentNewsData } = useRecentNews(3);
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useDashboard(!!user);
 
   const featuredStrategies = useMemo(
     () => strategiesData?.strategies.slice(0, 3) ?? [],
@@ -79,7 +88,7 @@ export default function Home() {
   const miniDashboard = (
     <>
       {predictionStats || !isLoadingRecommendations ? (
-        <div className="max-w-2xl mx-auto text-left">
+        <div className="max-w-2xl lg:max-w-none mx-auto text-left">
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-6">
             <p className="text-sm sm:text-base text-slate-300 mb-3 sm:mb-4 text-center leading-relaxed">
               오늘 AI가{' '}
@@ -95,7 +104,9 @@ export default function Home() {
                 <p className="text-lg sm:text-2xl font-bold text-cyan-400 tabular-nums">
                   {aGradeRatio !== null ? `${aGradeRatio}%` : '...'}
                 </p>
-                <p className="text-[10px] sm:text-xs text-slate-400">좋은 평가 비율</p>
+                <p className="text-[10px] sm:text-xs text-slate-400">
+                  좋은 평가 비율 <span className="text-slate-500">(30일)</span>
+                </p>
               </div>
               <div className="bg-slate-700/30 rounded-lg p-3 text-center">
                 <p className="text-lg sm:text-2xl font-bold text-purple-400 tabular-nums">
@@ -103,7 +114,9 @@ export default function Home() {
                     ? `${Math.min(Math.round((predictionStats.avgCompositeScore / 4.0) * 100), 100)}점`
                     : '...'}
                 </p>
-                <p className="text-[10px] sm:text-xs text-slate-400">평균 AI 점수</p>
+                <p className="text-[10px] sm:text-xs text-slate-400">
+                  평균 AI 점수 <span className="text-slate-500">(100점 만점)</span>
+                </p>
               </div>
             </div>
             {/* 등급분포 바 제거 — 초보자에게 불필요한 정보 */}
@@ -138,7 +151,7 @@ export default function Home() {
      공통 섹션: AI 주목 종목 + 분석된 종목
      ────────────────────────────────────────────── */
   const aiStocksSection = (
-    <div className="mb-10 md:mb-16">
+    <div className="mb-8 md:mb-10">
       {isLoadingRecommendations ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
@@ -164,7 +177,7 @@ export default function Home() {
         <>
           {/* Tier 1: 강한 신호 (없으면 중간 신호 fallback) */}
           {displayStocks.length > 0 ? (
-            <div className="mb-10 md:mb-12">
+            <div className="mb-8 md:mb-10">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-white mb-2">
                 {isFallback ? '📊 AI 분석 종목' : '🔥 AI 주목 종목'}
               </h2>
@@ -369,32 +382,19 @@ export default function Home() {
                                 )}
                               </div>
                             )}
-                            {/* 세부 점수 — 모바일에서는 숨기고 데스크탑에서만 표시 */}
+                            {/* 세부 점수 — 데스크탑: 컬러 바 포함 */}
                             <div
                               className={`hidden sm:grid ${stock.sentimentScore > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:gap-2`}
                             >
                               <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
-                                  차트 패턴
-                                </p>
-                                <p className="text-sm sm:text-base font-bold text-cyan-400 tabular-nums">
-                                  {stock.techScoreDisplay}점
-                                </p>
+                                <ScoreBar score={stock.techScoreDisplay} label="차트 패턴" />
                               </div>
                               <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">AI 예측</p>
-                                <p className="text-sm sm:text-base font-bold text-purple-400 tabular-nums">
-                                  {stock.aiScoreDisplay}점
-                                </p>
+                                <ScoreBar score={stock.aiScoreDisplay} label="AI 예측" />
                               </div>
                               {stock.sentimentScore > 0 && (
                                 <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                  <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
-                                    뉴스 반응
-                                  </p>
-                                  <p className="text-sm sm:text-base font-bold text-yellow-400 tabular-nums">
-                                    {stock.sentimentScoreDisplay}점
-                                  </p>
+                                  <ScoreBar score={stock.sentimentScoreDisplay} label="뉴스 반응" />
                                 </div>
                               )}
                             </div>
@@ -507,10 +507,7 @@ export default function Home() {
         </>
       )}
 
-      <p className="text-center text-[11px] sm:text-xs text-slate-500 mt-6 mb-4">
-        위 정보는 AI가 차트와 뉴스를 분석한 참고 자료이며, 투자를 권유하는 것이 아닙니다.
-      </p>
-      <div className="text-center mt-4">
+      <div className="text-center mt-6">
         <Link href="/recommendations">
           <Button
             size="lg"
@@ -527,10 +524,10 @@ export default function Home() {
      공통 섹션: 인기 투자 전략
      ────────────────────────────────────────────── */
   const strategiesSection = (
-    <div className="mb-10 md:mb-16">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-6 md:mb-8">
+    <div className="mb-8 md:mb-10">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4 md:mb-6">
         <div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">
             인기 투자 전략
           </h2>
           <p className="text-sm text-slate-400">
@@ -562,7 +559,7 @@ export default function Home() {
           ))}
         </div>
       ) : featuredStrategies.length > 0 ? (
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="strategy-grid grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {featuredStrategies.map((strategy) => (
             <Link key={strategy.id} href={`/strategies/${strategy.id}`}>
               <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all h-full">
@@ -606,8 +603,16 @@ export default function Home() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-slate-400">안정성 지수</p>
-                      <p className="text-cyan-400 font-semibold">{strategy.sharpeRatio}</p>
+                      <p className="text-slate-400">안정성</p>
+                      <p className="text-cyan-400 font-semibold">
+                        {strategy.sharpeRatio === 'N/A' || strategy.sharpeRatio == null
+                          ? '측정 중'
+                          : Number(strategy.sharpeRatio) >= 2
+                            ? '높음'
+                            : Number(strategy.sharpeRatio) >= 1
+                              ? '보통'
+                              : '낮음'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-slate-400">구독자</p>
@@ -653,8 +658,8 @@ export default function Home() {
      공통 섹션: 최신 뉴스 미리보기
      ────────────────────────────────────────────── */
   const newsPreviewSection = recentNewsData?.news && recentNewsData.news.length > 0 && (
-    <div className="mb-10 md:mb-16">
-      <div className="flex items-center justify-between mb-4 md:mb-6">
+    <div className="mb-8 md:mb-10">
+      <div className="flex items-center justify-between mb-4 md:mb-5">
         <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
           <Newspaper size={20} className="text-slate-400" />
           최신 투자 뉴스
@@ -737,9 +742,9 @@ export default function Home() {
                로그인 사용자: 대시보드 뷰
                ══════════════════════════════════════ */
             <>
-              {/* 1. 대시보드 헤더 */}
-              <div className="mb-8 md:mb-12">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6">
+              {/* 1. 개인화 블록 + 시장 현황 (PC: 2컬럼) */}
+              <div className="mb-6 md:mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-white">오늘의 AI 분석</h1>
                     <p className="text-sm text-slate-400 mt-1">
@@ -748,35 +753,77 @@ export default function Home() {
                         : 'AI가 매일 종목을 분석합니다'}
                     </p>
                   </div>
-                  <div className="flex gap-2 mt-3 sm:mt-0">
+                  <div className="flex gap-2">
                     <Link href="/recommendations">
-                      <Button className="bg-emerald-600 hover:bg-emerald-700 text-sm h-10 px-4">
-                        전체 분석 보기
+                      <Button className="bg-emerald-600 hover:bg-emerald-700 text-sm h-9 px-3">
+                        AI가 고른 종목 보기
                       </Button>
                     </Link>
                     <Link href="/strategies">
                       <Button
                         variant="outline"
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700 text-sm h-10 px-4"
+                        className="border-slate-600 text-slate-300 hover:bg-slate-700 text-sm h-9 px-3"
                       >
-                        전략 둘러보기
+                        전략 구독하기
                       </Button>
                     </Link>
                   </div>
                 </div>
-                {miniDashboard}
+
+                <div className="grid lg:grid-cols-3 gap-3 sm:gap-4">
+                  {/* 좌측 2/3: 개인 KPI + AI 분석 요약 */}
+                  <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+                    {/* 개인 KPI 카드 */}
+                    {isLoadingDashboard ? (
+                      <PersonalDashboardSkeleton />
+                    ) : dashboardData ? (
+                      <PersonalDashboard dashboard={dashboardData} />
+                    ) : null}
+
+                    {/* AI 분석 미니 대시보드 */}
+                    {miniDashboard}
+                  </div>
+
+                  {/* 우측 1/3: 시장 현황 */}
+                  <div className="space-y-3">
+                    {isLoadingDashboard ? (
+                      <MarketWidgetSkeleton />
+                    ) : dashboardData?.market ? (
+                      <MarketWidget indices={dashboardData.market.indices} />
+                    ) : null}
+
+                    {/* 최근 알림 미리보기 */}
+                    {dashboardData?.signals && dashboardData.signals.recent.length > 0 && (
+                      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4">
+                        <h3 className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                          최근 알림
+                        </h3>
+                        <div className="space-y-1.5">
+                          {dashboardData.signals.recent.slice(0, 3).map((noti) => (
+                            <div key={noti.id} className="flex items-start gap-2 min-w-0">
+                              <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full mt-1.5 shrink-0" />
+                              <p className="text-[11px] text-slate-300 line-clamp-1">
+                                {noti.title}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* 2. AI 주목 종목 */}
               {aiStocksSection}
 
-              {/* 3. 최신 뉴스 */}
-              {newsPreviewSection}
+              {/* 3+4. 뉴스 + 전략 (PC: 2컬럼 병렬) */}
+              <div className="lg:grid lg:grid-cols-2 lg:gap-8 [&_.strategy-grid]:lg:grid-cols-1">
+                <div>{newsPreviewSection}</div>
+                <div>{strategiesSection}</div>
+              </div>
 
-              {/* 4. 인기 전략 */}
-              {strategiesSection}
-
-              {/* 5. 투자 유의사항 */}
+              {/* 5. 투자 유의사항 (1회만) */}
               {disclaimerSection}
             </>
           ) : (
@@ -861,10 +908,7 @@ export default function Home() {
               {/* 4. 인기 전략 */}
               {strategiesSection}
 
-              {/* 5. 투자 유의사항 */}
-              {disclaimerSection}
-
-              {/* 6. CTA */}
+              {/* 5. CTA (면책조항은 푸터에 1회만 표시) */}
               <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
                 <CardContent className="text-center py-8 sm:py-10 md:py-12">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 text-white">
