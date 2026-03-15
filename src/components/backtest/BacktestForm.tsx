@@ -93,8 +93,8 @@ interface BacktestFormProps {
 }
 
 const defaultBenchmarkOptions: BenchmarkOption[] = [
-  { value: '^KS11', label: 'KOSPI (^KS11)' },
-  { value: 'SPY', label: 'S&P 500 (SPY)' },
+  { value: '^GSPC', label: 'S&P 500 (^GSPC)' },
+  { value: 'SPY', label: 'S&P 500 ETF (SPY)' },
   { value: 'QQQ', label: 'NASDAQ 100 (QQQ)' },
 ];
 
@@ -315,7 +315,7 @@ export default function BacktestForm({
       startDate: defaultDates.startDate,
       endDate: defaultDates.endDate,
       initialCapital: 10000000,
-      benchmark: '^KS11',
+      benchmark: '^GSPC',
       rebalancePeriod: 'MONTHLY',
     },
   });
@@ -329,7 +329,7 @@ export default function BacktestForm({
       startDate: initialValues.startDate ?? defaultDates.startDate,
       endDate: initialValues.endDate ?? defaultDates.endDate,
       initialCapital: initialValues.initialCapital ?? 10000000,
-      benchmark: initialValues.benchmark ?? '^KS11',
+      benchmark: initialValues.benchmark ?? '^GSPC',
       rebalancePeriod: (initialValues.rebalancePeriod as RebalancePeriod | undefined) ?? 'MONTHLY',
     });
 

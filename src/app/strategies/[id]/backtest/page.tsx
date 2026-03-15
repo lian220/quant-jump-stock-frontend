@@ -44,7 +44,7 @@ export default function BacktestPage() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   // 로그인 후 폼 복원을 위한 저장 값
   const [savedFormValues, setSavedFormValues] = useState<BacktestFormSavedValues | null>(null);
-  const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['^KS11']);
+  const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['^GSPC']);
   const [strategyName, setStrategyName] = useState<string>('');
   const [strategyRiskSettings, setStrategyRiskSettings] = useState<string | undefined>();
   const [strategyPositionSizing, setStrategyPositionSizing] = useState<string | undefined>();
