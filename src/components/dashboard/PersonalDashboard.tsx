@@ -55,7 +55,7 @@ export function PersonalDashboard({ dashboard }: PersonalDashboardProps) {
           <div
             className="h-1 bg-purple-500 rounded-full transition-all"
             style={{
-              width: `${Math.min((aiUsage.backtestUsed / aiUsage.backtestLimit) * 100, 100)}%`,
+              width: `${aiUsage.backtestLimit > 0 ? Math.min((aiUsage.backtestUsed / aiUsage.backtestLimit) * 100, 100) : 0}%`,
             }}
           />
         </div>

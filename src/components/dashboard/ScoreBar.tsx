@@ -26,7 +26,7 @@ function getScoreTextColor(score: number): string {
 }
 
 export function ScoreBar({ score, label, maxScore = 100, size = 'sm' }: ScoreBarProps) {
-  const percentage = Math.min(Math.max((score / maxScore) * 100, 0), 100);
+  const percentage = maxScore > 0 ? Math.min(Math.max((score / maxScore) * 100, 0), 100) : 0;
   const barHeight = size === 'sm' ? 'h-1.5' : 'h-2';
 
   return (

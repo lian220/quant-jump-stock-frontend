@@ -6,7 +6,7 @@
 - **관련 문서**:
   - [메인-대시보드-벤치마킹.md](./메인-대시보드-벤치마킹.md)
   - [대시보드-UX-전문가-분석.md](./대시보드-UX-전문가-분석.md)
-- **상태**: 갭 분석 완료, Dashboard API 미연동
+- **상태**: P0 구현 완료 (Dashboard API 연동, PersonalDashboard/MarketWidget 적용)
 
 ---
 
