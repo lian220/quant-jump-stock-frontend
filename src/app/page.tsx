@@ -26,7 +26,15 @@ import {
   useLatestPredictions,
   useStrategies,
   useRecentNews,
+  useDashboard,
 } from '@/hooks/useData';
+import {
+  PersonalDashboard,
+  PersonalDashboardSkeleton,
+  MarketWidget,
+  MarketWidgetSkeleton,
+  ScoreBar,
+} from '@/components/dashboard';
 import { Newspaper } from 'lucide-react';
 
 export default function Home() {
@@ -49,6 +57,7 @@ export default function Home() {
     minConfidence: 0.05,
   });
   const { data: recentNewsData } = useRecentNews(3);
+  const { data: dashboardData, isLoading: isLoadingDashboard } = useDashboard(!!user);
 
   const featuredStrategies = useMemo(
     () => strategiesData?.strategies.slice(0, 3) ?? [],
@@ -79,7 +88,7 @@ export default function Home() {
   const miniDashboard = (
     <>
       {predictionStats || !isLoadingRecommendations ? (
-        <div className="max-w-2xl mx-auto text-left">
+        <div className="max-w-2xl lg:max-w-none mx-auto text-left">
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-6">
             <p className="text-sm sm:text-base text-slate-300 mb-3 sm:mb-4 text-center leading-relaxed">
               오늘 AI가{' '}
@@ -95,7 +104,9 @@ export default function Home() {
                 <p className="text-lg sm:text-2xl font-bold text-cyan-400 tabular-nums">
                   {aGradeRatio !== null ? `${aGradeRatio}%` : '...'}
                 </p>
-                <p className="text-[10px] sm:text-xs text-slate-400">좋은 평가 비율</p>
+                <p className="text-[10px] sm:text-xs text-slate-400">
+                  좋은 평가 비율 <span className="text-slate-500">(30일)</span>
+                </p>
               </div>
               <div className="bg-slate-700/30 rounded-lg p-3 text-center">
                 <p className="text-lg sm:text-2xl font-bold text-purple-400 tabular-nums">
@@ -103,7 +114,9 @@ export default function Home() {
                     ? `${Math.min(Math.round((predictionStats.avgCompositeScore / 4.0) * 100), 100)}점`
                     : '...'}
                 </p>
-                <p className="text-[10px] sm:text-xs text-slate-400">평균 AI 점수</p>
+                <p className="text-[10px] sm:text-xs text-slate-400">
+                  평균 AI 점수 <span className="text-slate-500">(100점 만점)</span>
+                </p>
               </div>
             </div>
             {/* 등급분포 바 제거 — 초보자에게 불필요한 정보 */}
@@ -138,7 +151,7 @@ export default function Home() {
      공통 섹션: AI 주목 종목 + 분석된 종목
      ────────────────────────────────────────────── */
   const aiStocksSection = (
-    <div className="mb-10 md:mb-16">
+    <div className="mb-8 md:mb-10">
       {isLoadingRecommendations ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
@@ -164,7 +177,7 @@ export default function Home() {
         <>
           {/* Tier 1: 강한 신호 (없으면 중간 신호 fallback) */}
           {displayStocks.length > 0 ? (
-            <div className="mb-10 md:mb-12">
+            <div className="mb-8 md:mb-10">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-center text-white mb-2">
                 {isFallback ? '📊 AI 분석 종목' : '🔥 AI 주목 종목'}
               </h2>
@@ -184,7 +197,7 @@ export default function Home() {
                 </Badge>
               </p>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-5 lg:gap-6">
-                {displayStocks.slice(0, 3).map((stock) => {
+                {displayStocks.slice(0, 3).map((stock, idx) => {
                   const grade = getScoreGrade(stock.compositeScore);
                   const indicators = parseIndicatorBadges(stock.recommendationReason);
                   const displayScore = stock.compositeScoreDisplay;
@@ -197,7 +210,11 @@ export default function Home() {
                   const isBuySignal =
                     !isUnreliable && (priceRec === '강력매수' || priceRec === '매수');
                   return (
-                    <Link key={stock.ticker} href="/recommendations">
+                    <Link
+                      key={stock.ticker}
+                      href="/recommendations"
+                      className={idx === 0 && !user ? 'hidden sm:block' : ''}
+                    >
                       <Card
                         className={`bg-slate-800/50 transition-all active:scale-[0.98] hover:shadow-lg cursor-pointer ${
                           isUnreliable
@@ -369,32 +386,19 @@ export default function Home() {
                                 )}
                               </div>
                             )}
-                            {/* 세부 점수 — 모바일에서는 숨기고 데스크탑에서만 표시 */}
+                            {/* 세부 점수 — 데스크탑: 컬러 바 포함 */}
                             <div
                               className={`hidden sm:grid ${stock.sentimentScore > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:gap-2`}
                             >
                               <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
-                                  차트 패턴
-                                </p>
-                                <p className="text-sm sm:text-base font-bold text-cyan-400 tabular-nums">
-                                  {stock.techScoreDisplay}점
-                                </p>
+                                <ScoreBar score={stock.techScoreDisplay} label="차트 패턴" />
                               </div>
                               <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">AI 예측</p>
-                                <p className="text-sm sm:text-base font-bold text-purple-400 tabular-nums">
-                                  {stock.aiScoreDisplay}점
-                                </p>
+                                <ScoreBar score={stock.aiScoreDisplay} label="AI 예측" />
                               </div>
                               {stock.sentimentScore > 0 && (
                                 <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                  <p className="text-[10px] text-slate-500 mb-0.5 sm:mb-1">
-                                    뉴스 반응
-                                  </p>
-                                  <p className="text-sm sm:text-base font-bold text-yellow-400 tabular-nums">
-                                    {stock.sentimentScoreDisplay}점
-                                  </p>
+                                  <ScoreBar score={stock.sentimentScoreDisplay} label="뉴스 반응" />
                                 </div>
                               )}
                             </div>
@@ -437,7 +441,7 @@ export default function Home() {
                 참고 종목
               </h3>
               <p className="text-center text-slate-500 text-xs sm:text-sm mb-6">
-                AI 확신도가 낮은 종목이에요 — 참고만 해주세요
+                AI 점수가 낮아 추천하지 않지만, 관심 있다면 참고하세요
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 max-w-4xl mx-auto">
                 {tiers.medium.slice(0, 4).map((stock) => {
@@ -507,10 +511,7 @@ export default function Home() {
         </>
       )}
 
-      <p className="text-center text-[11px] sm:text-xs text-slate-500 mt-6 mb-4">
-        위 정보는 AI가 차트와 뉴스를 분석한 참고 자료이며, 투자를 권유하는 것이 아닙니다.
-      </p>
-      <div className="text-center mt-4">
+      <div className="text-center mt-6">
         <Link href="/recommendations">
           <Button
             size="lg"
@@ -527,10 +528,10 @@ export default function Home() {
      공통 섹션: 인기 투자 전략
      ────────────────────────────────────────────── */
   const strategiesSection = (
-    <div className="mb-10 md:mb-16">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-6 md:mb-8">
+    <div className="mb-8 md:mb-10">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4 md:mb-6">
         <div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">
             인기 투자 전략
           </h2>
           <p className="text-sm text-slate-400">
@@ -562,7 +563,7 @@ export default function Home() {
           ))}
         </div>
       ) : featuredStrategies.length > 0 ? (
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+        <div className="strategy-grid grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {featuredStrategies.map((strategy) => (
             <Link key={strategy.id} href={`/strategies/${strategy.id}`}>
               <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-all h-full">
@@ -606,8 +607,16 @@ export default function Home() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-slate-400">안정성 지수</p>
-                      <p className="text-cyan-400 font-semibold">{strategy.sharpeRatio}</p>
+                      <p className="text-slate-400">안정성</p>
+                      <p className="text-cyan-400 font-semibold">
+                        {strategy.sharpeRatio === 'N/A' || strategy.sharpeRatio == null
+                          ? '측정 중'
+                          : Number(strategy.sharpeRatio) >= 2
+                            ? '높음'
+                            : Number(strategy.sharpeRatio) >= 1
+                              ? '보통'
+                              : '낮음'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-slate-400">구독자</p>
@@ -653,8 +662,8 @@ export default function Home() {
      공통 섹션: 최신 뉴스 미리보기
      ────────────────────────────────────────────── */
   const newsPreviewSection = recentNewsData?.news && recentNewsData.news.length > 0 && (
-    <div className="mb-10 md:mb-16">
-      <div className="flex items-center justify-between mb-4 md:mb-6">
+    <div className="mb-8 md:mb-10">
+      <div className="flex items-center justify-between mb-4 md:mb-5">
         <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
           <Newspaper size={20} className="text-slate-400" />
           최신 투자 뉴스
@@ -737,9 +746,9 @@ export default function Home() {
                로그인 사용자: 대시보드 뷰
                ══════════════════════════════════════ */
             <>
-              {/* 1. 대시보드 헤더 */}
-              <div className="mb-8 md:mb-12">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-6">
+              {/* 1. 개인화 블록 + 시장 현황 (PC: 2컬럼) */}
+              <div className="mb-6 md:mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-white">오늘의 AI 분석</h1>
                     <p className="text-sm text-slate-400 mt-1">
@@ -748,35 +757,77 @@ export default function Home() {
                         : 'AI가 매일 종목을 분석합니다'}
                     </p>
                   </div>
-                  <div className="flex gap-2 mt-3 sm:mt-0">
+                  <div className="flex gap-2">
                     <Link href="/recommendations">
-                      <Button className="bg-emerald-600 hover:bg-emerald-700 text-sm h-10 px-4">
-                        전체 분석 보기
+                      <Button className="bg-emerald-600 hover:bg-emerald-700 text-sm h-9 px-3">
+                        AI가 고른 종목 보기
                       </Button>
                     </Link>
                     <Link href="/strategies">
                       <Button
                         variant="outline"
-                        className="border-slate-600 text-slate-300 hover:bg-slate-700 text-sm h-10 px-4"
+                        className="border-slate-600 text-slate-300 hover:bg-slate-700 text-sm h-9 px-3"
                       >
-                        전략 둘러보기
+                        전략 구독하기
                       </Button>
                     </Link>
                   </div>
                 </div>
-                {miniDashboard}
+
+                <div className="grid lg:grid-cols-3 gap-3 sm:gap-4">
+                  {/* 좌측 2/3: 개인 KPI + AI 분석 요약 */}
+                  <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+                    {/* 개인 KPI 카드 */}
+                    {isLoadingDashboard ? (
+                      <PersonalDashboardSkeleton />
+                    ) : dashboardData ? (
+                      <PersonalDashboard dashboard={dashboardData} />
+                    ) : null}
+
+                    {/* AI 분석 미니 대시보드 */}
+                    {miniDashboard}
+                  </div>
+
+                  {/* 우측 1/3: 시장 현황 */}
+                  <div className="space-y-3">
+                    {isLoadingDashboard ? (
+                      <MarketWidgetSkeleton />
+                    ) : dashboardData?.market ? (
+                      <MarketWidget indices={dashboardData.market.indices} />
+                    ) : null}
+
+                    {/* 최근 알림 미리보기 */}
+                    {dashboardData?.signals && dashboardData.signals.recent.length > 0 && (
+                      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4">
+                        <h3 className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                          최근 알림
+                        </h3>
+                        <div className="space-y-1.5">
+                          {dashboardData.signals.recent.slice(0, 3).map((noti) => (
+                            <div key={noti.id} className="flex items-start gap-2 min-w-0">
+                              <span className="w-1.5 h-1.5 bg-cyan-500 rounded-full mt-1.5 shrink-0" />
+                              <p className="text-[11px] text-slate-300 line-clamp-1">
+                                {noti.title}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* 2. AI 주목 종목 */}
               {aiStocksSection}
 
-              {/* 3. 최신 뉴스 */}
-              {newsPreviewSection}
+              {/* 3+4. 뉴스 + 전략 (PC: 2컬럼 병렬) */}
+              <div className="lg:grid lg:grid-cols-2 lg:gap-8 [&_.strategy-grid]:lg:grid-cols-1">
+                <div>{newsPreviewSection}</div>
+                <div>{strategiesSection}</div>
+              </div>
 
-              {/* 4. 인기 전략 */}
-              {strategiesSection}
-
-              {/* 5. 투자 유의사항 */}
+              {/* 5. 투자 유의사항 (1회만) */}
               {disclaimerSection}
             </>
           ) : (
@@ -784,22 +835,30 @@ export default function Home() {
                비로그인 사용자: 랜딩 페이지 뷰
                ══════════════════════════════════════ */
             <>
-              {/* 1. 컴팩트 히어로 */}
+              {/* 1. 컴팩트 히어로 + TOP 종목 카드 (모바일: fold 위에 모두 배치) */}
               <div className="text-center mb-6 md:mb-10">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
-                  주식,{' '}
+                  오늘의{' '}
                   <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                    뭘 사야 할지
+                    AI 종목 분석
                   </span>{' '}
-                  모르겠다면
+                  나왔어요
                 </h1>
                 <p className="hidden sm:block text-base md:text-lg text-slate-400 mb-5 md:mb-6 max-w-2xl mx-auto">
-                  AI가 매일 종목을 분석하고, 좋은 종목을 골라드립니다.
+                  AI가 매일{' '}
+                  {predictionStats?.uniqueTickers
+                    ? `${predictionStats.uniqueTickers}개`
+                    : '수십 개'}{' '}
+                  종목을 분석하고, 좋은 종목을 골라드립니다.
                   <br />
                   초보자도 쉽게 시작할 수 있어요.
                 </p>
                 <p className="sm:hidden text-sm text-slate-400 mb-4">
-                  AI가 매일 종목을 분석하고 골라드립니다
+                  매일{' '}
+                  {predictionStats?.uniqueTickers
+                    ? `${predictionStats.uniqueTickers}개`
+                    : '수십 개'}{' '}
+                  종목을 AI가 분석합니다
                 </p>
                 <Link
                   href="/recommendations"
@@ -814,45 +873,90 @@ export default function Home() {
                     size="lg"
                     className="w-full sm:w-auto min-w-[220px] bg-emerald-600 hover:bg-emerald-700 h-12 sm:h-11 text-base"
                   >
-                    오늘의 AI 추천 보기 →
+                    무료로 AI 분석 보기 →
                   </Button>
                 </Link>
-                <div className="mt-3">
-                  <Link
-                    href="/signup"
-                    onClick={() =>
-                      trackEvent('landing_cta_click', {
-                        cta: 'hero_secondary_signup',
-                        location: 'hero',
-                      })
-                    }
-                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    회원가입하면 맞춤 추천을 받을 수 있어요
-                  </Link>
-                </div>
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-400">
-                  {predictionStats?.uniqueTickers ? (
-                    <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
-                      매일 {predictionStats.uniqueTickers}개 종목 분석 중
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
-                      매일 종목 자동 분석
-                    </Badge>
-                  )}
-                  {predictionStats?.totalPredictions ? (
-                    <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
-                      최근 30일 {predictionStats.totalPredictions.toLocaleString()}건 분석 완료
-                    </Badge>
-                  ) : null}
-                  <Badge className="bg-slate-800/70 text-slate-300 border-slate-600">
-                    투자 권유가 아닌 참고 정보
-                  </Badge>
-                </div>
+
+                {/* 모바일: TOP 종목 카드 (fold 위) */}
+                {displayStocks.length > 0 && (
+                  <div className="sm:hidden mt-4">
+                    {(() => {
+                      const topStock = displayStocks[0];
+                      const topGrade = getScoreGrade(topStock.compositeScore);
+                      const topReliability = checkPredictionReliability(topStock);
+                      const topIsUnreliable = topReliability.status !== 'reliable';
+                      const topPriceRec = topStock.priceRecommendation;
+                      const topIsBuy =
+                        !topIsUnreliable && (topPriceRec === '강력매수' || topPriceRec === '매수');
+                      return (
+                        <Link href="/recommendations">
+                          <div
+                            className={`bg-slate-800/60 border rounded-xl p-3.5 text-left transition-all active:scale-[0.98] ${
+                              topIsUnreliable ? 'border-amber-500/30' : 'border-emerald-500/40'
+                            }`}
+                          >
+                            <p className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider mb-1.5">
+                              {isFallback ? '오늘의 분석' : '오늘의 TOP'}
+                            </p>
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="text-[15px] font-bold text-white truncate">
+                                    {topStock.stockName}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500">
+                                    {topStock.ticker}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  {topStock.currentPrice != null && (
+                                    <span className="text-[13px] font-semibold text-slate-200 font-mono tabular-nums">
+                                      ${topStock.currentPrice.toFixed(2)}
+                                    </span>
+                                  )}
+                                  {topStock.targetPrice != null && (
+                                    <span className="text-[11px] text-slate-500 font-mono">
+                                      → 목표 ${topStock.targetPrice.toFixed(0)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className={`text-xl font-bold ${topGrade.color}`}>
+                                  {topStock.compositeScoreDisplay}
+                                  <span className="text-[10px] text-slate-500 font-normal">
+                                    /100
+                                  </span>
+                                </div>
+                                {topIsUnreliable ? (
+                                  <span className="text-[10px] text-amber-400">점검 중</span>
+                                ) : topIsBuy ? (
+                                  <span className="text-[10px] text-emerald-400">매수 신호</span>
+                                ) : null}
+                              </div>
+                            </div>
+                            {topStock.recommendationReason && (
+                              <p className="text-[11px] text-slate-400 mt-2 line-clamp-1">
+                                💡 {topStock.recommendationReason}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* PC: 배지 대신 간결한 부가정보 */}
+                <p className="hidden sm:block mt-4 text-xs text-slate-500">
+                  {lastUpdated
+                    ? `${new Date(lastUpdated).toLocaleDateString('ko-KR')} 업데이트`
+                    : ''}{' '}
+                  · 투자 권유가 아닌 참고 정보입니다
+                </p>
               </div>
 
-              {/* 2. AI 주목 종목 (히어로 바로 아래) */}
+              {/* 2. AI 주목 종목 (모바일: 나머지 종목, PC: 전체) */}
               {aiStocksSection}
 
               {/* 3. 최신 뉴스 */}
@@ -861,17 +965,14 @@ export default function Home() {
               {/* 4. 인기 전략 */}
               {strategiesSection}
 
-              {/* 5. 투자 유의사항 */}
-              {disclaimerSection}
-
-              {/* 6. CTA */}
+              {/* 5. CTA (면책조항은 푸터에 1회만 표시) */}
               <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
                 <CardContent className="text-center py-8 sm:py-10 md:py-12">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 text-white">
-                    지금 바로 AI 투자 분석을 시작하세요
+                    매일 새로운 AI 분석을 받아보세요
                   </h2>
                   <p className="text-sm sm:text-base md:text-lg mb-6 sm:mb-8 text-emerald-100">
-                    무료 가입으로 AI가 골라주는 종목을 확인해보세요.
+                    가입하면 맞춤 종목 추천과 알림을 받을 수 있어요.
                   </p>
                   <Link
                     href="/signup"
