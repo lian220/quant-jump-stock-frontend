@@ -92,18 +92,22 @@
 
 ---
 
-## 4. 권장 조치 (우선순위)
+## 4. 구현 완료 항목 및 후속 과제
 
-1. **메인 페이지에서 `useDashboard(user !== null)` 호출**
+### 완료 항목 (P0)
+
+1. **✅ 메인 페이지에서 `useDashboard(user !== null)` 호출**
    - 로그인 시에만 Dashboard API 사용, 기존 훅 그대로 활용.
 
-2. **로그인 뷰에 Dashboard 데이터 노출**
-   - ① **개인 요약**: subscriptions(count/maxCount 또는 요약), aiUsage(backtest 사용량/한도)
+2. **✅ 로그인 뷰에 Dashboard 데이터 노출**
+   - ① **개인 요약**: subscriptions(count/maxCount), aiUsage(backtest 사용량/한도)
    - ② **시장·알림**: market.indices(지수), signals(unreadCount, todayCount, recent[])
-   - 레이아웃은 [대시보드-UX-전문가-분석.md](./대시보드-UX-전문가-분석.md) PC/모바일 Wireframe 참고.
+   - PersonalDashboard + MarketWidget 컴포넌트로 구현.
 
-3. **에러/로딩 처리**
-   - Dashboard API 실패 시 기존 대시보드(전략·AI 종목·뉴스)는 유지, 개인 요약/시장·알림만 fallback 또는 숨김 처리 권장.
+3. **✅ 에러/로딩 처리**
+   - Dashboard API 실패 시 기존 대시보드(전략·AI 종목·뉴스)는 유지, 개인 요약/시장·알림만 숨김 처리.
+
+### 후속 개선 과제
 
 4. **추가 검토**
    - 구독 전략 **성과**(수익률 등)가 Dashboard API에 없으면, 별도 API 또는 전략 API와 조합 필요.

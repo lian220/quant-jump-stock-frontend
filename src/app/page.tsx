@@ -797,7 +797,7 @@ export default function Home() {
                     ) : null}
 
                     {/* 최근 알림 미리보기 */}
-                    {dashboardData?.signals && dashboardData.signals.recent.length > 0 && (
+                    {dashboardData?.signals?.recent && dashboardData.signals.recent.length > 0 && (
                       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3 sm:p-4">
                         <h3 className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
                           최근 알림
