@@ -23,7 +23,9 @@ export function PersonalDashboard({ dashboard }: PersonalDashboardProps) {
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 sm:p-3 hover:border-emerald-500/30 transition-colors text-center">
           <p className="text-lg sm:text-xl font-bold text-emerald-400 tabular-nums">
             {subscriptions.count}
-            <span className="text-xs text-slate-500 font-normal">/{subscriptions.maxCount}</span>
+            <span className="text-xs text-slate-500 font-normal">
+              /{subscriptions.maxCount < 0 ? '∞' : subscriptions.maxCount}
+            </span>
           </p>
           <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">구독 전략</p>
         </div>
@@ -47,7 +49,9 @@ export function PersonalDashboard({ dashboard }: PersonalDashboardProps) {
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-2.5 sm:p-3 text-center">
         <p className="text-lg sm:text-xl font-bold text-purple-400 tabular-nums">
           {aiUsage.backtestUsed}
-          <span className="text-xs text-slate-500 font-normal">/{aiUsage.backtestLimit}</span>
+          <span className="text-xs text-slate-500 font-normal">
+            /{aiUsage.backtestLimit < 0 ? '∞' : aiUsage.backtestLimit}
+          </span>
         </p>
         <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">백테스트</p>
         {/* 사용량 미니 바 */}
