@@ -780,7 +780,7 @@ export default function Home() {
                     {/* 개인 KPI 카드 */}
                     {isLoadingDashboard ? (
                       <PersonalDashboardSkeleton />
-                    ) : dashboardData ? (
+                    ) : dashboardData?.subscriptions ? (
                       <PersonalDashboard dashboard={dashboardData} />
                     ) : null}
 
