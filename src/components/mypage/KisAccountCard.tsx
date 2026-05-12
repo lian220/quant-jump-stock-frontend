@@ -117,6 +117,10 @@ export function KisAccountCard({
   );
 }
 
+/**
+ * ISO timestamp 를 "방금 전 / N분 전 / N시간 전 / N일 전" 한국어로 변환.
+ * 서버-클라이언트 시계 오차로 미래 시각이 들어와도 `Math.max(0, ...)` 가드로 "방금 전" 처리.
+ */
 function formatRelative(iso: string): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';

@@ -90,15 +90,22 @@ export async function restoreKisAccount(userId: string, token: string): Promise<
   return res.json() as Promise<KisAccount>;
 }
 
-// APP_KEY 마스킹 — 앞 4 + 뒤 4 외 ********
+/**
+ * APP_KEY 를 화면 노출용으로 마스킹.
+ * 정책: 앞 4자리 + 뒤 4자리만 노출, 사이 8자 고정 별표 (총 길이를 가려 길이 정보 leak 방지).
+ * 8자 이하면 전체를 별표로 가린다.
+ */
 export function maskAppKey(appKey: string): string {
   if (!appKey) return '';
   if (appKey.length <= 8) return '*'.repeat(appKey.length);
   return `${appKey.slice(0, 4)}${'*'.repeat(8)}${appKey.slice(-4)}`;
 }
 
-// 계좌번호 마스킹 — 12345678-01 → ****5678-01 (뒤 4 + 상품코드만 노출).
-// 형식이 예상과 다르면 뒤 4자리만 노출하는 보수적 fallback 으로 동작 (원본 노출 금지).
+/**
+ * 계좌번호 마스킹. 예: `12345678-01` → `****5678-01`.
+ * 본번호의 앞부분만 별표 처리하고 뒤 4자리 + 상품코드(-NN) 는 그대로 노출.
+ * 예상 형식이 아닐 때는 뒤 4자리만 노출하는 보수적 fallback 으로 원본 노출 금지.
+ */
 export function maskAccountNumber(accountNumber: string): string {
   if (!accountNumber) return '';
   const match = accountNumber.match(/^(.+)(-\d{2})$/);
@@ -111,7 +118,11 @@ export function maskAccountNumber(accountNumber: string): string {
   return `${'*'.repeat(main.length - 4)}${main.slice(-4)}${suffix}`;
 }
 
-// 휴지통 row 의 D-day 계산. deletedAt 으로부터 7일 경과까지의 남은 일수.
+/**
+ * 휴지통 row 의 D-day 계산. `deletedAt + 7일` 까지 남은 일수.
+ * BE Cloud Scheduler 가 7일 경과 row 를 hard delete 하므로 사용자가 복원 가능한 잔여 일수.
+ * 0 또는 음수면 만료 — UI 는 카드를 숨긴다.
+ */
 export function trashedDaysLeft(deletedAt: string | null): number {
   if (!deletedAt) return 0;
   const deletedTs = new Date(deletedAt).getTime();

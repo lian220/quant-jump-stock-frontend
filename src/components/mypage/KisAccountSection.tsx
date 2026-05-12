@@ -21,6 +21,11 @@ const USE_MOCK = true;
 type MockScenario = 'empty' | 'active' | 'active-with-trash';
 const MOCK_SCENARIO: MockScenario = 'active-with-trash';
 
+/**
+ * BE A+ 작업 머지 전 컴포넌트 동작 검증용 mock 상태 빌더.
+ * `MOCK_SCENARIO` 토글로 3가지 상태(`empty` / `active` / `active-with-trash`) 시각 확인 가능.
+ * BE 머지 후 `USE_MOCK = false` 로 전환하면 본 함수와 분기는 사용되지 않으므로 안전하게 삭제 가능.
+ */
 function buildMockState(): { active: KisAccount | null; trashed: KisAccount | null } {
   if (MOCK_SCENARIO === 'empty') {
     return { active: null, trashed: null };
