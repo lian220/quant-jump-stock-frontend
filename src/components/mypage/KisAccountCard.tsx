@@ -32,7 +32,7 @@ export function KisAccountCard({
     try {
       await onToggle(next);
     } catch (err) {
-      setToggleError(err instanceof Error ? err.message : '변경 실패');
+      setToggleError(err instanceof Error ? err.message : '활성 상태 변경에 실패했습니다');
     } finally {
       setToggling(false);
     }
@@ -120,7 +120,8 @@ export function KisAccountCard({
 function formatRelative(iso: string): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';
-  const diffMs = Date.now() - then;
+  // 시계 오차로 미래 시각이 들어오면 "방금 전" 으로 처리.
+  const diffMs = Math.max(0, Date.now() - then);
   const diffMin = Math.floor(diffMs / 60_000);
   if (diffMin < 1) return '방금 전';
   if (diffMin < 60) return `${diffMin}분 전`;

@@ -28,7 +28,7 @@ export function KisAccountForm({
   const [appSecret, setAppSecret] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountType, setAccountType] = useState<KisAccountType>(lockedAccountType ?? 'MOCK');
-  const [accountProductCode] = useState('01');
+  const accountProductCode = '01';
   const [realAgreed, setRealAgreed] = useState(false);
   const [modeChangeAgreed, setModeChangeAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -78,6 +78,7 @@ export function KisAccountForm({
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : '등록에 실패했습니다');
+    } finally {
       setSubmitting(false);
     }
   }

@@ -97,11 +97,15 @@ export function maskAppKey(appKey: string): string {
   return `${appKey.slice(0, 4)}${'*'.repeat(8)}${appKey.slice(-4)}`;
 }
 
-// 계좌번호 마스킹 — 12345678-01 → ****5678-01 (뒤 4 + 상품코드만 노출)
+// 계좌번호 마스킹 — 12345678-01 → ****5678-01 (뒤 4 + 상품코드만 노출).
+// 형식이 예상과 다르면 뒤 4자리만 노출하는 보수적 fallback 으로 동작 (원본 노출 금지).
 export function maskAccountNumber(accountNumber: string): string {
   if (!accountNumber) return '';
   const match = accountNumber.match(/^(.+)(-\d{2})$/);
-  if (!match) return accountNumber;
+  if (!match) {
+    if (accountNumber.length <= 4) return '*'.repeat(accountNumber.length);
+    return `${'*'.repeat(accountNumber.length - 4)}${accountNumber.slice(-4)}`;
+  }
   const [, main, suffix] = match;
   if (main.length <= 4) return `${main}${suffix}`;
   return `${'*'.repeat(main.length - 4)}${main.slice(-4)}${suffix}`;

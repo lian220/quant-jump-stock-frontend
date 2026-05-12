@@ -27,9 +27,10 @@ export function KisAccountTrashedCard({ account, onRestore }: KisAccountTrashedC
     setError(null);
     try {
       await onRestore();
-      // 성공 시 부모가 trashed=null 로 갱신
+      setConfirming(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '복원 실패');
+      setError(err instanceof Error ? err.message : '이전 키 복원에 실패했습니다');
+    } finally {
       setRestoring(false);
     }
   }

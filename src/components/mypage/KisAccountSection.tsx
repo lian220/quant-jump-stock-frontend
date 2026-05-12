@@ -209,7 +209,13 @@ export function KisAccountSection({ userId }: KisAccountSectionProps) {
               }
               onModeChange={() => setFormMode({ kind: 'new' })}
             />
-            {trashed && <KisAccountTrashedCard account={trashed} onRestore={handleRestore} />}
+            {trashed && (
+              <KisAccountTrashedCard
+                key={trashed.appKey + (trashed.deletedAt ?? '')}
+                account={trashed}
+                onRestore={handleRestore}
+              />
+            )}
           </>
         )}
 
