@@ -1,8 +1,9 @@
 # Frontend Dockerfile for Next.js
 FROM node:22-alpine AS base
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# pnpm 버전은 package.json의 "packageManager" 필드에서 corepack이 자동 활성화
+# (이전: corepack prepare pnpm@latest → 매 빌드마다 메이저 자동 갱신되어 시간 폭탄)
+RUN corepack enable
 
 # Build stage
 FROM base AS builder
@@ -15,8 +16,8 @@ ENV HUSKY=0
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
-# Install dependencies
-RUN pnpm install --no-frozen-lockfile
+# Install dependencies (CI: 재현성을 위해 frozen-lockfile)
+RUN pnpm install --frozen-lockfile
 
 # Copy source files
 COPY . .
