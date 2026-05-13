@@ -4,11 +4,19 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'standalone',
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development';
     return [
-      // ── 정적 자산 (빌드 해시 포함) → 영구 캐시 ──
+      // ── 정적 자산 (빌드 해시 포함) → 영구 캐시 (dev 에선 캐시 금지) ──
       {
         source: '/_next/static/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: isDev
+              ? 'no-cache, no-store, must-revalidate'
+              : 'public, max-age=31536000, immutable',
+          },
+        ],
       },
       // ── 이미지 → 1일 캐시 + SWR 12시간 ──
       {
