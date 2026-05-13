@@ -8,6 +8,10 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 FROM base AS builder
 WORKDIR /app
 
+# husky prepare 스크립트는 .git을 요구하는데 Docker 빌드 컨텍스트에는 .git이 없음.
+# HUSKY=0 으로 husky 자체를 no-op 처리 (husky 9 공식 지원).
+ENV HUSKY=0
+
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
