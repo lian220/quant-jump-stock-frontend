@@ -835,31 +835,82 @@ export default function Home() {
                비로그인 사용자: 랜딩 페이지 뷰
                ══════════════════════════════════════ */
             <>
-              {/* 1. 컴팩트 히어로 + TOP 종목 카드 (모바일: fold 위에 모두 배치) */}
+              {/* 1. 히어로 (시안 C: AI 점수 띠 + KIS 차별점) */}
               <div className="text-center mb-6 md:mb-10">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4">
-                  오늘의{' '}
+                <h1
+                  className="font-extrabold text-white mb-3 md:mb-4 break-keep tracking-tight leading-[1.1]"
+                  style={{ fontSize: 'clamp(28px, 4.6vw, 60px)' }}
+                >
                   <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                    AI 종목 분석
-                  </span>{' '}
-                  나왔어요
+                    AI
+                  </span>
+                  가 골라준 미국 주식,{' '}
+                  <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                    KIS
+                  </span>
+                  로 바로 매수.
                 </h1>
-                <p className="hidden sm:block text-base md:text-lg text-slate-400 mb-5 md:mb-6 max-w-2xl mx-auto">
-                  AI가 매일{' '}
-                  {predictionStats?.uniqueTickers
-                    ? `${predictionStats.uniqueTickers}개`
-                    : '수십 개'}{' '}
-                  종목을 분석하고, 좋은 종목을 골라드립니다.
-                  <br />
-                  초보자도 쉽게 시작할 수 있어요.
+                <p
+                  className="text-slate-400 mb-4 max-w-[680px] mx-auto leading-relaxed"
+                  style={{ fontSize: 'clamp(13px, 1.15vw, 17px)' }}
+                >
+                  주식이 처음이어도 괜찮아요. AI가 매일{' '}
+                  <strong className="text-slate-200">
+                    {predictionStats?.uniqueTickers
+                      ? `${predictionStats.uniqueTickers}개`
+                      : '수십 개'}
+                  </strong>{' '}
+                  미국 주식을 <strong className="text-slate-200">1~100점</strong>으로 채점하고,
+                  점수가 높은 종목만 추천합니다.
                 </p>
-                <p className="sm:hidden text-sm text-slate-400 mb-4">
-                  매일{' '}
-                  {predictionStats?.uniqueTickers
-                    ? `${predictionStats.uniqueTickers}개`
-                    : '수십 개'}{' '}
-                  종목을 AI가 분석합니다
-                </p>
+
+                {/* AI 점수 띠 — 점수의 의미를 1초에 이해 */}
+                {(() => {
+                  const buyCount = displayStocks.filter(
+                    (s) => (s.compositeScoreDisplay ?? 0) >= 65,
+                  ).length;
+                  return (
+                    <div className="max-w-[680px] mx-auto mt-4 bg-slate-800/60 border border-slate-700 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-left">
+                      <div className="flex items-center gap-2 mb-2 text-[12px] font-semibold text-slate-300">
+                        <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-bold">
+                          ?
+                        </span>
+                        <span>AI 점수란?</span>
+                        <span className="ml-auto hidden sm:inline text-[11px] font-normal text-slate-500">
+                          AI·기술·감정 분석을 100점 만점으로 종합
+                        </span>
+                      </div>
+                      <div
+                        className="relative h-[10px] rounded-full"
+                        style={{
+                          background:
+                            'linear-gradient(90deg, #5b6a92 0%, #5b6a92 50%, #fbbf24 50%, #fbbf24 65%, #10b981 65%, #10b981 80%, #22d3ee 80%, #22d3ee 100%)',
+                        }}
+                      >
+                        <div
+                          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[18px] h-[18px] rounded-full bg-white border-[3px] border-emerald-500"
+                          style={{ left: '65%', boxShadow: '0 0 12px rgba(16,185,129,0.6)' }}
+                        >
+                          <span className="absolute -top-[22px] left-1/2 -translate-x-1/2 text-[10px] font-bold text-emerald-400 bg-slate-900 border border-emerald-500 px-[5px] py-[1px] rounded whitespace-nowrap">
+                            65
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2.5 grid grid-cols-2 sm:grid-cols-[50%_15%_15%_20%] gap-y-1 text-[11px] text-center whitespace-nowrap">
+                        <span className="text-slate-400">0–49 · 보류</span>
+                        <span className="text-amber-400">50–64 · 관찰</span>
+                        <span className="text-emerald-400 font-bold">65–79 · 매수 추천</span>
+                        <span className="text-cyan-400 font-bold">80–100 · 강력 추천</span>
+                      </div>
+                      {displayStocks.length > 0 && (
+                        <p className="mt-2 text-center text-[11.5px] text-slate-400">
+                          오늘 65점 이상 종목 <strong className="text-white">{buyCount}개</strong>
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <Link
                   href="/recommendations"
                   onClick={() =>
@@ -868,14 +919,18 @@ export default function Home() {
                       location: 'hero',
                     })
                   }
+                  className="inline-block mt-5"
                 >
                   <Button
                     size="lg"
                     className="w-full sm:w-auto min-w-[220px] bg-emerald-600 hover:bg-emerald-700 h-12 sm:h-11 text-base"
                   >
-                    무료로 AI 분석 보기 →
+                    오늘의 AI 추천 보기 →
                   </Button>
                 </Link>
+                <p className="mt-2 text-[12px] text-slate-500">
+                  가입 없이 미리보기 · 신용카드 불필요
+                </p>
 
                 {/* 모바일: TOP 종목 카드 (fold 위) */}
                 {displayStocks.length > 0 && (
@@ -947,13 +1002,12 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* PC: 배지 대신 간결한 부가정보 */}
-                <p className="hidden sm:block mt-4 text-xs text-slate-500">
-                  {lastUpdated
-                    ? `${new Date(lastUpdated).toLocaleDateString('ko-KR')} 업데이트`
-                    : ''}{' '}
-                  · 투자 권유가 아닌 참고 정보입니다
-                </p>
+                {/* PC: 업데이트 시각 (면책은 푸터에서) */}
+                {lastUpdated && (
+                  <p className="hidden sm:block mt-3 text-[11px] text-slate-600">
+                    {new Date(lastUpdated).toLocaleDateString('ko-KR')} 업데이트
+                  </p>
+                )}
               </div>
 
               {/* 2. AI 주목 종목 (모바일: 나머지 종목, PC: 전체) */}
