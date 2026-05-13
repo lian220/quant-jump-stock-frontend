@@ -216,7 +216,7 @@ export default function Home() {
                       className={idx === 0 && !user ? 'hidden sm:block' : ''}
                     >
                       <Card
-                        className={`bg-slate-800/50 transition-all active:scale-[0.98] hover:shadow-lg cursor-pointer ${
+                        className={`relative bg-slate-800/50 transition-all active:scale-[0.98] hover:shadow-lg cursor-pointer ${
                           isUnreliable
                             ? 'border-amber-500/30 hover:border-amber-400'
                             : isSellSignal
@@ -224,6 +224,16 @@ export default function Home() {
                               : 'border-emerald-500/50 hover:border-emerald-400'
                         }`}
                       >
+                        {/* 순위 배지 (#1 emerald / 그 외 slate) */}
+                        <span
+                          className={`absolute -top-2.5 left-4 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide whitespace-nowrap ${
+                            idx === 0
+                              ? 'bg-emerald-500 text-emerald-950'
+                              : 'bg-slate-700 text-slate-200 border border-slate-600'
+                          }`}
+                        >
+                          {idx === 0 ? '🏆 #1' : `#${idx + 1}`}
+                        </span>
                         {/* ── 모바일: 컴팩트 카드 ── */}
                         <div className="sm:hidden px-3 py-2.5 space-y-2">
                           {/* 상단: 종목 정보 + 점수/배지 */}
@@ -835,43 +845,120 @@ export default function Home() {
                비로그인 사용자: 랜딩 페이지 뷰
                ══════════════════════════════════════ */
             <>
-              {/* 1. 히어로 (시안 C: AI 점수 띠 + KIS 차별점) */}
-              <div className="text-center mb-6 md:mb-10">
-                <h1
-                  className="font-extrabold text-white mb-3 md:mb-4 break-keep tracking-tight leading-[1.1]"
-                  style={{ fontSize: 'clamp(28px, 4.6vw, 60px)' }}
-                >
-                  <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                    AI
-                  </span>
-                  가 골라준 미국 주식,{' '}
-                  <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                    KIS
-                  </span>
-                  로 바로 매수.
-                </h1>
-                <p
-                  className="text-slate-400 mb-4 max-w-[680px] mx-auto leading-relaxed"
-                  style={{ fontSize: 'clamp(13px, 1.15vw, 17px)' }}
-                >
-                  주식이 처음이어도 괜찮아요. AI가 매일{' '}
-                  <strong className="text-slate-200">
+              {/* 1. Hero — 2-col PC / 1-col mobile · compact */}
+              <div className="mb-6 md:mb-8 lg:grid lg:grid-cols-[1.15fr_1fr] lg:gap-10 lg:items-center text-center lg:text-left">
+                {/* ── 좌측: 텍스트 + CTA ── */}
+                <div>
+                  {/* Eyebrow */}
+                  <span className="inline-flex items-center gap-2 mb-2.5 px-3 py-1 rounded-full bg-cyan-400/10 border border-cyan-400/25 text-cyan-300 text-[11px] font-semibold tracking-wide">
+                    <span
+                      aria-hidden="true"
+                      className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse motion-reduce:animate-none"
+                    ></span>
+                    {lastUpdated
+                      ? `${new Date(lastUpdated).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 분석 완료`
+                      : '오늘 분석 완료'}
                     {predictionStats?.uniqueTickers
-                      ? `${predictionStats.uniqueTickers}개`
-                      : '수십 개'}
-                  </strong>{' '}
-                  미국 주식을 <strong className="text-slate-200">1~100점</strong>으로 채점하고,
-                  점수가 높은 종목만 추천합니다.
-                </p>
+                      ? ` · ${predictionStats.uniqueTickers}개 종목`
+                      : ''}
+                  </span>
+                  <h1
+                    className="font-extrabold text-white mb-2.5 break-keep tracking-tight leading-[1.1]"
+                    style={{ fontSize: 'clamp(28px, 3.8vw, 52px)' }}
+                  >
+                    {/* fallback: emerald-300 solid (WCAG AA 4.5:1 on slate-900). 그라데이션 미지원 환경 + a11y 보강 */}
+                    <span className="text-emerald-300 bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
+                      AI
+                    </span>
+                    가 골라준 미국 주식,{' '}
+                    <span className="text-emerald-300 bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
+                      KIS
+                    </span>
+                    로 매수까지.
+                  </h1>
+                  <p
+                    className="text-slate-400 mb-4 max-w-[560px] mx-auto lg:mx-0 leading-relaxed"
+                    style={{ fontSize: 'clamp(13px, 1.05vw, 16px)' }}
+                  >
+                    주식이 처음이어도 괜찮아요. AI가 매일{' '}
+                    <strong className="text-slate-200">
+                      {predictionStats?.uniqueTickers
+                        ? `${predictionStats.uniqueTickers}개`
+                        : '수십 개'}
+                    </strong>{' '}
+                    미국 주식을 <strong className="text-slate-200">1~100점</strong>으로 채점, 높은
+                    점수만 추천합니다.
+                  </p>
 
-                {/* AI 점수 띠 — 점수의 의미를 1초에 이해 */}
+                  {/* Proof line — 한 줄 압축 */}
+                  <div className="mb-4 flex flex-wrap items-center justify-center lg:justify-start gap-x-4 gap-y-1.5 text-[12px] text-slate-400">
+                    <span className="inline-flex items-center gap-1.5">
+                      🏦 <strong className="text-slate-200 font-semibold">KIS</strong> 계좌 연동
+                    </span>
+                    <span className="text-slate-700">·</span>
+                    <span className="inline-flex items-center gap-1.5">🇰🇷 한국어 분석</span>
+                    {strategiesData?.totalItems ? (
+                      <>
+                        <span className="text-slate-700">·</span>
+                        <span className="inline-flex items-center gap-1.5">
+                          📊 검증된 전략{' '}
+                          <strong className="text-slate-200 font-semibold">
+                            {strategiesData.totalItems}개
+                          </strong>
+                        </span>
+                      </>
+                    ) : null}
+                  </div>
+
+                  {/* CTA 행 */}
+                  <div className="flex flex-col sm:flex-row gap-2.5 justify-center lg:justify-start items-stretch sm:items-center">
+                    <Link
+                      href="/recommendations"
+                      onClick={() =>
+                        trackEvent('landing_cta_click', {
+                          cta: 'hero_primary_recommendations',
+                          location: 'hero',
+                        })
+                      }
+                    >
+                      <Button
+                        size="lg"
+                        className="w-full sm:w-auto min-w-[200px] bg-emerald-600 hover:bg-emerald-700 h-11 text-base"
+                      >
+                        오늘의 AI 추천 보기 →
+                      </Button>
+                    </Link>
+                    <Link
+                      href="/mypage?tab=kis"
+                      onClick={() =>
+                        trackEvent('landing_cta_click', {
+                          cta: 'hero_secondary_kis',
+                          location: 'hero',
+                        })
+                      }
+                    >
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="w-full sm:w-auto min-w-[200px] border-slate-600 text-slate-200 hover:bg-slate-800 h-11 text-base"
+                      >
+                        KIS 계좌 연결로 시작
+                      </Button>
+                    </Link>
+                  </div>
+                  <p className="mt-2 text-[12px] text-slate-500">
+                    가입 없이 미리보기 가능 · 신용카드 불필요
+                  </p>
+                </div>
+
+                {/* ── 우측: AI 점수 띠 카드 ── */}
                 {(() => {
                   const buyCount = displayStocks.filter(
                     (s) => (s.compositeScoreDisplay ?? 0) >= 65,
                   ).length;
                   return (
-                    <div className="max-w-[680px] mx-auto mt-4 bg-slate-800/60 border border-slate-700 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-left">
-                      <div className="flex items-center gap-2 mb-2 text-[12px] font-semibold text-slate-300">
+                    <div className="mt-5 lg:mt-0 mx-auto lg:mx-0 max-w-[680px] bg-slate-800/60 border border-slate-700 rounded-2xl px-4 py-3.5 sm:px-5 sm:py-4 text-left">
+                      <div className="flex items-center gap-2 mb-2.5 text-[12px] font-semibold text-slate-300">
                         <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-emerald-500/15 text-emerald-400 text-[11px] font-bold">
                           ?
                         </span>
@@ -891,46 +978,28 @@ export default function Home() {
                           className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[18px] h-[18px] rounded-full bg-white border-[3px] border-emerald-500"
                           style={{ left: '65%', boxShadow: '0 0 12px rgba(16,185,129,0.6)' }}
                         >
-                          <span className="absolute -top-[22px] left-1/2 -translate-x-1/2 text-[10px] font-bold text-emerald-400 bg-slate-900 border border-emerald-500 px-[5px] py-[1px] rounded whitespace-nowrap">
-                            65
+                          {/* 마커 라벨: "65 · 매수 추천" 한 묶음으로 — 점수 의미를 1초에 전달 */}
+                          <span className="absolute -top-[24px] left-1/2 -translate-x-1/2 text-[10px] font-bold text-emerald-300 bg-slate-900 border border-emerald-500 px-1.5 py-[1px] rounded whitespace-nowrap">
+                            65 · 매수 추천
                           </span>
                         </div>
                       </div>
-                      <div className="mt-2.5 grid grid-cols-2 sm:grid-cols-[50%_15%_15%_20%] gap-y-1 text-[11px] text-center whitespace-nowrap">
+                      {/* 4-구간 라벨 — 모바일 강제 2×2 grid (디자인 컨펌 권고) */}
+                      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-2 gap-y-1.5 text-[11px] text-center whitespace-nowrap">
                         <span className="text-slate-400">0–49 · 보류</span>
                         <span className="text-amber-400">50–64 · 관찰</span>
                         <span className="text-emerald-400 font-bold">65–79 · 매수 추천</span>
-                        <span className="text-cyan-400 font-bold">80–100 · 강력 추천</span>
+                        <span className="text-cyan-300 font-bold">80–100 · 강력 추천</span>
                       </div>
                       {displayStocks.length > 0 && (
-                        <p className="mt-2 text-center text-[11.5px] text-slate-400">
-                          오늘 65점 이상 종목 <strong className="text-white">{buyCount}개</strong>
+                        <p className="mt-2.5 text-center text-[11.5px] text-slate-400">
+                          오늘 65점 이상 종목 <strong className="text-white">{buyCount}개</strong> ·
+                          KIS 계좌로 1초 매수 가능
                         </p>
                       )}
                     </div>
                   );
                 })()}
-
-                <Link
-                  href="/recommendations"
-                  onClick={() =>
-                    trackEvent('landing_cta_click', {
-                      cta: 'hero_primary_recommendations',
-                      location: 'hero',
-                    })
-                  }
-                  className="inline-block mt-5"
-                >
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto min-w-[220px] bg-emerald-600 hover:bg-emerald-700 h-12 sm:h-11 text-base"
-                  >
-                    오늘의 AI 추천 보기 →
-                  </Button>
-                </Link>
-                <p className="mt-2 text-[12px] text-slate-500">
-                  가입 없이 미리보기 · 신용카드 불필요
-                </p>
 
                 {/* 모바일: TOP 종목 카드 (fold 위) */}
                 {displayStocks.length > 0 && (
