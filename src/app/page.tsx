@@ -845,7 +845,7 @@ export default function Home() {
                비로그인 사용자: 랜딩 페이지 뷰
                ══════════════════════════════════════ */
             <>
-              {/* 1. Hero — 2-col PC / 1-col mobile · compact */}
+              {/* 1. Hero (2-col PC / 1-col mobile, compact) */}
               <div className="mb-6 md:mb-8 lg:grid lg:grid-cols-[1.15fr_1fr] lg:gap-10 lg:items-center text-center lg:text-left">
                 {/* ── 좌측: 텍스트 + CTA ── */}
                 <div>
@@ -867,11 +867,11 @@ export default function Home() {
                     style={{ fontSize: 'clamp(28px, 3.8vw, 52px)' }}
                   >
                     {/* fallback: emerald-300 solid (WCAG AA 4.5:1 on slate-900). 그라데이션 미지원 환경 + a11y 보강 */}
-                    <span className="text-emerald-300 bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
+                    <span className="text-emerald-300 supports-[background-clip:text]:bg-gradient-to-r supports-[background-clip:text]:from-emerald-300 supports-[background-clip:text]:to-cyan-300 supports-[background-clip:text]:bg-clip-text supports-[background-clip:text]:text-transparent">
                       AI
                     </span>
                     가 골라준 미국 주식,{' '}
-                    <span className="text-emerald-300 bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
+                    <span className="text-emerald-300 supports-[background-clip:text]:bg-gradient-to-r supports-[background-clip:text]:from-emerald-300 supports-[background-clip:text]:to-cyan-300 supports-[background-clip:text]:bg-clip-text supports-[background-clip:text]:text-transparent">
                       KIS
                     </span>
                     로 매수까지.
@@ -910,41 +910,43 @@ export default function Home() {
                     ) : null}
                   </div>
 
-                  {/* CTA 행 */}
+                  {/* CTA 행 — Button asChild 패턴: a > button 중첩 방지 (a11y) */}
                   <div className="flex flex-col sm:flex-row gap-2.5 justify-center lg:justify-start items-stretch sm:items-center">
-                    <Link
-                      href="/recommendations"
-                      onClick={() =>
-                        trackEvent('landing_cta_click', {
-                          cta: 'hero_primary_recommendations',
-                          location: 'hero',
-                        })
-                      }
+                    <Button
+                      asChild
+                      size="lg"
+                      className="w-full sm:w-auto min-w-[200px] bg-emerald-600 hover:bg-emerald-700 h-11 text-base"
                     >
-                      <Button
-                        size="lg"
-                        className="w-full sm:w-auto min-w-[200px] bg-emerald-600 hover:bg-emerald-700 h-11 text-base"
+                      <Link
+                        href="/recommendations"
+                        onClick={() =>
+                          trackEvent('landing_cta_click', {
+                            cta: 'hero_primary_recommendations',
+                            location: 'hero',
+                          })
+                        }
                       >
                         오늘의 AI 추천 보기 →
-                      </Button>
-                    </Link>
-                    <Link
-                      href="/mypage?tab=kis"
-                      onClick={() =>
-                        trackEvent('landing_cta_click', {
-                          cta: 'hero_secondary_kis',
-                          location: 'hero',
-                        })
-                      }
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="outline"
+                      className="w-full sm:w-auto min-w-[200px] border-slate-600 text-slate-200 hover:bg-slate-800 h-11 text-base"
                     >
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="w-full sm:w-auto min-w-[200px] border-slate-600 text-slate-200 hover:bg-slate-800 h-11 text-base"
+                      <Link
+                        href="/mypage?tab=kis"
+                        onClick={() =>
+                          trackEvent('landing_cta_click', {
+                            cta: 'hero_secondary_kis',
+                            location: 'hero',
+                          })
+                        }
                       >
                         KIS 계좌 연결로 시작
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </div>
                   <p className="mt-2 text-[12px] text-slate-500">
                     가입 없이 미리보기 가능 · 신용카드 불필요
