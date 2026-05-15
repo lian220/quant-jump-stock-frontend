@@ -16,7 +16,8 @@ interface KisAccountFormProps {
 
 const APP_KEY_MIN_LEN = 32;
 const APP_SECRET_MIN_LEN = 64;
-const ACCOUNT_NUMBER_PATTERN = /^\d{8,10}-\d{2}$/;
+// BE 검증 (`accountNumber: ^\d{8}$`, `accountProductCode: ^\d{2}$`) 과 일치.
+const ACCOUNT_NUMBER_PATTERN = /^\d{8}-\d{2}$/;
 
 export function KisAccountForm({
   lockedAccountType,
@@ -67,12 +68,15 @@ export function KisAccountForm({
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
+    // BE 는 accountNumber (8자리) + accountProductCode (2자리) 분리 형태로 받음.
+    // FE 입력은 단일 필드 `12345678-01` UX 유지하되 제출 시 split.
+    const [accNumberPart, productCodePart] = trimmedAccountNumber.split('-');
     try {
       await onSubmit({
         appKey: trimmedAppKey,
         appSecret: trimmedAppSecret,
-        accountNumber: trimmedAccountNumber,
-        accountProductCode,
+        accountNumber: accNumberPart,
+        accountProductCode: productCodePart ?? accountProductCode,
         accountType,
         enabled: true,
       });
