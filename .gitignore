@@ -60,3 +60,6 @@ settings.local.json
 
 # Runtime logs
 .logs/
+
+# Git worktrees
+.worktrees/
