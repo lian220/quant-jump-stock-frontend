@@ -31,7 +31,7 @@ import {
 import type { Strategy, RiskLevel } from '@/types/strategy';
 import { getRiskColor, getRiskLabel, getCategoryLabel } from '@/lib/strategy-helpers';
 import { PageSEO } from '@/components/seo';
-import { KisAccountSection } from '@/components/mypage/KisAccountSection';
+import { BrokerAccountSection } from '@/components/mypage/BrokerAccountSection';
 
 export default function MyPage() {
   const { user, loading, signOut, resetPassword, updateProfile } = useAuth();
@@ -399,7 +399,7 @@ export default function MyPage() {
         </Card>
 
         {/* 자동매매 계좌 */}
-        <KisAccountSection userId={user.userId} />
+        <BrokerAccountSection userId={user.userId} />
 
         {/* 내 구독 전략 */}
         <Card className="bg-slate-800/50 border-slate-700">
