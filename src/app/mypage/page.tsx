@@ -542,79 +542,98 @@ export default function MyPage() {
                 {subscriptionError && (
                   <p className="text-red-400 text-xs mb-2">{subscriptionError}</p>
                 )}
-                {subscriptions.map((sub) => (
-                  <div
-                    key={sub.subscriptionId}
-                    className="flex flex-col gap-2 p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
-                    data-testid={`subscription-${sub.subscriptionId}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Link href={`/strategies/${sub.strategyId}`} className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">
-                          {sub.strategyName}
-                        </p>
-                        <p className="text-slate-500 text-xs mt-0.5">
-                          {new Date(sub.subscribedAt).toLocaleDateString('ko-KR')} 구독
-                        </p>
-                      </Link>
-                      <button
-                        onClick={() => handleToggleAlert(sub.subscriptionId, sub.alertEnabled)}
-                        disabled={togglingAlert === sub.subscriptionId}
-                        className={`shrink-0 text-xs px-2 py-1 rounded transition-colors ${
-                          sub.alertEnabled
-                            ? 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30'
-                            : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
-                        }`}
-                        title={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
-                        aria-label={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
-                        aria-pressed={sub.alertEnabled}
-                      >
-                        {togglingAlert === sub.subscriptionId ? (
-                          '...'
-                        ) : (
-                          <span aria-hidden="true">{sub.alertEnabled ? '🔔' : '🔕'}</span>
+                {subscriptions.map((sub) => {
+                  // Phase 1C — 계좌-구독 1:1 제약.
+                  // 다른 ACTIVE 구독이 이미 점유한 계좌 ID → 점유 구독 매핑.
+                  const accountUsageByOthers = new Map<number, SubscriptionSummary>();
+                  for (const other of subscriptions) {
+                    if (
+                      other.subscriptionId !== sub.subscriptionId &&
+                      other.brokerAccountId != null
+                    ) {
+                      accountUsageByOthers.set(other.brokerAccountId, other);
+                    }
+                  }
+                  return (
+                    <div
+                      key={sub.subscriptionId}
+                      className="flex flex-col gap-2 p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                      data-testid={`subscription-${sub.subscriptionId}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Link href={`/strategies/${sub.strategyId}`} className="flex-1 min-w-0">
+                          <p className="text-white text-sm font-medium truncate">
+                            {sub.strategyName}
+                          </p>
+                          <p className="text-slate-500 text-xs mt-0.5">
+                            {new Date(sub.subscribedAt).toLocaleDateString('ko-KR')} 구독
+                          </p>
+                        </Link>
+                        <button
+                          onClick={() => handleToggleAlert(sub.subscriptionId, sub.alertEnabled)}
+                          disabled={togglingAlert === sub.subscriptionId}
+                          className={`shrink-0 text-xs px-2 py-1 rounded transition-colors ${
+                            sub.alertEnabled
+                              ? 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30'
+                              : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
+                          }`}
+                          title={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
+                          aria-label={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
+                          aria-pressed={sub.alertEnabled}
+                        >
+                          {togglingAlert === sub.subscriptionId ? (
+                            '...'
+                          ) : (
+                            <span aria-hidden="true">{sub.alertEnabled ? '🔔' : '🔕'}</span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleUnsubscribe(sub.strategyId)}
+                          disabled={unsubscribing === sub.strategyId}
+                          className="shrink-0 text-slate-500 hover:text-red-400 transition-colors text-lg leading-none"
+                          title="구독 취소"
+                          aria-label="구독 취소"
+                        >
+                          {unsubscribing === sub.strategyId ? '...' : '×'}
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 pl-1">
+                        <label className="text-slate-400 text-xs whitespace-nowrap">
+                          이 전략으로 주문 나갈 계좌
+                        </label>
+                        <select
+                          value={sub.brokerAccountId ?? ''}
+                          onChange={(e) =>
+                            handleChangeBrokerAccount(
+                              sub.subscriptionId,
+                              e.target.value === '' ? null : Number(e.target.value),
+                            )
+                          }
+                          disabled={updatingBrokerAccount === sub.subscriptionId}
+                          className="flex-1 bg-slate-700 text-white text-xs rounded px-2 py-1 border border-slate-600"
+                          data-testid={`subscription-broker-${sub.subscriptionId}`}
+                        >
+                          <option value="">미설정 — 자동매매 안 함</option>
+                          {brokerAccounts.map((acc) => {
+                            const occupiedBy = accountUsageByOthers.get(acc.id);
+                            const baseLabel = `${acc.broker} ${ACCOUNT_TYPE_LABEL[acc.accountType]} ${acc.accountNumber}${acc.accountAlias ? ` — ${acc.accountAlias}` : ''}`;
+                            return (
+                              <option key={acc.id} value={acc.id} disabled={occupiedBy != null}>
+                                {baseLabel}
+                                {occupiedBy != null
+                                  ? ` — 「${occupiedBy.strategyName}」 사용 중`
+                                  : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        {updatingBrokerAccount === sub.subscriptionId && (
+                          <span className="text-xs text-slate-400">저장 중...</span>
                         )}
-                      </button>
-                      <button
-                        onClick={() => handleUnsubscribe(sub.strategyId)}
-                        disabled={unsubscribing === sub.strategyId}
-                        className="shrink-0 text-slate-500 hover:text-red-400 transition-colors text-lg leading-none"
-                        title="구독 취소"
-                        aria-label="구독 취소"
-                      >
-                        {unsubscribing === sub.strategyId ? '...' : '×'}
-                      </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 pl-1">
-                      <label className="text-slate-400 text-xs whitespace-nowrap">
-                        이 전략으로 주문 나갈 계좌
-                      </label>
-                      <select
-                        value={sub.brokerAccountId ?? ''}
-                        onChange={(e) =>
-                          handleChangeBrokerAccount(
-                            sub.subscriptionId,
-                            e.target.value === '' ? null : Number(e.target.value),
-                          )
-                        }
-                        disabled={updatingBrokerAccount === sub.subscriptionId}
-                        className="flex-1 bg-slate-700 text-white text-xs rounded px-2 py-1 border border-slate-600"
-                        data-testid={`subscription-broker-${sub.subscriptionId}`}
-                      >
-                        <option value="">미설정 — 자동매매 안 함</option>
-                        {brokerAccounts.map((acc) => (
-                          <option key={acc.id} value={acc.id}>
-                            {acc.broker} {ACCOUNT_TYPE_LABEL[acc.accountType]} {acc.accountNumber}
-                            {acc.accountAlias ? ` — ${acc.accountAlias}` : ''}
-                          </option>
-                        ))}
-                      </select>
-                      {updatingBrokerAccount === sub.subscriptionId && (
-                        <span className="text-xs text-slate-400">저장 중...</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
