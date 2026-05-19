@@ -36,6 +36,7 @@ import type { Strategy, RiskLevel } from '@/types/strategy';
 import { getRiskColor, getRiskLabel, getCategoryLabel } from '@/lib/strategy-helpers';
 import { PageSEO } from '@/components/seo';
 import { BrokerAccountSection } from '@/components/mypage/BrokerAccountSection';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function MyPage() {
   const { user, loading, signOut, resetPassword, updateProfile } = useAuth();
@@ -54,6 +55,14 @@ export default function MyPage() {
   // Phase 1B v2.1: 구독별 실행 계좌 라디오용 broker accounts
   const [brokerAccounts, setBrokerAccounts] = useState<BrokerAccount[]>([]);
   const [updatingBrokerAccount, setUpdatingBrokerAccount] = useState<number | null>(null);
+
+  // REAL 계좌 매핑 confirm 대상 (subscriptionId, accountId, strategyName)
+  const [pendingRealMapping, setPendingRealMapping] = useState<{
+    subscriptionId: number;
+    accountId: number;
+    strategyName: string;
+    accountLabel: string;
+  } | null>(null);
 
   // 프로필 편집 상태
   const [isEditingName, setIsEditingName] = useState(false);
@@ -228,20 +237,32 @@ export default function MyPage() {
    * null = legacy fallback (BE 가 사용자의 활성 계좌 1개 자동 선택).
    * 모의→실전 변경 시 동의 확인 (자금 노출 임계 행위).
    */
-  async function handleChangeBrokerAccount(subscriptionId: number, newAccountId: number | null) {
-    const token = localStorage.getItem('auth_token');
-    if (!token) return;
-
+  /**
+   * 구독의 실행 계좌 변경. REAL 계좌 선택 시 ConfirmDialog 게이트 통과 필요.
+   */
+  function handleChangeBrokerAccount(subscriptionId: number, newAccountId: number | null) {
     if (newAccountId !== null) {
       const target = brokerAccounts.find((a) => a.id === newAccountId);
       if (target?.accountType === 'REAL') {
-        const ok = confirm(
-          '실전 계좌로 변경합니다. 실제 자금이 거래에 사용됩니다.\n계속하시겠습니까?',
-        );
-        if (!ok) return;
+        const sub = subscriptions.find((s) => s.subscriptionId === subscriptionId);
+        setPendingRealMapping({
+          subscriptionId,
+          accountId: newAccountId,
+          strategyName: sub?.strategyName ?? `구독 #${subscriptionId}`,
+          accountLabel: `${target.broker} 실전 ${target.accountNumber}${
+            target.accountAlias ? ` — ${target.accountAlias}` : ''
+          }`,
+        });
+        return;
       }
     }
+    void persistBrokerMapping(subscriptionId, newAccountId);
+  }
 
+  /** ConfirmDialog 통과 후 또는 MOCK/미설정 즉시 실행. */
+  async function persistBrokerMapping(subscriptionId: number, newAccountId: number | null) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
     setUpdatingBrokerAccount(subscriptionId);
     setSubscriptionError(null);
     try {
@@ -546,12 +567,13 @@ export default function MyPage() {
                         }`}
                         title={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
                         aria-label={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
+                        aria-pressed={sub.alertEnabled}
                       >
-                        {togglingAlert === sub.subscriptionId
-                          ? '...'
-                          : sub.alertEnabled
-                            ? '🔔'
-                            : '🔕'}
+                        {togglingAlert === sub.subscriptionId ? (
+                          '...'
+                        ) : (
+                          <span aria-hidden="true">{sub.alertEnabled ? '🔔' : '🔕'}</span>
+                        )}
                       </button>
                       <button
                         onClick={() => handleUnsubscribe(sub.strategyId)}
@@ -564,7 +586,9 @@ export default function MyPage() {
                       </button>
                     </div>
                     <div className="flex items-center gap-2 pl-1">
-                      <label className="text-slate-400 text-xs">실행 계좌</label>
+                      <label className="text-slate-400 text-xs whitespace-nowrap">
+                        이 전략으로 주문 나갈 계좌
+                      </label>
                       <select
                         value={sub.brokerAccountId ?? ''}
                         onChange={(e) =>
@@ -577,7 +601,7 @@ export default function MyPage() {
                         className="flex-1 bg-slate-700 text-white text-xs rounded px-2 py-1 border border-slate-600"
                         data-testid={`subscription-broker-${sub.subscriptionId}`}
                       >
-                        <option value="">미설정 (자동 선택)</option>
+                        <option value="">미설정 — 자동매매 안 함</option>
                         {brokerAccounts.map((acc) => (
                           <option key={acc.id} value={acc.id}>
                             {acc.broker} {ACCOUNT_TYPE_LABEL[acc.accountType]} {acc.accountNumber}
@@ -853,6 +877,25 @@ export default function MyPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={pendingRealMapping !== null}
+        title="실전 계좌로 매핑"
+        description={
+          pendingRealMapping
+            ? `"${pendingRealMapping.strategyName}" 전략을 다음 실전 계좌로 실행합니다.\n\n${pendingRealMapping.accountLabel}\n\n실제 자금이 자동매매에 사용됩니다. 계속하시겠습니까?`
+            : ''
+        }
+        confirmLabel="실전 계좌로 매핑"
+        cancelLabel="취소"
+        tone="danger"
+        onConfirm={() => {
+          const p = pendingRealMapping;
+          setPendingRealMapping(null);
+          if (p) void persistBrokerMapping(p.subscriptionId, p.accountId);
+        }}
+        onCancel={() => setPendingRealMapping(null)}
+      />
     </div>
   );
 }

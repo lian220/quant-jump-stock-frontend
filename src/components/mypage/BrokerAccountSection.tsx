@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   listBrokerAccounts,
   registerBrokerAccount,
@@ -31,6 +32,7 @@ export function BrokerAccountSection({ userId }: Props) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [trashTarget, setTrashTarget] = useState<BrokerAccount | null>(null);
 
   function token(): string | null {
     return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
@@ -79,12 +81,15 @@ export function BrokerAccountSection({ userId }: Props) {
     await refresh();
   }
 
-  async function handleSoftDelete(account: BrokerAccount) {
-    if (
-      !confirm(`${account.displayName} 계좌를 휴지통으로 이동할까요? 7일 안에 복원 가능합니다.`)
-    ) {
-      return;
-    }
+  function handleSoftDelete(account: BrokerAccount) {
+    // ConfirmDialog 로 위임. 실 실행은 confirmTrash().
+    setTrashTarget(account);
+  }
+
+  async function confirmTrash() {
+    const account = trashTarget;
+    if (!account) return;
+    setTrashTarget(null);
     const t = token();
     if (!t) throw new Error('로그인이 필요합니다');
     await softDeleteBrokerAccount(userId, t, account.id);
@@ -149,6 +154,20 @@ export function BrokerAccountSection({ userId }: Props) {
           </>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={trashTarget !== null}
+        title="휴지통으로 이동"
+        description={
+          trashTarget
+            ? `${trashTarget.displayName} 계좌를 휴지통으로 이동합니다.\n7일 안에 복원할 수 있고, 이후 영구 삭제됩니다.`
+            : ''
+        }
+        confirmLabel="휴지통으로 이동"
+        cancelLabel="취소"
+        tone="default"
+        onConfirm={confirmTrash}
+        onCancel={() => setTrashTarget(null)}
+      />
     </Card>
   );
 }
@@ -167,7 +186,7 @@ function BrokerGroup({
   active: BrokerAccount[];
   trashed: BrokerAccount[];
   onToggle: (a: BrokerAccount, enabled: boolean) => Promise<void>;
-  onSoftDelete: (a: BrokerAccount) => Promise<void>;
+  onSoftDelete: (a: BrokerAccount) => void;
   onRestore: (a: BrokerAccount) => Promise<void>;
 }) {
   const meta = BROKER_META[broker];
@@ -212,7 +231,7 @@ function AccountCard({
 }: {
   account: BrokerAccount;
   onToggle: (a: BrokerAccount, enabled: boolean) => Promise<void>;
-  onSoftDelete: (a: BrokerAccount) => Promise<void>;
+  onSoftDelete: (a: BrokerAccount) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -231,17 +250,9 @@ function AccountCard({
     }
   }
 
-  async function handleDelete() {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await onSoftDelete(account);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '삭제 실패');
-    } finally {
-      setBusy(false);
-    }
+  function handleDelete() {
+    // ConfirmDialog 가 Section 레벨에서 실제 삭제를 처리. 여기선 trigger 만.
+    onSoftDelete(account);
   }
 
   return (
@@ -252,11 +263,14 @@ function AccountCard({
       <div className="flex justify-between items-center">
         <Badge
           variant="outline"
-          className={`text-xs ${
-            isReal ? 'border-red-500/40 text-red-300' : 'border-emerald-500/40 text-emerald-300'
+          className={`text-xs font-semibold ${
+            isReal
+              ? 'border-red-500/60 bg-red-500/20 text-red-200'
+              : 'border-emerald-500/60 bg-emerald-500/20 text-emerald-200'
           }`}
         >
-          {isReal ? '🔴' : '🟢'} {ACCOUNT_TYPE_LABEL[account.accountType]}
+          <span aria-hidden="true">{isReal ? '🔴' : '🟢'}</span>{' '}
+          {ACCOUNT_TYPE_LABEL[account.accountType]}
         </Badge>
         <span className="text-white text-xs font-mono">{account.accountNumber}</span>
       </div>
@@ -271,7 +285,7 @@ function AccountCard({
         <button
           onClick={handleToggle}
           disabled={busy}
-          className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
             account.enabled ? 'bg-emerald-600' : 'bg-slate-600'
           } ${busy ? 'opacity-50' : ''}`}
           role="switch"
@@ -280,8 +294,8 @@ function AccountCard({
           data-testid={`broker-account-toggle-${account.id}`}
         >
           <span
-            className={`inline-block h-3 w-3 transform rounded-full bg-white transition ${
-              account.enabled ? 'translate-x-5' : 'translate-x-1'
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+              account.enabled ? 'translate-x-6' : 'translate-x-1'
             }`}
           />
         </button>
@@ -336,8 +350,11 @@ function TrashedCard({
       data-testid={`broker-account-trashed-${account.id}`}
     >
       <div className="flex justify-between items-center">
-        <Badge variant="outline" className="border-amber-500/40 text-amber-300 text-xs">
-          🗑️ 휴지통 · D-{daysLeft}
+        <Badge
+          variant="outline"
+          className="border-amber-500/60 bg-amber-500/15 text-amber-200 text-xs font-semibold"
+        >
+          <span aria-hidden="true">🗑️</span> 휴지통 · D-{daysLeft}
         </Badge>
         <span className="text-slate-500 text-xs font-mono">
           {ACCOUNT_TYPE_LABEL[account.accountType]} {account.accountNumber}
