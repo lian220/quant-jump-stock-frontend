@@ -44,6 +44,7 @@ export interface SubscriptionSummary {
   subscribedAt: string;
   alertEnabled: boolean;
   status: string;
+  brokerAccountId?: number | null;
 }
 
 export interface MySubscriptionsResponse {
@@ -110,5 +111,26 @@ export async function updateSubscriptionAlert(
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.message || body.error || '알림 설정 변경 실패');
+  }
+}
+
+export async function updateSubscriptionBrokerAccount(
+  subscriptionId: number,
+  brokerAccountId: number | null,
+  token: string,
+): Promise<void> {
+  const isBrowser = typeof window !== 'undefined';
+  const url = isBrowser
+    ? `/api/subscriptions/${subscriptionId}/broker-account`
+    : `${API_URL}/api/v1/subscriptions/${subscriptionId}/broker-account`;
+
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: getJsonHeaders(token),
+    body: JSON.stringify({ brokerAccountId }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || body.error || '실행 계좌 변경 실패');
   }
 }
