@@ -22,10 +22,14 @@ import {
   type NotificationPreferenceUpdate,
 } from '@/lib/api/notification-preferences';
 import { getStrategies } from '@/lib/api/strategies';
+import { listBrokerAccounts } from '@/lib/api/broker-account';
+import type { BrokerAccount } from '@/types/broker-account';
+import { ACCOUNT_TYPE_LABEL } from '@/types/broker-account';
 import {
   getMySubscriptions,
   unsubscribeStrategy,
   updateSubscriptionAlert,
+  updateSubscriptionBrokerAccount,
   type SubscriptionSummary,
 } from '@/lib/api/subscriptions';
 import type { Strategy, RiskLevel } from '@/types/strategy';
@@ -46,6 +50,10 @@ export default function MyPage() {
   const [unsubscribing, setUnsubscribing] = useState<number | null>(null);
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const [subscriptionLoadError, setSubscriptionLoadError] = useState(false);
+
+  // Phase 1B v2.1: 구독별 실행 계좌 라디오용 broker accounts
+  const [brokerAccounts, setBrokerAccounts] = useState<BrokerAccount[]>([]);
+  const [updatingBrokerAccount, setUpdatingBrokerAccount] = useState<number | null>(null);
 
   // 프로필 편집 상태
   const [isEditingName, setIsEditingName] = useState(false);
@@ -106,6 +114,24 @@ export default function MyPage() {
       })
       .finally(() => {
         if (mounted) setSubscriptionsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [user]);
+
+  // Phase 1B v2.1: 구독별 실행 계좌 라디오용 broker accounts 로드
+  useEffect(() => {
+    if (!user) return;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!token) return;
+    let mounted = true;
+    listBrokerAccounts(user.userId, token)
+      .then((data) => {
+        if (mounted) setBrokerAccounts(data.active);
+      })
+      .catch(() => {
+        // broker accounts 가 없어도 구독 카드 자체는 표시되므로 silent fail
       });
     return () => {
       mounted = false;
@@ -194,6 +220,42 @@ export default function MyPage() {
       setSubscriptionError(message);
     } finally {
       setTogglingAlert(null);
+    }
+  }
+
+  /**
+   * Phase 1B v2.1: 구독의 실행 계좌 변경.
+   * null = legacy fallback (BE 가 사용자의 활성 계좌 1개 자동 선택).
+   * 모의→실전 변경 시 동의 확인 (자금 노출 임계 행위).
+   */
+  async function handleChangeBrokerAccount(subscriptionId: number, newAccountId: number | null) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    if (newAccountId !== null) {
+      const target = brokerAccounts.find((a) => a.id === newAccountId);
+      if (target?.accountType === 'REAL') {
+        const ok = confirm(
+          '실전 계좌로 변경합니다. 실제 자금이 거래에 사용됩니다.\n계속하시겠습니까?',
+        );
+        if (!ok) return;
+      }
+    }
+
+    setUpdatingBrokerAccount(subscriptionId);
+    setSubscriptionError(null);
+    try {
+      await updateSubscriptionBrokerAccount(subscriptionId, newAccountId, token);
+      setSubscriptions((prev) =>
+        prev.map((s) =>
+          s.subscriptionId === subscriptionId ? { ...s, brokerAccountId: newAccountId } : s,
+        ),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '실행 계좌 변경 실패';
+      setSubscriptionError(message);
+    } finally {
+      setUpdatingBrokerAccount(null);
     }
   }
 
@@ -462,40 +524,71 @@ export default function MyPage() {
                 {subscriptions.map((sub) => (
                   <div
                     key={sub.subscriptionId}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                    className="flex flex-col gap-2 p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                    data-testid={`subscription-${sub.subscriptionId}`}
                   >
-                    <Link href={`/strategies/${sub.strategyId}`} className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{sub.strategyName}</p>
-                      <p className="text-slate-500 text-xs mt-0.5">
-                        {new Date(sub.subscribedAt).toLocaleDateString('ko-KR')} 구독
-                      </p>
-                    </Link>
-                    <button
-                      onClick={() => handleToggleAlert(sub.subscriptionId, sub.alertEnabled)}
-                      disabled={togglingAlert === sub.subscriptionId}
-                      className={`shrink-0 text-xs px-2 py-1 rounded transition-colors ${
-                        sub.alertEnabled
-                          ? 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30'
-                          : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
-                      }`}
-                      title={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
-                      aria-label={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
-                    >
-                      {togglingAlert === sub.subscriptionId
-                        ? '...'
-                        : sub.alertEnabled
-                          ? '🔔'
-                          : '🔕'}
-                    </button>
-                    <button
-                      onClick={() => handleUnsubscribe(sub.strategyId)}
-                      disabled={unsubscribing === sub.strategyId}
-                      className="shrink-0 text-slate-500 hover:text-red-400 transition-colors text-lg leading-none"
-                      title="구독 취소"
-                      aria-label="구독 취소"
-                    >
-                      {unsubscribing === sub.strategyId ? '...' : '×'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <Link href={`/strategies/${sub.strategyId}`} className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-medium truncate">
+                          {sub.strategyName}
+                        </p>
+                        <p className="text-slate-500 text-xs mt-0.5">
+                          {new Date(sub.subscribedAt).toLocaleDateString('ko-KR')} 구독
+                        </p>
+                      </Link>
+                      <button
+                        onClick={() => handleToggleAlert(sub.subscriptionId, sub.alertEnabled)}
+                        disabled={togglingAlert === sub.subscriptionId}
+                        className={`shrink-0 text-xs px-2 py-1 rounded transition-colors ${
+                          sub.alertEnabled
+                            ? 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30'
+                            : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
+                        }`}
+                        title={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
+                        aria-label={sub.alertEnabled ? '알림 끄기' : '알림 켜기'}
+                      >
+                        {togglingAlert === sub.subscriptionId
+                          ? '...'
+                          : sub.alertEnabled
+                            ? '🔔'
+                            : '🔕'}
+                      </button>
+                      <button
+                        onClick={() => handleUnsubscribe(sub.strategyId)}
+                        disabled={unsubscribing === sub.strategyId}
+                        className="shrink-0 text-slate-500 hover:text-red-400 transition-colors text-lg leading-none"
+                        title="구독 취소"
+                        aria-label="구독 취소"
+                      >
+                        {unsubscribing === sub.strategyId ? '...' : '×'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 pl-1">
+                      <label className="text-slate-400 text-xs">실행 계좌</label>
+                      <select
+                        value={sub.brokerAccountId ?? ''}
+                        onChange={(e) =>
+                          handleChangeBrokerAccount(
+                            sub.subscriptionId,
+                            e.target.value === '' ? null : Number(e.target.value),
+                          )
+                        }
+                        disabled={updatingBrokerAccount === sub.subscriptionId}
+                        className="flex-1 bg-slate-700 text-white text-xs rounded px-2 py-1 border border-slate-600"
+                        data-testid={`subscription-broker-${sub.subscriptionId}`}
+                      >
+                        <option value="">미설정 (자동 선택)</option>
+                        {brokerAccounts.map((acc) => (
+                          <option key={acc.id} value={acc.id}>
+                            {acc.broker} {ACCOUNT_TYPE_LABEL[acc.accountType]} {acc.accountNumber}
+                            {acc.accountAlias ? ` — ${acc.accountAlias}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      {updatingBrokerAccount === sub.subscriptionId && (
+                        <span className="text-xs text-slate-400">저장 중...</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
