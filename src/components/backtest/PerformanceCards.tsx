@@ -1,5 +1,9 @@
 'use client';
 
+// Fallback 카드: enhancedResult(등급 객체 포함)가 없을 때만 사용된다.
+// enhanced 결과가 있을 때는 `EnhancedPerformanceCards`가 쓰이며, 두 컴포넌트는 의도된 점진적 enhancement 관계다.
+// 호출처: src/app/strategies/[id]/backtest/page.tsx (enhancedResult 삼항)
+
 import { Card, CardContent } from '@/components/ui/card';
 import { TermTooltip } from '@/components/strategies/TermTooltip';
 import type { BacktestMetrics } from '@/types/backtest';

@@ -4,6 +4,6 @@ export { StrategyGrid } from './StrategyGrid';
 export { StrategyPagination } from './StrategyPagination';
 export { MetricCard } from './MetricCard';
 export { InvestmentSummary } from './InvestmentSummary';
-export { EquityCurveChart } from './EquityCurveChart';
+export { StrategyEquityCurveChart } from './StrategyEquityCurveChart';
 export { TermTooltip } from './TermTooltip';
 export { SubscribeButton } from './SubscribeButton';

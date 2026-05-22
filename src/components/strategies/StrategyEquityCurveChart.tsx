@@ -16,13 +16,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { TermTooltip } from './TermTooltip';
 import type { EquityCurveData, BenchmarkSeries } from '@/types/strategy';
 
-interface EquityCurveChartProps {
+interface StrategyEquityCurveChartProps {
   data: EquityCurveData[];
   benchmarks?: BenchmarkSeries[];
 }
 
-// 벤치마크별 색상 (최대 5개)
-const BENCHMARK_COLORS = ['#94a3b8', '#f59e0b', '#a78bfa', '#f87171', '#38bdf8'];
+// 전략 상세 페이지용 벤치마크 색상 (최대 5개, 회색조 우세 — 전략 라인 강조)
+// 백테스트 페이지(`@/constants/backtest`의 BENCHMARK_COLORS)와는 의도적으로 다른 팔레트
+const STRATEGY_BENCHMARK_COLORS = ['#94a3b8', '#f59e0b', '#a78bfa', '#f87171', '#38bdf8'];
 
 interface TooltipPayloadItem {
   value: number;
@@ -83,7 +84,9 @@ function CustomChartTooltip({
               <div className="flex items-center justify-between gap-6">
                 <span
                   className="text-xs"
-                  style={{ color: BENCHMARK_COLORS[idx % BENCHMARK_COLORS.length] }}
+                  style={{
+                    color: STRATEGY_BENCHMARK_COLORS[idx % STRATEGY_BENCHMARK_COLORS.length],
+                  }}
                 >
                   {bm.displayName}
                 </span>
@@ -116,7 +119,7 @@ function CustomChartTooltip({
   );
 }
 
-export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
+export function StrategyEquityCurveChart({ data, benchmarks }: StrategyEquityCurveChartProps) {
   const initialValue = data?.[0]?.value ?? 0;
 
   // equityCurve 없이 벤치마크만 있는 경우
@@ -282,12 +285,12 @@ export function EquityCurveChart({ data, benchmarks }: EquityCurveChartProps) {
                   key={bm.ticker}
                   type="monotone"
                   dataKey={`bm_${bm.ticker}`}
-                  stroke={BENCHMARK_COLORS[idx % BENCHMARK_COLORS.length]}
+                  stroke={STRATEGY_BENCHMARK_COLORS[idx % STRATEGY_BENCHMARK_COLORS.length]}
                   strokeWidth={2}
                   dot={false}
                   activeDot={{
                     r: 4,
-                    stroke: BENCHMARK_COLORS[idx % BENCHMARK_COLORS.length],
+                    stroke: STRATEGY_BENCHMARK_COLORS[idx % STRATEGY_BENCHMARK_COLORS.length],
                     strokeWidth: 2,
                     fill: '#0f172a',
                   }}
