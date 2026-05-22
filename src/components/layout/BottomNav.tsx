@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BarChart3, Search, User, TrendingUp, Newspaper } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn, isActiveRoute } from '@/lib/utils';
 
 const navItems = [

@@ -8,7 +8,7 @@ import {
   markAllNotificationsAsRead,
 } from '@/lib/api/notifications';
 import type { UnifiedNotification } from '@/lib/api/notifications';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const POLL_INTERVAL = 30_000; // 30초
 

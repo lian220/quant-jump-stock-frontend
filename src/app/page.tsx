@@ -19,7 +19,7 @@ import {
   type BuySignal,
 } from '@/lib/api/predictions';
 import { trackEvent } from '@/lib/analytics';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   useBuySignals,
   usePredictionStats,
