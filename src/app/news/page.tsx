@@ -16,15 +16,18 @@ import {
   getNewsByCategory,
   getImportanceInfo,
   getSourceLabel,
-  formatRelativeTime,
-  subscribe,
-  unsubscribe,
-  getSubscriptions,
-  getNotifications,
-  getUnreadCount,
-  markAllNotificationsRead,
 } from '@/lib/api/news';
-import type { NewsArticle, Subscription, Notification } from '@/lib/api/news';
+import type { NewsArticle } from '@/lib/api/news';
+import {
+  subscribeNews,
+  unsubscribeNews,
+  getNewsSubscriptions,
+  getNewsNotifications,
+  getNewsUnreadCount,
+  markAllNewsNotificationsRead,
+} from '@/lib/api/news-subscriptions';
+import type { NewsSubscription, NewsNotification } from '@/lib/api/news-subscriptions';
+import { formatRelativeTime } from '@/lib/utils';
 import { useNewsCategories } from '@/hooks/useData';
 
 const ITEMS_PER_PAGE = 12;
@@ -72,13 +75,13 @@ export default function NewsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // 구독
-  const [userSubscriptions, setUserSubscriptions] = useState<Subscription[]>([]);
+  const [userSubscriptions, setUserSubscriptions] = useState<NewsSubscription[]>([]);
   const [subscribingCategory, setSubscribingCategory] = useState<string | null>(null);
 
   // 알림
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NewsNotification[]>([]);
 
   // 기사 상세 모달
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
@@ -119,12 +122,12 @@ export default function NewsPage() {
       setUnreadCount(0);
       return;
     }
-    getSubscriptions()
+    getNewsSubscriptions()
       .then((res) => setUserSubscriptions(res.subscriptions ?? []))
       .catch((err) => {
         console.error('구독 목록 조회 실패:', err);
       });
-    getUnreadCount()
+    getNewsUnreadCount()
       .then(setUnreadCount)
       .catch((err) => {
         console.error('읽지 않은 알림 수 조회 실패:', err);
@@ -242,11 +245,11 @@ export default function NewsPage() {
             (s) => s.type === 'CATEGORY' && s.value === categoryName && s.isActive,
           );
           if (sub) {
-            await unsubscribe(sub.id);
+            await unsubscribeNews(sub.id);
             setUserSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
           }
         } else {
-          const newSub = await subscribe('CATEGORY', categoryName);
+          const newSub = await subscribeNews('CATEGORY', categoryName);
           setUserSubscriptions((prev) => [...prev, newSub]);
         }
       } catch (err) {
@@ -262,7 +265,7 @@ export default function NewsPage() {
   const handleNotificationToggle = useCallback(async () => {
     if (!showNotifications) {
       try {
-        const res = await getNotifications(20);
+        const res = await getNewsNotifications(20);
         setNotifications(res.notifications ?? []);
         setUnreadCount(res.unreadCount);
       } catch (err) {
@@ -275,7 +278,7 @@ export default function NewsPage() {
   // 알림 전체 읽음
   const handleMarkAllRead = useCallback(async () => {
     try {
-      await markAllNotificationsRead();
+      await markAllNewsNotificationsRead();
       setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (err) {
@@ -291,7 +294,7 @@ export default function NewsPage() {
       if (subscribedTickers.has(t)) return;
       setIsAddingTicker(true);
       try {
-        const newSub = await subscribe('TICKER', t);
+        const newSub = await subscribeNews('TICKER', t);
         setUserSubscriptions((prev) => [...prev, newSub]);
         setTickerInput('');
       } catch (err) {
@@ -311,7 +314,7 @@ export default function NewsPage() {
       );
       if (!sub) return;
       try {
-        await unsubscribe(sub.id);
+        await unsubscribeNews(sub.id);
         setUserSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
       } catch (err) {
         console.error('관심 종목 삭제 실패:', err);
@@ -336,7 +339,7 @@ export default function NewsPage() {
       if (!categoryName || !user || subscribedCategories.has(categoryName)) return;
       setIsAddingCategory(true);
       try {
-        const newSub = await subscribe('CATEGORY', categoryName);
+        const newSub = await subscribeNews('CATEGORY', categoryName);
         setUserSubscriptions((prev) => [...prev, newSub]);
         setSelectedCategoryToAdd('');
       } catch (err) {
@@ -356,7 +359,7 @@ export default function NewsPage() {
       );
       if (!sub) return;
       try {
-        await unsubscribe(sub.id);
+        await unsubscribeNews(sub.id);
         setUserSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
       } catch (err) {
         console.error('관심 카테고리 삭제 실패:', err);

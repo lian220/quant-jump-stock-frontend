@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/select';
 import { PageSEO } from '@/components/seo';
 import { getScoreGrade, TIER_THRESHOLDS, checkPredictionReliability } from '@/lib/api/predictions';
-import { getNewsByTickers, formatRelativeTime } from '@/lib/api/news';
+import { getNewsByTickers } from '@/lib/api/news';
+import { formatRelativeTime } from '@/lib/utils';
 import { useBuySignals, useStrategies } from '@/hooks/useData';
 
 import type { NewsArticle } from '@/lib/api/news';
