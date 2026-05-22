@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { SignUpForm } from '@/components/auth/SignUpForm';
 import { getPostLoginRedirect, clearOnboardingState } from '@/lib/onboarding';
 import { trackEvent } from '@/lib/analytics';

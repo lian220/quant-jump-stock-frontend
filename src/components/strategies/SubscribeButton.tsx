@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, BellOff, Loader2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   subscribeStrategy,
   unsubscribeStrategy,

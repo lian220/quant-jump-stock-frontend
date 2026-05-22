@@ -22,7 +22,7 @@ import {
   getEnhancedBacktestResult,
 } from '@/lib/api/backtest';
 import { getStrategyById } from '@/lib/api/strategies';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import type {
   BacktestRunRequest,
   BacktestResultResponse,
