@@ -23,52 +23,52 @@ export const MetaTags: React.FC<SEOProps> = ({
   noindex = false,
   nofollow = false,
 }) => {
-  // 제목 포맷팅
-  const formatTitle = (title: string) => {
-    if (seoConfig.titleTemplate && title !== seoConfig.defaultTitle) {
-      return seoConfig.titleTemplate.replace('%s', title);
-    }
-    return title;
-  };
-
-  // canonical URL 생성
-  const getCanonicalUrl = () => {
-    if (meta.canonical) {
-      return meta.canonical.startsWith('http')
-        ? meta.canonical
-        : `${seoConfig.siteUrl}${meta.canonical}`;
-    }
-    return undefined;
-  };
-
-  // robots meta 생성
-  const getRobotsMeta = () => {
-    const robots = [];
-    if (noindex) robots.push('noindex');
-    if (nofollow) robots.push('nofollow');
-    if (meta.robots) robots.push(meta.robots);
-    return robots.length > 0 ? robots.join(', ') : 'index, follow';
-  };
-
-  // Open Graph URL 생성
-  const getOpenGraphUrl = () => {
-    return (
-      openGraph?.url || (typeof window !== 'undefined' ? window.location.href : seoConfig.siteUrl)
-    );
-  };
-
-  // Open Graph 이미지 URL 생성
-  const getOpenGraphImage = () => {
-    if (openGraph?.image) {
-      return openGraph.image.startsWith('http')
-        ? openGraph.image
-        : `${seoConfig.siteUrl}${openGraph.image}`;
-    }
-    return `${seoConfig.siteUrl}${seoConfig.defaultImage}`;
-  };
-
   useEffect(() => {
     if (typeof document === 'undefined') return;
+
+    // 제목 포맷팅
+    const formatTitle = (title: string) => {
+      if (seoConfig.titleTemplate && title !== seoConfig.defaultTitle) {
+        return seoConfig.titleTemplate.replace('%s', title);
+      }
+      return title;
+    };
+
+    // canonical URL 생성
+    const getCanonicalUrl = () => {
+      if (meta.canonical) {
+        return meta.canonical.startsWith('http')
+          ? meta.canonical
+          : `${seoConfig.siteUrl}${meta.canonical}`;
+      }
+      return undefined;
+    };
+
+    // robots meta 생성
+    const getRobotsMeta = () => {
+      const robots = [];
+      if (noindex) robots.push('noindex');
+      if (nofollow) robots.push('nofollow');
+      if (meta.robots) robots.push(meta.robots);
+      return robots.length > 0 ? robots.join(', ') : 'index, follow';
+    };
+
+    // Open Graph URL 생성
+    const getOpenGraphUrl = () => {
+      return (
+        openGraph?.url || (typeof window !== 'undefined' ? window.location.href : seoConfig.siteUrl)
+      );
+    };
+
+    // Open Graph 이미지 URL 생성
+    const getOpenGraphImage = () => {
+      if (openGraph?.image) {
+        return openGraph.image.startsWith('http')
+          ? openGraph.image
+          : `${seoConfig.siteUrl}${openGraph.image}`;
+      }
+      return `${seoConfig.siteUrl}${seoConfig.defaultImage}`;
+    };
 
     // 동적으로 메타태그 업데이트 (App Router에서는 이 방식 사용)
 
@@ -148,7 +148,6 @@ export const MetaTags: React.FC<SEOProps> = ({
         document.head.appendChild(script);
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta, openGraph, twitter, structuredData, noindex, nofollow]);
 
   // App Router에서는 실제 JSX를 반환하지 않고 useEffect로 처리

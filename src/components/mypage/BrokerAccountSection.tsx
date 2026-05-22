@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ export function BrokerAccountSection({ userId }: Props) {
     return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
   }
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     const t = token();
     if (!t) {
       setLoading(false);
@@ -53,7 +53,7 @@ export function BrokerAccountSection({ userId }: Props) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId]);
 
   useEffect(() => {
     let mounted = true;
@@ -63,8 +63,7 @@ export function BrokerAccountSection({ userId }: Props) {
     return () => {
       mounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [refresh]);
 
   async function handleRegister(req: BrokerAccountRegisterRequest) {
     const t = token();

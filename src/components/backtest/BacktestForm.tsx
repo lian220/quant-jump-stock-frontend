@@ -264,28 +264,6 @@ export default function BacktestForm({
     }
   }, [defaultRiskSettings, defaultPositionSizing, defaultTradingCosts]);
 
-  // 동적 벤치마크 로딩
-  useEffect(() => {
-    getAvailableBenchmarks()
-      .then((options) => {
-        if (options && options.length > 0) {
-          setBenchmarkOptions(options);
-          // 추가 벤치마크 중 유효하지 않은 항목 제거
-          const validValues = new Set(options.map((opt) => opt.value));
-          setAdditionalBenchmarks((prev) => prev.filter((b) => validValues.has(b)));
-          // 현재 선택된 벤치마크가 새 옵션에 없으면 첫 번째 옵션으로 변경
-          const currentBenchmark = watch('benchmark');
-          const hasCurrentBenchmark = options.some((opt) => opt.value === currentBenchmark);
-          if (!hasCurrentBenchmark) {
-            setValue('benchmark', options[0].value);
-          }
-        }
-      })
-      .catch(() => {
-        // 실패 시 기본 옵션 유지
-      });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   // SCRUM-344: recommendedUniverseType prop 변경 시 universeType 동기화
   useEffect(() => {
     if (recommendedUniverseType && !universeType) {
@@ -306,6 +284,7 @@ export default function BacktestForm({
     register,
     handleSubmit,
     setValue,
+    getValues,
     watch,
     reset,
     formState: { errors },
@@ -319,6 +298,28 @@ export default function BacktestForm({
       rebalancePeriod: 'MONTHLY',
     },
   });
+
+  // 동적 벤치마크 로딩 (mount 시 1회 — getValues/setValue는 RHF stable identity)
+  useEffect(() => {
+    getAvailableBenchmarks()
+      .then((options) => {
+        if (options && options.length > 0) {
+          setBenchmarkOptions(options);
+          // 추가 벤치마크 중 유효하지 않은 항목 제거
+          const validValues = new Set(options.map((opt) => opt.value));
+          setAdditionalBenchmarks((prev) => prev.filter((b) => validValues.has(b)));
+          // 현재 선택된 벤치마크가 새 옵션에 없으면 첫 번째 옵션으로 변경
+          const currentBenchmark = getValues('benchmark');
+          const hasCurrentBenchmark = options.some((opt) => opt.value === currentBenchmark);
+          if (!hasCurrentBenchmark) {
+            setValue('benchmark', options[0].value);
+          }
+        }
+      })
+      .catch(() => {
+        // 실패 시 기본 옵션 유지
+      });
+  }, [getValues, setValue]);
 
   // initialValues가 세팅되면 폼 전체 리셋 (로그인 후 복귀 시 폼 값 복원)
   useEffect(() => {
@@ -383,7 +384,7 @@ export default function BacktestForm({
       }
       setShowAdvanced(true);
     }
-  }, [initialValues]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialValues, defaultDates, reset]);
 
   const benchmarkValue = watch('benchmark');
   const rebalanceValue = watch('rebalancePeriod');
