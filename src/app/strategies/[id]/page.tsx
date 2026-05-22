@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import {
   MetricCard,
   InvestmentSummary,
-  EquityCurveChart,
+  StrategyEquityCurveChart,
   TermTooltip,
   SubscribeButton,
 } from '@/components/strategies';
@@ -557,7 +557,7 @@ export default function StrategyDetailPage() {
 
           {/* 수익 곡선 탭 */}
           <TabsContent value="performance">
-            <EquityCurveChart data={strategy.equityCurve} benchmarks={benchmarks} />
+            <StrategyEquityCurveChart data={strategy.equityCurve} benchmarks={benchmarks} />
           </TabsContent>
 
           {/* 전략 조건 탭 */}
