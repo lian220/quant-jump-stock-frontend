@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -65,7 +65,7 @@ export default function StockDetailPage() {
   const [predictions, setPredictions] = useState<PredictionHistory[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
 
-  const fetchStock = async () => {
+  const fetchStock = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -77,7 +77,7 @@ export default function StockDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (isNaN(id)) {
@@ -87,8 +87,7 @@ export default function StockDetailPage() {
     }
 
     fetchStock();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, fetchStock]);
 
   // AI 분석 이력 가져오기
   useEffect(() => {
