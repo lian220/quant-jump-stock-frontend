@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AuthContextType, AuthUser, LoginResponse, SignUpResponse } from '@/types/auth';
 import { clientApi as api } from '@/lib/api-client';
 import { saveAuthReturnUrl } from '@/lib/onboarding';
@@ -25,12 +25,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 토큰 저장/조회 헬퍼 — 메모리 auth-store 위임 (Phase A).
-  // 외부 모듈은 @/lib/auth-store 의 getAuthToken/setAuthToken 직접 사용 권장.
-  const getToken = getAuthToken;
+  // 토큰 저장/조회는 모듈 외부에서 @/lib/auth-store 의 getAuthToken/setAuthToken 직접 사용.
+  // AuthContext 는 user 상태와 인증 라이프사이클 (signIn/signOut/validateSession) 만 책임.
+
+  // React 19 Strict Mode 의 마운트 이중 실행 가드 — 중복 refresh 요청 방지
+  const initialized = useRef(false);
 
   // 초기 로드 시: 잔존 localStorage 정리 + refresh cookie 로 access token 재발급 시도
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
     const validateSession = async () => {
       // 마이그레이션: 기존 localStorage 잔여 토큰 일괄 삭제 (httpOnly refresh cookie 가 진실의 원천)
       if (typeof window !== 'undefined' && localStorage.getItem('auth_token')) {
@@ -176,11 +180,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     try {
       setLoading(true);
-      const token = getToken();
-
-      if (token) {
-        await api.post('/api/auth/logout');
-      }
+      // P0-fix C4: access token 유무와 무관하게 logout API 호출.
+      // refresh httpOnly cookie 무효화 + 서버 측 jti revoke 가 진실의 원천이므로
+      // 메모리 토큰이 없는 상태(새로고침 직후 등) 에서도 반드시 호출해야 한다.
+      await api.post('/api/auth/logout');
     } catch (error) {
       console.error('로그아웃 오류:', error);
     } finally {
