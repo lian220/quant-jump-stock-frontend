@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getPostLoginRedirect } from '@/lib/onboarding';
+import { clearAuthToken, setAuthToken } from '@/lib/auth-store';
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
@@ -72,8 +73,8 @@ export default function OAuthCallbackPage() {
           throw new Error(data.message || `HTTP ${response.status}`);
         }
 
-        // JWT 저장
-        localStorage.setItem('auth_token', data.token);
+        // JWT 저장 (메모리 auth-store). refresh token 은 BE 가 httpOnly cookie 로 발급함.
+        setAuthToken(data.token);
 
         // 사용자 정보 확인
         const meResponse = await fetch('/api/auth/me', {
@@ -101,7 +102,7 @@ export default function OAuthCallbackPage() {
         console.error(`${provider} OAuth 콜백 오류:`, err);
         setStatus('error');
         setMessage('로그인 처리 중 오류가 발생했습니다');
-        localStorage.removeItem('auth_token');
+        clearAuthToken();
         setTimeout(() => router.push('/auth'), 3000);
       }
     };

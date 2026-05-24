@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, BellOff, Loader2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAuthToken } from '@/lib/auth-store';
 import {
   subscribeStrategy,
   unsubscribeStrategy,
@@ -52,7 +53,7 @@ export function SubscribeButton({
       return;
     }
 
-    const token = localStorage.getItem('auth_token');
+    const token = getAuthToken();
     if (!token) {
       showToast('인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.', 'error');
       return;

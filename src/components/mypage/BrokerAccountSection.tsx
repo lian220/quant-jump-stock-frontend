@@ -13,6 +13,7 @@ import {
   restoreBrokerAccount,
   trashedDaysLeft,
 } from '@/lib/api/broker-account';
+import { getAuthToken } from '@/lib/auth-store';
 import {
   BROKER_META,
   ACCOUNT_TYPE_LABEL,
@@ -35,7 +36,7 @@ export function BrokerAccountSection({ userId }: Props) {
   const [trashTarget, setTrashTarget] = useState<BrokerAccount | null>(null);
 
   function token(): string | null {
-    return typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    return getAuthToken();
   }
 
   const refresh = useCallback(async () => {

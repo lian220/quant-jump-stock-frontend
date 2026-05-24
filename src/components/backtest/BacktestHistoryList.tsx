@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getUniverseLabel } from '@/lib/strategy-helpers';
+import { getAuthToken } from '@/lib/auth-store';
 
 interface BacktestHistoryItem {
   id: string;
@@ -37,7 +38,7 @@ export default function BacktestHistoryList({ strategyId }: BacktestHistoryListP
     const fetchHistory = async () => {
       try {
         const url = `/api/backtest?strategyId=${strategyId}&size=10&sort=createdAt,desc`;
-        const token = localStorage.getItem('auth_token');
+        const token = getAuthToken();
 
         const response = await fetch(url, {
           credentials: 'include',

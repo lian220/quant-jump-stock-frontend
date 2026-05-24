@@ -8,8 +8,10 @@
  * - 통합 알림(백테스트 완료, 거래 시그널 등): `@/lib/api/notifications` (별도 도메인)
  */
 
+import { getAuthToken } from '@/lib/auth-store';
+
 function getAuthHeaders(): Record<string, string> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  const token = getAuthToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;

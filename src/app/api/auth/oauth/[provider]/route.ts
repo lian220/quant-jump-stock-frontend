@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_URL } from '@/lib/api/config';
+import { forwardSetCookies } from '@/lib/proxy-cookies';
 
 const ALLOWED_PROVIDERS = new Set(['naver']);
 
@@ -38,11 +39,8 @@ export async function POST(
 
     const data = await response.json();
 
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
-    }
-
-    return NextResponse.json(data);
+    // BE 가 발급한 refresh cookie 를 forward (OAuth 성공 응답에도 포함될 수 있음)
+    return forwardSetCookies(response, NextResponse.json(data, { status: response.status }));
   } catch (error) {
     console.error('OAuth code exchange proxy error:', error);
     if (error instanceof Error && error.name === 'AbortError') {

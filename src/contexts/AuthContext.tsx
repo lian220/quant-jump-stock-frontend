@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AuthContextType, AuthUser, LoginResponse, SignUpResponse } from '@/types/auth';
 import { clientApi as api } from '@/lib/api-client';
 import { saveAuthReturnUrl } from '@/lib/onboarding';
+import { clearAuthToken, getAuthToken, setAuthToken } from '@/lib/auth-store';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -24,30 +25,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 토큰 저장/조회 헬퍼
-  const getToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
-    }
-    return null;
-  };
+  // 토큰 저장/조회는 모듈 외부에서 @/lib/auth-store 의 getAuthToken/setAuthToken 직접 사용.
+  // AuthContext 는 user 상태와 인증 라이프사이클 (signIn/signOut/validateSession) 만 책임.
 
-  const setToken = (token: string | null) => {
-    if (typeof window !== 'undefined') {
-      if (token) {
-        localStorage.setItem('auth_token', token);
-      } else {
+  // React 19 Strict Mode 의 마운트 이중 실행 가드 — 중복 refresh 요청 방지
+  const initialized = useRef(false);
+
+  // 초기 로드 시: 잔존 localStorage 정리 + refresh cookie 로 access token 재발급 시도
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+    const validateSession = async () => {
+      // 마이그레이션: 기존 localStorage 잔여 토큰 일괄 삭제 (httpOnly refresh cookie 가 진실의 원천)
+      if (typeof window !== 'undefined' && localStorage.getItem('auth_token')) {
         localStorage.removeItem('auth_token');
       }
-    }
-  };
 
-  // 초기 로드 시 토큰 검증
-  useEffect(() => {
-    const validateSession = async () => {
-      const token = getToken();
+      // refresh cookie 가 있으면 새 access token 발급 (없으면 401 → 비로그인 상태)
+      try {
+        const refreshRes = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (refreshRes.ok) {
+          const refreshData = (await refreshRes.json()) as { accessToken?: string };
+          if (refreshData.accessToken) {
+            setAuthToken(refreshData.accessToken);
+          }
+        }
+      } catch (e) {
+        console.warn('초기 토큰 재발급 시도 실패 (비로그인 상태로 진행):', e);
+      }
 
-      if (!token) {
+      if (!getAuthToken()) {
         setLoading(false);
         return;
       }
@@ -58,7 +69,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (response.data.success && response.data.user) {
           setUser(response.data.user);
         } else {
-          setToken(null);
+          clearAuthToken();
           setUser(null);
         }
       } catch (err: unknown) {
@@ -70,7 +81,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         if (status === 401 || status === 403) {
           // 인증 만료 → 토큰 삭제
-          setToken(null);
+          clearAuthToken();
           setUser(null);
           setError(null);
         } else if (status && status >= 500) {
@@ -100,7 +111,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const data = response.data;
 
       if (data.success && data.token && data.user) {
-        setToken(data.token);
+        setAuthToken(data.token);
         setUser(data.user);
         setError(null);
         return {};
@@ -144,7 +155,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (data.success) {
         // 자동 로그인: 토큰과 유저 정보가 있으면 바로 로그인 상태로 설정
         if (data.token && data.user) {
-          setToken(data.token);
+          setAuthToken(data.token);
           setUser(data.user);
           setError(null);
         }
@@ -169,15 +180,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     try {
       setLoading(true);
-      const token = getToken();
-
-      if (token) {
-        await api.post('/api/auth/logout');
-      }
+      // P0-fix C4: access token 유무와 무관하게 logout API 호출.
+      // refresh httpOnly cookie 무효화 + 서버 측 jti revoke 가 진실의 원천이므로
+      // 메모리 토큰이 없는 상태(새로고침 직후 등) 에서도 반드시 호출해야 한다.
+      await api.post('/api/auth/logout');
     } catch (error) {
       console.error('로그아웃 오류:', error);
     } finally {
-      setToken(null);
+      clearAuthToken();
       setUser(null);
       setError(null);
       setLoading(false);

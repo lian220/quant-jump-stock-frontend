@@ -1,11 +1,11 @@
 // 통합 알림 API 클라이언트
 
+import { getAuthToken } from '@/lib/auth-store';
+
 function getAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token');
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
+  const token = getAuthToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
 }
 

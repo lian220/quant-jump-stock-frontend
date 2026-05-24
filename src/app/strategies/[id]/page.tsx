@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAuthToken } from '@/lib/auth-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -95,7 +96,7 @@ export default function StrategyDetailPage() {
     setSubscriptionInfo(null);
 
     if (!user || !id) return;
-    const token = localStorage.getItem('auth_token');
+    const token = getAuthToken();
     if (!token) return;
 
     getMySubscriptions(token)

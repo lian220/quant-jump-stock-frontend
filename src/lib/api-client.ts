@@ -1,68 +1,112 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { clearAuthToken, getAuthToken, setAuthToken } from '@/lib/auth-store';
 
 /**
- * API 클라이언트 (표준 방식)
+ * API 클라이언트 (Phase 1A 보안 PRE Phase A).
  *
- * 서버 사이드: Backend 직접 호출
- * 클라이언트 사이드: Same-Origin (프록시 자동 처리)
+ * - 서버 사이드: Backend 직접 호출 (Authorization 헤더 없음)
+ * - 클라이언트 사이드: Same-Origin Next.js proxy 사용
+ *   * Access token 은 메모리(auth-store) 에서 읽어 Authorization 헤더로 전달
+ *   * Refresh token 은 httpOnly cookie 로 자동 전송 (withCredentials)
+ *   * 401 응답 시 1회 한정 /api/auth/refresh 자동 호출 + 재시도
+ *   * 동시 401 다발 시 singleton refresh promise 로 중복 호출 방지
  */
 
-// 서버 사이드 전용 API 클라이언트
 export const serverApi = axios.create({
   baseURL: process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010',
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// 클라이언트 사이드 전용 API 클라이언트 (Same-Origin)
 export const clientApi = axios.create({
-  baseURL: '', // Same-Origin (Next.js API Routes 사용)
+  baseURL: '', // Same-Origin Next.js proxy
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // refresh cookie 자동 포함
 });
 
-// 범용 API 클라이언트 (자동 선택) - 함수로 변경하여 런타임에 평가
 export const getApi = () => (typeof window === 'undefined' ? serverApi : clientApi);
 
-// Request Interceptor (토큰 자동 추가) - clientApi에 적용
+// Request Interceptor — auth-store 의 메모리 access token 을 Authorization 헤더로 첨부
 clientApi.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// 401 리다이렉트에서 제외할 경로 (자체적으로 401을 처리하는 엔드포인트)
-const AUTH_SILENT_PATHS = ['/api/auth/me', '/api/auth/login', '/api/auth/signup'];
+// 401 자체 처리하는 엔드포인트 (재발급 / 리다이렉트 대상에서 제외)
+const AUTH_SILENT_PATHS = [
+  '/api/auth/me',
+  '/api/auth/login',
+  '/api/auth/signup',
+  '/api/auth/refresh',
+];
 
-// Response Interceptor (에러 처리) - clientApi에 적용
+// Singleton refresh promise — 동시 401 시 중복 refresh 방지
+let refreshPromise: Promise<string | null> | null = null;
+
+async function performRefresh(): Promise<string | null> {
+  try {
+    const res = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { accessToken?: string };
+    if (!data.accessToken) return null;
+    setAuthToken(data.accessToken);
+    return data.accessToken;
+  } catch {
+    return null;
+  }
+}
+
+function getRefreshPromise(): Promise<string | null> {
+  if (!refreshPromise) {
+    refreshPromise = performRefresh().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+// Response Interceptor — 401 자동 재발급 + 1회 한정 재시도
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
 clientApi.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      const requestPath = error.config?.url || '';
-      const isSilent = AUTH_SILENT_PATHS.some((p) => requestPath.startsWith(p));
+  async (error: AxiosError) => {
+    const original = error.config as RetryableConfig | undefined;
+    const status = error.response?.status;
+    const url = original?.url ?? '';
+    const isSilent = AUTH_SILENT_PATHS.some((p) => url.startsWith(p));
 
-      // 세션 검증·로그인 요청의 401은 호출자가 직접 처리 (AuthContext)
-      // 그 외 API 401만 로그인 페이지로 리다이렉트
-      if (!isSilent && typeof window !== 'undefined' && window.location.pathname !== '/auth') {
-        localStorage.removeItem('auth_token');
+    if (status !== 401 || isSilent || !original || original._retry) {
+      return Promise.reject(error);
+    }
+
+    original._retry = true;
+
+    const newToken = await getRefreshPromise();
+    if (!newToken) {
+      clearAuthToken();
+      if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
         window.location.href = '/auth';
       }
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    // 재시도: 새 access token 으로 Authorization 헤더 교체
+    original.headers = original.headers ?? {};
+    (original.headers as Record<string, string>).Authorization = `Bearer ${newToken}`;
+    return clientApi(original);
   },
 );
 
-// 기본 export는 clientApi로 (브라우저에서 주로 사용)
 export default clientApi;

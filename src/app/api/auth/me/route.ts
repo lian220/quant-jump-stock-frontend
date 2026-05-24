@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { forwardSetCookies } from '@/lib/proxy-cookies';
 
 // 서버 사이드: API_URL 우선
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
@@ -6,20 +7,23 @@ const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http:
 export async function GET(request: NextRequest) {
   try {
     const authorization = request.headers.get('authorization');
+    const cookieHeader = request.headers.get('cookie');
 
-    if (!authorization) {
+    // Authorization 헤더와 refresh cookie 모두 없으면 인증 불가
+    if (!authorization && !cookieHeader) {
       return NextResponse.json(
         { success: false, message: '인증 토큰이 필요합니다.' },
         { status: 401 },
       );
     }
 
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (authorization) headers['Authorization'] = authorization;
+    if (cookieHeader) headers['Cookie'] = cookieHeader;
+
     const response = await fetch(`${API_URL}/api/v1/auth/me`, {
       method: 'GET',
-      headers: {
-        Authorization: authorization,
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -33,11 +37,11 @@ export async function GET(request: NextRequest) {
       if (!data) {
         data = { success: false, message: '인증에 실패했습니다.' };
       }
-      return NextResponse.json(data, { status: response.status });
+      return forwardSetCookies(response, NextResponse.json(data, { status: response.status }));
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return forwardSetCookies(response, NextResponse.json(data));
   } catch (error) {
     console.error('Auth validation proxy error:', error);
     return NextResponse.json(

@@ -25,6 +25,7 @@ import { getStrategies } from '@/lib/api/strategies';
 import { listBrokerAccounts } from '@/lib/api/broker-account';
 import type { BrokerAccount } from '@/types/broker-account';
 import { ACCOUNT_TYPE_LABEL } from '@/types/broker-account';
+import { getAuthToken } from '@/lib/auth-store';
 import {
   getMySubscriptions,
   unsubscribeStrategy,
@@ -108,7 +109,7 @@ export default function MyPage() {
   // 구독 목록 로드
   useEffect(() => {
     if (!user) return;
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const token = getAuthToken();
     if (!token) {
       setSubscriptionsLoading(false);
       return;
@@ -132,7 +133,7 @@ export default function MyPage() {
   // Phase 1B v2.1: 구독별 실행 계좌 라디오용 broker accounts 로드
   useEffect(() => {
     if (!user) return;
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const token = getAuthToken();
     if (!token) return;
     let mounted = true;
     listBrokerAccounts(user.userId, token)
@@ -150,7 +151,7 @@ export default function MyPage() {
   // 알림 설정 로드
   useEffect(() => {
     if (!user) return;
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const token = getAuthToken();
     if (!token) {
       setNotifPrefsLoading(false);
       return;
@@ -182,7 +183,7 @@ export default function MyPage() {
   }, [user]);
 
   async function handleToggleNotifPref(key: keyof NotificationPreferences) {
-    const token = localStorage.getItem('auth_token');
+    const token = getAuthToken();
     if (!token || !notifPrefs) return;
     setNotifToggling(key);
     try {
@@ -197,7 +198,7 @@ export default function MyPage() {
   }
 
   async function handleUnsubscribe(strategyId: number) {
-    const token = localStorage.getItem('auth_token');
+    const token = getAuthToken();
     if (!token) return;
     setUnsubscribing(strategyId);
     setSubscriptionError(null);
@@ -213,7 +214,7 @@ export default function MyPage() {
   }
 
   async function handleToggleAlert(subscriptionId: number, current: boolean) {
-    const token = localStorage.getItem('auth_token');
+    const token = getAuthToken();
     if (!token) return;
     setTogglingAlert(subscriptionId);
     setSubscriptionError(null);
@@ -261,7 +262,7 @@ export default function MyPage() {
 
   /** ConfirmDialog 통과 후 또는 MOCK/미설정 즉시 실행. */
   async function persistBrokerMapping(subscriptionId: number, newAccountId: number | null) {
-    const token = localStorage.getItem('auth_token');
+    const token = getAuthToken();
     if (!token) return;
     setUpdatingBrokerAccount(subscriptionId);
     setSubscriptionError(null);
