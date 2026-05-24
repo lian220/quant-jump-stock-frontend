@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthContextType, AuthUser, LoginResponse, SignUpResponse } from '@/types/auth';
 import { clientApi as api } from '@/lib/api-client';
 import { saveAuthReturnUrl } from '@/lib/onboarding';
+import { clearAuthToken, getAuthToken, setAuthToken } from '@/lib/auth-store';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -24,30 +25,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 토큰 저장/조회 헬퍼
-  const getToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
-    }
-    return null;
-  };
+  // 토큰 저장/조회 헬퍼 — 메모리 auth-store 위임 (Phase A).
+  // 외부 모듈은 @/lib/auth-store 의 getAuthToken/setAuthToken 직접 사용 권장.
+  const getToken = getAuthToken;
 
-  const setToken = (token: string | null) => {
-    if (typeof window !== 'undefined') {
-      if (token) {
-        localStorage.setItem('auth_token', token);
-      } else {
-        localStorage.removeItem('auth_token');
-      }
-    }
-  };
-
-  // 초기 로드 시 토큰 검증
+  // 초기 로드 시: 잔존 localStorage 정리 + refresh cookie 로 access token 재발급 시도
   useEffect(() => {
     const validateSession = async () => {
-      const token = getToken();
+      // 마이그레이션: 기존 localStorage 잔여 토큰 일괄 삭제 (httpOnly refresh cookie 가 진실의 원천)
+      if (typeof window !== 'undefined' && localStorage.getItem('auth_token')) {
+        localStorage.removeItem('auth_token');
+      }
 
-      if (!token) {
+      // refresh cookie 가 있으면 새 access token 발급 (없으면 401 → 비로그인 상태)
+      try {
+        const refreshRes = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (refreshRes.ok) {
+          const refreshData = (await refreshRes.json()) as { accessToken?: string };
+          if (refreshData.accessToken) {
+            setAuthToken(refreshData.accessToken);
+          }
+        }
+      } catch (e) {
+        console.warn('초기 토큰 재발급 시도 실패 (비로그인 상태로 진행):', e);
+      }
+
+      if (!getAuthToken()) {
         setLoading(false);
         return;
       }
@@ -58,7 +65,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (response.data.success && response.data.user) {
           setUser(response.data.user);
         } else {
-          setToken(null);
+          clearAuthToken();
           setUser(null);
         }
       } catch (err: unknown) {
@@ -70,7 +77,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         if (status === 401 || status === 403) {
           // 인증 만료 → 토큰 삭제
-          setToken(null);
+          clearAuthToken();
           setUser(null);
           setError(null);
         } else if (status && status >= 500) {
@@ -100,7 +107,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const data = response.data;
 
       if (data.success && data.token && data.user) {
-        setToken(data.token);
+        setAuthToken(data.token);
         setUser(data.user);
         setError(null);
         return {};
@@ -144,7 +151,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (data.success) {
         // 자동 로그인: 토큰과 유저 정보가 있으면 바로 로그인 상태로 설정
         if (data.token && data.user) {
-          setToken(data.token);
+          setAuthToken(data.token);
           setUser(data.user);
           setError(null);
         }
@@ -177,7 +184,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('로그아웃 오류:', error);
     } finally {
-      setToken(null);
+      clearAuthToken();
       setUser(null);
       setError(null);
       setLoading(false);
