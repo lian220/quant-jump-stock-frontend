@@ -25,12 +25,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // BE 의 임시 CSRF 방어 (isAllowedOrigin) 를 통과시키기 위해 브라우저의 Origin/Referer 를 forward.
+    // Next.js 자체 host(localhost:3000) 가 same-site 이므로 그대로 전달해도 보안 의미 동일.
+    const origin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Cookie: cookieHeader,
+    };
+    if (origin) headers['Origin'] = origin;
+    if (referer) headers['Referer'] = referer;
+
     const response = await fetch(`${API_URL}/api/v1/auth/refresh`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Cookie: cookieHeader,
-      },
+      headers,
       // Cache-Control: no-store 는 BE 가 응답에 명시해야 함 (Cloudflare 캐시 회피)
     });
 

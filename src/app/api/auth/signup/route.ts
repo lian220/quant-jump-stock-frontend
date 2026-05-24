@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { forwardSetCookies } from '@/lib/proxy-cookies';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
@@ -16,11 +17,8 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
 
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
-    }
-
-    return NextResponse.json(data);
+    // BE 가 발급한 refresh httpOnly cookie 등 Set-Cookie 헤더를 브라우저로 forward
+    return forwardSetCookies(response, NextResponse.json(data, { status: response.status }));
   } catch (error) {
     console.error('Signup proxy error:', error);
     return NextResponse.json(
