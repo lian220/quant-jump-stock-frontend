@@ -8,6 +8,7 @@
  * - 통합 알림(백테스트 완료, 거래 시그널 등): `@/lib/api/notifications` (별도 도메인)
  */
 
+import { fetchWithAutoRefresh } from '@/lib/api-client';
 import { getAuthToken } from '@/lib/auth-store';
 
 function getAuthHeaders(): Record<string, string> {
@@ -56,7 +57,7 @@ export async function subscribeNews(
   value: string,
   channel: string = 'IN_APP',
 ): Promise<NewsSubscription> {
-  const response = await fetch('/api/news/subscriptions', {
+  const response = await fetchWithAutoRefresh('/api/news/subscriptions', {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify({ type, value, channel }),
@@ -66,7 +67,7 @@ export async function subscribeNews(
 }
 
 export async function unsubscribeNews(subscriptionId: number): Promise<void> {
-  const response = await fetch(`/api/news/subscriptions/${subscriptionId}`, {
+  const response = await fetchWithAutoRefresh(`/api/news/subscriptions/${subscriptionId}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
@@ -74,7 +75,7 @@ export async function unsubscribeNews(subscriptionId: number): Promise<void> {
 }
 
 export async function getNewsSubscriptions(): Promise<NewsSubscriptionListResponse> {
-  const response = await fetch('/api/news/subscriptions', {
+  const response = await fetchWithAutoRefresh('/api/news/subscriptions', {
     method: 'GET',
     headers: getAuthHeaders(),
     cache: 'no-store',
@@ -86,38 +87,47 @@ export async function getNewsSubscriptions(): Promise<NewsSubscriptionListRespon
 export async function getNewsNotifications(
   limit: number = 30,
 ): Promise<NewsNotificationListResponse> {
-  const response = await fetch(`/api/news/subscriptions/notifications?limit=${limit}`, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    cache: 'no-store',
-  });
+  const response = await fetchWithAutoRefresh(
+    `/api/news/subscriptions/notifications?limit=${limit}`,
+    {
+      method: 'GET',
+      headers: getAuthHeaders(),
+      cache: 'no-store',
+    },
+  );
   if (!response.ok) throw new Error(`알림 조회 실패: ${response.status}`);
   return response.json();
 }
 
 export async function getNewsUnreadCount(): Promise<number> {
-  const response = await fetch('/api/news/subscriptions/notifications/unread-count', {
-    method: 'GET',
-    headers: getAuthHeaders(),
-    cache: 'no-store',
-  });
+  const response = await fetchWithAutoRefresh(
+    '/api/news/subscriptions/notifications/unread-count',
+    {
+      method: 'GET',
+      headers: getAuthHeaders(),
+      cache: 'no-store',
+    },
+  );
   if (!response.ok) return 0;
   const data = await response.json();
   return data.unreadCount ?? 0;
 }
 
 export async function markNewsNotificationRead(notificationId: number): Promise<void> {
-  const response = await fetch(`/api/news/subscriptions/notifications/${notificationId}/read`, {
-    method: 'PATCH',
-    headers: getAuthHeaders(),
-  });
+  const response = await fetchWithAutoRefresh(
+    `/api/news/subscriptions/notifications/${notificationId}/read`,
+    {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+    },
+  );
   if (!response.ok) {
     throw new Error(`알림 읽음 처리 실패: ${response.status}`);
   }
 }
 
 export async function markAllNewsNotificationsRead(): Promise<void> {
-  const response = await fetch('/api/news/subscriptions/notifications/read-all', {
+  const response = await fetchWithAutoRefresh('/api/news/subscriptions/notifications/read-all', {
     method: 'PATCH',
     headers: getAuthHeaders(),
   });

@@ -1,6 +1,7 @@
 // 통합 알림 API 클라이언트
 
 import { getAuthToken } from '@/lib/auth-store';
+import { fetchWithAutoRefresh } from '@/lib/api-client';
 
 function getAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -41,7 +42,7 @@ export interface UnifiedNotificationListResponse {
 }
 
 export async function getNotifications(limit = 20): Promise<UnifiedNotificationListResponse> {
-  const res = await fetch(`/api/notifications?limit=${limit}`, {
+  const res = await fetchWithAutoRefresh(`/api/notifications?limit=${limit}`, {
     headers: getAuthHeaders(),
     credentials: 'include',
   });
@@ -50,7 +51,7 @@ export async function getNotifications(limit = 20): Promise<UnifiedNotificationL
 }
 
 export async function getUnreadCount(): Promise<number> {
-  const res = await fetch('/api/notifications/unread-count', {
+  const res = await fetchWithAutoRefresh('/api/notifications/unread-count', {
     headers: getAuthHeaders(),
     credentials: 'include',
   });
@@ -60,7 +61,7 @@ export async function getUnreadCount(): Promise<number> {
 }
 
 export async function markNotificationAsRead(id: number): Promise<void> {
-  const res = await fetch(`/api/notifications/${id}/read`, {
+  const res = await fetchWithAutoRefresh(`/api/notifications/${id}/read`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
     credentials: 'include',
@@ -69,7 +70,7 @@ export async function markNotificationAsRead(id: number): Promise<void> {
 }
 
 export async function markAllNotificationsAsRead(): Promise<void> {
-  const res = await fetch('/api/notifications/read-all', {
+  const res = await fetchWithAutoRefresh('/api/notifications/read-all', {
     method: 'PATCH',
     headers: getAuthHeaders(),
     credentials: 'include',

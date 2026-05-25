@@ -8,6 +8,7 @@ import type {
   EnhancedBacktestResult,
   BenchmarkOption,
 } from '@/types/backtest';
+import { fetchWithAutoRefresh } from '@/lib/api-client';
 import { getAuthToken } from '@/lib/auth-store';
 
 function getAuthHeaders(): Record<string, string> {
@@ -23,7 +24,7 @@ function getAuthHeaders(): Record<string, string> {
  * 백테스트 실행 요청
  */
 export async function runBacktest(req: BacktestRunRequest): Promise<BacktestRunResponse> {
-  const response = await fetch('/api/backtest/run', {
+  const response = await fetchWithAutoRefresh('/api/backtest/run', {
     method: 'POST',
     headers: getAuthHeaders(),
     credentials: 'include',
@@ -49,7 +50,7 @@ export async function getBacktestResult(
   id: string,
   signal?: AbortSignal,
 ): Promise<BacktestResultResponse> {
-  const response = await fetch(`/api/backtest/${id}`, {
+  const response = await fetchWithAutoRefresh(`/api/backtest/${id}`, {
     method: 'GET',
     headers: getAuthHeaders(),
     credentials: 'include',
@@ -125,7 +126,7 @@ export async function pollBacktestResult(
  * 강화 백테스트 결과 조회
  */
 export async function getEnhancedBacktestResult(id: string): Promise<EnhancedBacktestResult> {
-  const response = await fetch(`/api/backtest/${id}/enhanced`, {
+  const response = await fetchWithAutoRefresh(`/api/backtest/${id}/enhanced`, {
     method: 'GET',
     headers: getAuthHeaders(),
     credentials: 'include',
@@ -142,7 +143,7 @@ export async function getEnhancedBacktestResult(id: string): Promise<EnhancedBac
  * 사용 가능한 벤치마크 목록 조회
  */
 export async function getAvailableBenchmarks(): Promise<BenchmarkOption[]> {
-  const response = await fetch('/api/backtest/benchmarks', {
+  const response = await fetchWithAutoRefresh('/api/backtest/benchmarks', {
     method: 'GET',
     headers: getAuthHeaders(),
     credentials: 'include',

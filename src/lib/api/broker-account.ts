@@ -4,6 +4,7 @@ import type {
   BrokerAccountRegisterRequest,
   BrokerAccountUpdateRequest,
 } from '@/types/broker-account';
+import { fetchWithAutoRefresh } from '@/lib/api-client';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 
@@ -29,7 +30,7 @@ export async function listBrokerAccounts(
   userId: string,
   token: string,
 ): Promise<BrokerAccountList> {
-  const res = await fetch(basePath(userId), {
+  const res = await fetchWithAutoRefresh(basePath(userId), {
     headers: { Authorization: `Bearer ${token}` },
   });
   await ensureOk(res, '계좌 목록을 불러오지 못했습니다');
@@ -41,7 +42,7 @@ export async function registerBrokerAccount(
   token: string,
   body: BrokerAccountRegisterRequest,
 ): Promise<BrokerAccount> {
-  const res = await fetch(basePath(userId), {
+  const res = await fetchWithAutoRefresh(basePath(userId), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -59,7 +60,7 @@ export async function updateBrokerAccount(
   accountId: number,
   body: BrokerAccountUpdateRequest,
 ): Promise<BrokerAccount> {
-  const res = await fetch(`${basePath(userId)}/${accountId}`, {
+  const res = await fetchWithAutoRefresh(`${basePath(userId)}/${accountId}`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -77,10 +78,13 @@ export async function toggleBrokerAccount(
   accountId: number,
   enabled: boolean,
 ): Promise<BrokerAccount> {
-  const res = await fetch(`${basePath(userId)}/${accountId}/toggle?enabled=${enabled}`, {
-    method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await fetchWithAutoRefresh(
+    `${basePath(userId)}/${accountId}/toggle?enabled=${enabled}`,
+    {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
   await ensureOk(res, '활성 상태 변경에 실패했습니다');
   return res.json() as Promise<BrokerAccount>;
 }
@@ -90,7 +94,7 @@ export async function softDeleteBrokerAccount(
   token: string,
   accountId: number,
 ): Promise<void> {
-  const res = await fetch(`${basePath(userId)}/${accountId}`, {
+  const res = await fetchWithAutoRefresh(`${basePath(userId)}/${accountId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -102,7 +106,7 @@ export async function restoreBrokerAccount(
   token: string,
   accountId: number,
 ): Promise<BrokerAccount> {
-  const res = await fetch(`${basePath(userId)}/${accountId}/restore`, {
+  const res = await fetchWithAutoRefresh(`${basePath(userId)}/${accountId}/restore`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });

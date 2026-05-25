@@ -4,6 +4,7 @@
  */
 
 import { API_URL } from './config';
+import { fetchWithAutoRefresh } from '@/lib/api-client';
 import { getAuthToken } from '@/lib/auth-store';
 
 function getAuthHeaders(): Record<string, string> {
@@ -82,7 +83,7 @@ export interface DashboardAiUsage {
 
 export async function getDashboard(): Promise<DashboardResponse> {
   const url = getDashboardUrl();
-  const response = await fetch(url, {
+  const response = await fetchWithAutoRefresh(url, {
     headers: getAuthHeaders(),
     credentials: 'include',
     cache: 'no-store',

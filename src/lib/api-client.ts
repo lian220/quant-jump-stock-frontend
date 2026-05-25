@@ -110,3 +110,29 @@ clientApi.interceptors.response.use(
 );
 
 export default clientApi;
+
+/**
+ * raw fetch 사용처 (lib/api/broker-account.ts 등) 가 401 시 자동 재발급 후 1회 재시도하는 헬퍼.
+ *
+ * axios clientApi 의 interceptor 와 같은 singleton refresh promise 를 공유하므로
+ * 동시 401 다발 시 중복 refresh 호출 없음.
+ *
+ * 사용:
+ *   const res = await fetchWithAutoRefresh(url, { headers: { Authorization: `Bearer ${token}` } });
+ * 재시도 시 새 access token 으로 Authorization 헤더가 갱신됨. 호출자는 별도 처리 불필요.
+ */
+export async function fetchWithAutoRefresh(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+): Promise<Response> {
+  const res = await fetch(input, init);
+  if (res.status !== 401) return res;
+
+  const newToken = await getRefreshPromise();
+  if (!newToken) return res;
+
+  // 새 access token 으로 Authorization 헤더 교체 (있던 자리면 갱신, 없으면 추가)
+  const nextHeaders = new Headers(init.headers ?? {});
+  nextHeaders.set('Authorization', `Bearer ${newToken}`);
+  return fetch(input, { ...init, headers: nextHeaders });
+}
