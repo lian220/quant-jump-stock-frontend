@@ -1,13 +1,15 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { PageSEO } from '@/components/seo';
 import { pageDefaults } from '@/lib/seo/config';
 import { classifyByTier, computeAGradeRatio, type BuySignal } from '@/lib/api/predictions';
+import { searchStocks } from '@/lib/api/stocks';
 import { trackEvent } from '@/lib/analytics';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -32,6 +34,30 @@ import { HomeAnonymousHero } from '@/components/home/HomeAnonymousHero';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [navigatingTicker, setNavigatingTicker] = useState<string | null>(null);
+
+  // 종목 카드 클릭 → ticker로 stock id 조회 후 종목 상세로 이동
+  // (recommendations 페이지의 navigateToStockDetail 패턴과 동일)
+  const navigateToStockDetail = useCallback(
+    async (ticker: string) => {
+      if (navigatingTicker) return; // 중복 클릭 방지
+      setNavigatingTicker(ticker);
+      try {
+        const result = await searchStocks({ query: ticker, size: 1 });
+        if (result.stocks.length > 0) {
+          router.push(`/stocks/${result.stocks[0].id}`);
+        } else {
+          router.push(`/stocks?query=${ticker}`);
+        }
+      } catch {
+        router.push(`/stocks?query=${ticker}`);
+      } finally {
+        setNavigatingTicker(null);
+      }
+    },
+    [router, navigatingTicker],
+  );
 
   // SWR 훅: 페이지 이동 후 돌아와도 캐시된 데이터 즉시 표시
   const { data: strategiesData, isLoading: isLoadingStrategies } = useStrategies({
@@ -87,6 +113,8 @@ export default function Home() {
 
   const aiStocksSection = (
     <HomeAIStocksSection
+      onStockClick={navigateToStockDetail}
+      navigatingTicker={navigatingTicker}
       isLoading={isLoadingRecommendations}
       hasError={!!buySignalsError}
       onRetry={mutateBuySignals}
@@ -231,6 +259,8 @@ export default function Home() {
                 totalStrategies={strategiesData?.totalItems}
                 displayStocks={displayStocks}
                 isFallback={isFallback}
+                onStockClick={navigateToStockDetail}
+                navigatingTicker={navigatingTicker}
               />
 
               {/* 2. AI 주목 종목 */}

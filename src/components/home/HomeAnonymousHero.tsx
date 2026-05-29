@@ -12,6 +12,8 @@ interface Props {
   totalStrategies: number | undefined;
   displayStocks: BuySignal[];
   isFallback: boolean;
+  onStockClick: (ticker: string) => void;
+  navigatingTicker: string | null;
 }
 
 export function HomeAnonymousHero({
@@ -20,6 +22,8 @@ export function HomeAnonymousHero({
   totalStrategies,
   displayStocks,
   isFallback,
+  onStockClick,
+  navigatingTicker,
 }: Props) {
   const buyCount = displayStocks.filter((s) => (s.compositeScoreDisplay ?? 0) >= 65).length;
 
@@ -177,8 +181,21 @@ export function HomeAnonymousHero({
             const topPriceRec = topStock.priceRecommendation;
             const topIsBuy =
               !topIsUnreliable && (topPriceRec === '강력매수' || topPriceRec === '매수');
+            const topIsNavigating = navigatingTicker === topStock.ticker;
             return (
-              <Link href="/recommendations">
+              <div
+                role="link"
+                tabIndex={0}
+                onClick={() => onStockClick(topStock.ticker)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onStockClick(topStock.ticker);
+                  }
+                }}
+                className={`cursor-pointer ${topIsNavigating ? 'opacity-60 pointer-events-none' : ''}`}
+                aria-label={`${topStock.stockName} 종목 상세 보기`}
+              >
                 <div
                   className={`bg-slate-800/60 border rounded-xl p-3.5 text-left transition-all active:scale-[0.98] ${
                     topIsUnreliable ? 'border-amber-500/30' : 'border-emerald-500/40'
@@ -226,7 +243,7 @@ export function HomeAnonymousHero({
                     </p>
                   )}
                 </div>
-              </Link>
+              </div>
             );
           })()}
         </div>
