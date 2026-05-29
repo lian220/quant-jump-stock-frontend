@@ -28,6 +28,8 @@ interface Props {
   tiers: Tiers;
   isLoggedIn: boolean;
   lastUpdated: string | null;
+  onStockClick: (ticker: string) => void;
+  navigatingTicker: string | null;
 }
 
 export function HomeAIStocksSection({
@@ -39,6 +41,8 @@ export function HomeAIStocksSection({
   tiers,
   isLoggedIn,
   lastUpdated,
+  onStockClick,
+  navigatingTicker,
 }: Props) {
   return (
     <div className="mb-8 md:mb-10">
@@ -97,11 +101,21 @@ export function HomeAIStocksSection({
                   const isSellSignal = !isUnreliable && priceRec === '매도';
                   const isBuySignal =
                     !isUnreliable && (priceRec === '강력매수' || priceRec === '매수');
+                  const isNavigating = navigatingTicker === stock.ticker;
                   return (
-                    <Link
+                    <div
                       key={stock.ticker}
-                      href="/recommendations"
-                      className={idx === 0 && !isLoggedIn ? 'hidden sm:block' : ''}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => onStockClick(stock.ticker)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onStockClick(stock.ticker);
+                        }
+                      }}
+                      className={`${idx === 0 && !isLoggedIn ? 'hidden sm:block' : ''} ${isNavigating ? 'opacity-60 pointer-events-none' : ''}`}
+                      aria-label={`${stock.stockName} 종목 상세 보기`}
                     >
                       <Card
                         className={`relative bg-slate-800/50 transition-all active:scale-[0.98] hover:shadow-lg cursor-pointer ${
@@ -303,7 +317,7 @@ export function HomeAIStocksSection({
                           </div>
                         </CardContent>
                       </Card>
-                    </Link>
+                    </div>
                   );
                 })}
               </div>
@@ -348,8 +362,22 @@ export function HomeAIStocksSection({
                   const mPriceRec = stock.priceRecommendation;
                   const mReliability = checkPredictionReliability(stock);
                   const mIsUnreliable = mReliability.status !== 'reliable';
+                  const mIsNavigating = navigatingTicker === stock.ticker;
                   return (
-                    <Link key={stock.ticker} href="/recommendations">
+                    <div
+                      key={stock.ticker}
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => onStockClick(stock.ticker)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onStockClick(stock.ticker);
+                        }
+                      }}
+                      className={mIsNavigating ? 'opacity-60 pointer-events-none' : ''}
+                      aria-label={`${stock.stockName} 종목 상세 보기`}
+                    >
                       <Card
                         className={`bg-slate-800/30 transition-colors cursor-pointer ${
                           mIsUnreliable
@@ -400,7 +428,7 @@ export function HomeAIStocksSection({
                           )}
                         </CardContent>
                       </Card>
-                    </Link>
+                    </div>
                   );
                 })}
               </div>
