@@ -39,7 +39,16 @@ export function ScoreBar({ score, label, maxScore = 100, size = 'sm' }: ScoreBar
           </span>
         </div>
       )}
-      <div className={`w-full ${barHeight} bg-slate-700 rounded-full overflow-hidden`}>
+      <div
+        className={`w-full ${barHeight} bg-slate-700 rounded-full overflow-hidden`}
+        role="progressbar"
+        aria-valuenow={score}
+        aria-valuemin={0}
+        aria-valuemax={maxScore}
+        aria-label={
+          label ? `${label} ${score}점 (${maxScore}점 만점)` : `${score}점 (${maxScore}점 만점)`
+        }
+      >
         <div
           className={`${barHeight} ${getScoreColor(score)} rounded-full transition-all duration-500`}
           style={{ width: `${percentage}%` }}

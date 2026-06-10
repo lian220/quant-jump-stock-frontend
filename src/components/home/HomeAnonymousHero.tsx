@@ -25,7 +25,8 @@ export function HomeAnonymousHero({
   onStockClick,
   navigatingTicker,
 }: Props) {
-  const buyCount = displayStocks.filter((s) => (s.compositeScoreDisplay ?? 0) >= 65).length;
+  // ADR 0006 §2.8: 점수 임계 재정의 금지 → 백엔드 isRecommended(SSoT)로 카운트
+  const buyCount = displayStocks.filter((s) => s.isRecommended).length;
 
   return (
     <div className="mb-6 md:mb-8 lg:grid lg:grid-cols-[1.15fr_1fr] lg:gap-10 lg:items-center text-center lg:text-left">
@@ -142,30 +143,31 @@ export function HomeAnonymousHero({
           className="relative h-[10px] rounded-full"
           style={{
             background:
-              'linear-gradient(90deg, #5b6a92 0%, #5b6a92 50%, #fbbf24 50%, #fbbf24 65%, #10b981 65%, #10b981 80%, #22d3ee 80%, #22d3ee 100%)',
+              'linear-gradient(90deg, #5b6a92 0%, #5b6a92 58%, #fbbf24 58%, #fbbf24 68%, #10b981 68%, #10b981 77%, #22d3ee 77%, #22d3ee 100%)',
           }}
         >
           <div
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-[18px] h-[18px] rounded-full bg-white border-[3px] border-emerald-500"
-            style={{ left: '65%', boxShadow: '0 0 12px rgba(16,185,129,0.6)' }}
+            style={{ left: '68%', boxShadow: '0 0 12px rgba(16,185,129,0.6)' }}
           >
-            {/* 마커 라벨: "65 · 매수 추천" 한 묶음으로 — 점수 의미를 1초에 전달 */}
+            {/* 마커 라벨: "68 · 매수 추천" — 추천 컷(grade B 경계)과 동일 (scoring_spec.yaml SSoT) */}
             <span className="absolute -top-[24px] left-1/2 -translate-x-1/2 text-[10px] font-bold text-emerald-300 bg-slate-900 border border-emerald-500 px-1.5 py-[1px] rounded whitespace-nowrap">
-              65 · 매수 추천
+              68 · 매수 추천
             </span>
           </div>
         </div>
-        {/* 4-구간 라벨 — 모바일 강제 2×2 grid (디자인 컨펌 권고) */}
+        {/* 4-구간 라벨 — 백엔드 라벨 임계(WATCH 58/RECOMMEND 68/STRONG 77, scoring_spec.yaml)와 동일 구간.
+            FE 자체 임계 정의 금지(ADR 0006 §2.8) — 값 변경은 spec 재보정 시 함께 갱신 */}
         <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-2 gap-y-1.5 text-[11px] text-center whitespace-nowrap">
-          <span className="text-slate-400">0–49 · 보류</span>
-          <span className="text-amber-400">50–64 · 관찰</span>
-          <span className="text-emerald-400 font-bold">65–79 · 매수 추천</span>
-          <span className="text-cyan-300 font-bold">80–100 · 강력 추천</span>
+          <span className="text-slate-400">0–57 · 보류</span>
+          <span className="text-amber-400">58–67 · 관심</span>
+          <span className="text-emerald-400 font-bold">68–76 · 추천</span>
+          <span className="text-cyan-300 font-bold">77–100 · 강력 추천</span>
         </div>
         {displayStocks.length > 0 && (
           <p className="mt-2.5 text-center text-[11.5px] text-slate-400">
-            오늘 65점 이상 종목 <strong className="text-white">{buyCount}개</strong> · KIS 계좌로
-            1초 매수 가능
+            오늘 AI 추천 종목 <strong className="text-white">{buyCount}개</strong> · KIS 계좌로 1초
+            매수 가능
           </p>
         )}
       </div>
@@ -175,7 +177,7 @@ export function HomeAnonymousHero({
         <div className="sm:hidden mt-4">
           {(() => {
             const topStock = displayStocks[0];
-            const topGrade = getScoreGrade(topStock.compositeScore);
+            const topGrade = getScoreGrade(topStock.compositeGrade);
             const topReliability = checkPredictionReliability(topStock);
             const topIsUnreliable = topReliability.status !== 'reliable';
             const topPriceRec = topStock.priceRecommendation;
@@ -227,7 +229,7 @@ export function HomeAnonymousHero({
                     </div>
                     <div className="text-right shrink-0">
                       <div className={`text-xl font-bold ${topGrade.color}`}>
-                        {topStock.compositeScoreDisplay}
+                        {topStock.compositeScore}
                         <span className="text-[10px] text-slate-500 font-normal">/100</span>
                       </div>
                       {topIsUnreliable ? (

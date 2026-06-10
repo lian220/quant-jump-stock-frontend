@@ -60,7 +60,7 @@ export function HomeMiniDashboard({
           <div className="bg-slate-700/30 rounded-lg p-3 text-center">
             <p className="text-lg sm:text-2xl font-bold text-purple-400 tabular-nums">
               {predictionStats?.avgCompositeScore != null
-                ? `${Math.min(Math.round((predictionStats.avgCompositeScore / 4.0) * 100), 100)}점`
+                ? `${Math.round(predictionStats.avgCompositeScore)}점`
                 : '...'}
             </p>
             <p className="text-[10px] sm:text-xs text-slate-400">
