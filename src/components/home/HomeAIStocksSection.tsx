@@ -11,7 +11,7 @@ import {
   parseIndicatorBadges,
   type BuySignal,
 } from '@/lib/api/predictions';
-import { ScoreBar } from '@/components/dashboard';
+import { AxisContributionBars } from '@/components/predictions';
 
 interface Tiers {
   strong: BuySignal[];
@@ -92,9 +92,9 @@ export function HomeAIStocksSection({
               </p>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-5 lg:gap-6">
                 {displayStocks.slice(0, 3).map((stock, idx) => {
-                  const grade = getScoreGrade(stock.compositeScore);
+                  const grade = getScoreGrade(stock.compositeGrade);
                   const indicators = parseIndicatorBadges(stock.recommendationReason);
-                  const displayScore = stock.compositeScoreDisplay;
+                  const displayScore = stock.compositeScore; // 0~100 단일 스케일
                   const reliability = checkPredictionReliability(stock);
                   const isUnreliable = reliability.status !== 'reliable';
                   const priceRec = stock.priceRecommendation;
@@ -190,19 +190,15 @@ export function HomeAIStocksSection({
                                         : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                                   }`}
                                 >
-                                  {getPriceRecLabel(priceRec, grade.grade)}
+                                  {getPriceRecLabel(priceRec, grade.label)}
                                 </Badge>
                               )}
                             </div>
                           </div>
-                          {/* 하단: 추천이유 + 지표 */}
-                          {stock.recommendationReason && (
-                            <div className="bg-slate-700/20 rounded-md px-2 py-1.5">
-                              <p className="text-[11px] text-slate-300 leading-snug line-clamp-1">
-                                💡 {stock.recommendationReason}
-                              </p>
-                            </div>
-                          )}
+                          {/* 하단: XAI 축별 기여도(모바일도 노출) + 추천이유 한 줄 (ADR 0006 §2.9) */}
+                          <div className="bg-slate-700/20 rounded-md px-2 py-1.5">
+                            <AxisContributionBars stock={stock} />
+                          </div>
                           {indicators.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {indicators.map((label) => (
@@ -244,7 +240,7 @@ export function HomeAIStocksSection({
                                         : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                                   }
                                 >
-                                  {getPriceRecLabel(priceRec, grade.grade)}
+                                  {getPriceRecLabel(priceRec, grade.label)}
                                 </Badge>
                               )}
                             </div>
@@ -298,21 +294,9 @@ export function HomeAIStocksSection({
                                 )}
                               </div>
                             )}
-                            {/* 세부 점수 — 데스크탑: 컬러 바 포함 */}
-                            <div
-                              className={`hidden sm:grid ${stock.sentimentScore > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:gap-2`}
-                            >
-                              <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                <ScoreBar score={stock.techScoreDisplay} label="차트 패턴" />
-                              </div>
-                              <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                <ScoreBar score={stock.aiScoreDisplay} label="AI 예측" />
-                              </div>
-                              {stock.sentimentScore > 0 && (
-                                <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-                                  <ScoreBar score={stock.sentimentScoreDisplay} label="뉴스 반응" />
-                                </div>
-                              )}
+                            {/* XAI 축별 기여도 — 데스크탑 (ADR 0006 §2.9) */}
+                            <div className="hidden sm:block bg-slate-700/30 p-2.5 rounded-lg">
+                              <AxisContributionBars stock={stock} showReason={false} />
                             </div>
                           </div>
                         </CardContent>
@@ -357,8 +341,8 @@ export function HomeAIStocksSection({
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 max-w-4xl mx-auto">
                 {tiers.medium.slice(0, 4).map((stock) => {
-                  const grade = getScoreGrade(stock.compositeScore);
-                  const mDisplayScore = stock.compositeScoreDisplay;
+                  const grade = getScoreGrade(stock.compositeGrade);
+                  const mDisplayScore = stock.compositeScore; // 0~100 단일 스케일
                   const mPriceRec = stock.priceRecommendation;
                   const mReliability = checkPredictionReliability(stock);
                   const mIsUnreliable = mReliability.status !== 'reliable';
@@ -410,7 +394,7 @@ export function HomeAIStocksSection({
                                     : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
                                 }`}
                               >
-                                {getPriceRecLabel(mPriceRec, grade.grade)}
+                                {getPriceRecLabel(mPriceRec, grade.label)}
                               </Badge>
                             )}
                           </div>

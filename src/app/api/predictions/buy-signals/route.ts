@@ -48,11 +48,18 @@ export async function GET(request: NextRequest) {
       }
     }
     // Backend 응답 형식을 Frontend 기대 형식으로 변환 (숫자 필드 정규화)
+    // ADR 0006: 0~100 단일 스케일. compositeGrade/axisContributions/scoreCoverage 등 비숫자 필드는
+    // spread로 그대로 통과시키고, 숫자 표시 필드만 Number()로 정규화한다.
     const NUMERIC_FIELDS = [
       'compositeScore',
+      'compositeScoreDisplay',
       'techScore',
       'aiScore',
       'sentimentScore',
+      'techScoreDisplay',
+      'aiScoreDisplay',
+      'sentimentScoreDisplay',
+      'scoreCoverage',
       'currentPrice',
       'targetPrice',
       'upsidePercent',

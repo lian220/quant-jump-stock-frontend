@@ -8,23 +8,54 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:10010';
 // === 타입 정의 ===
 
 export type Signal = 'BUY' | 'SELL' | 'HOLD';
-export type CompositeGrade = 'A' | 'B' | 'C' | 'D' | 'EXCELLENT' | 'GOOD' | 'FAIR' | 'LOW';
+
+/**
+ * 종합 등급 (백엔드 SSoT).
+ * ADR 0006 §2.6: 0~100 percentile 기반으로 백엔드가 산출하며,
+ * 프론트는 재계산하지 않고 표시만 한다.
+ * 레거시 enum(EXCELLENT/GOOD/FAIR/LOW)이 섞여올 수 있어 입력 타입에는 포함하되,
+ * 화면에서는 normalizeGrade로 S/A/B/C/D로 정규화한다.
+ */
+export type CompositeGrade = 'S' | 'A' | 'B' | 'C' | 'D';
+export type CompositeGradeInput =
+  | CompositeGrade
+  | 'EXCELLENT'
+  | 'GOOD'
+  | 'FAIR'
+  | 'LOW'
+  | string
+  | null
+  | undefined;
 export type SignalTier = 'strong' | 'medium' | 'weak';
+
+/** 축별 기여도 (0~100). ADR 0006 §2.9 XAI. */
+export interface AxisContributions {
+  tech?: number;
+  ai?: number;
+  sentiment?: number;
+}
 
 export interface BuySignal {
   ticker: string;
   stockName: string;
   analysisDate: string;
-  compositeScore: number;
-  compositeGrade: CompositeGrade;
-  aiScore: number;
-  techScore: number;
-  sentimentScore: number;
-  // 정규화 점수 (0-100): 백엔드에서 계산
+  // ADR 0006: 0~100 단일 스케일 (저장값). display는 하위호환 별칭.
+  compositeScore: number; // 0~100
+  compositeGrade: CompositeGradeInput; // 백엔드 SSoT (S|A|B|C|D, 레거시 enum 혼입 가능)
+  aiScore: number; // 원점수 0~10 (강도 = aiScore/10×100)
+  techScore: number; // 원점수 0~3.5
+  sentimentScore: number; // 원점수 0~10
+  /** @deprecated ADR 0006 — 0~100 단일 스케일 전환으로 별도 display 불필요. 전환기 하위호환 별칭, 추후 제거. compositeScore/axisContributions 사용. */
   techScoreDisplay: number;
+  /** @deprecated compositeScore/axisContributions 사용 */
   aiScoreDisplay: number;
+  /** @deprecated compositeScore/axisContributions 사용 */
   sentimentScoreDisplay: number;
+  /** @deprecated = compositeScore. 하위호환 별칭, 추후 제거. */
   compositeScoreDisplay: number;
+  // ADR 0006 §2.9 XAI / §5 커버리지 노출
+  axisContributions?: AxisContributions; // 0~100 축별 기여도 (우선 사용)
+  scoreCoverage?: number; // 0~1 점수 산출 커버리지
   isRecommended: boolean;
   recommendationReason?: string;
   currentPrice?: number;
@@ -38,15 +69,16 @@ export interface BuySignalsResponse {
   date: string | null; // 실제 조회된 날짜 (백엔드 fallback 적용 후)
 }
 
-// === Tier 분류 ===
+// === 등급 기반 Tier 분류 (점수 임계 재계산 금지, 백엔드 grade 사용) ===
 
-/** Tier 기준 (AI/감정 점수 통합 반영, 현재 범위 ~0.6~3.5) */
-export const TIER_THRESHOLDS = {
-  STRONG: 2.5, // 상위 ~25% → "AI 추천"
-  MEDIUM: 1.5, // 중간 ~50% → "분석 참고"
-} as const;
-
-/** 종목을 Tier별로 분류 */
+/**
+ * 종목을 Tier별로 분류.
+ * ADR 0006 §2.8: 프론트는 점수 임계값을 재정의하지 않는다.
+ * 백엔드 compositeGrade(S/A/B/C/D)로만 분류한다.
+ * - strong: S, A (강한 매수)
+ * - medium: B, C (보통~약한 매수)
+ * - weak:   D (신호 없음)
+ */
 export function classifyByTier(signals: BuySignal[]): {
   strong: BuySignal[];
   medium: BuySignal[];
@@ -57,17 +89,17 @@ export function classifyByTier(signals: BuySignal[]): {
   const weak: BuySignal[] = [];
 
   for (const signal of signals) {
-    const score = signal.compositeScore;
-    if (score >= TIER_THRESHOLDS.STRONG) {
+    const grade = normalizeGrade(signal.compositeGrade);
+    if (grade === 'S' || grade === 'A') {
       strong.push(signal);
-    } else if (score >= TIER_THRESHOLDS.MEDIUM) {
+    } else if (grade === 'B' || grade === 'C') {
       medium.push(signal);
     } else {
       weak.push(signal);
     }
   }
 
-  // 각 Tier 내에서 점수 높은 순 정렬
+  // 각 Tier 내에서 점수 높은 순 정렬 (표시 순서용, 임계 판정 아님)
   const byScoreDesc = (a: BuySignal, b: BuySignal) => b.compositeScore - a.compositeScore;
 
   strong.sort(byScoreDesc);
@@ -162,8 +194,8 @@ export interface LatestPrediction {
   ticker: string;
   stockName: string;
   analysisDate: string;
-  compositeScore: number;
-  compositeGrade: CompositeGrade;
+  compositeScore: number; // 0~100
+  compositeGrade: CompositeGradeInput;
   isRecommended: boolean;
 }
 
@@ -177,8 +209,8 @@ export interface PredictionHistory {
   ticker: string;
   stockName: string;
   analysisDate: string;
-  compositeScore: number;
-  compositeGrade: CompositeGrade;
+  compositeScore: number; // 0~100
+  compositeGrade: CompositeGradeInput;
   techScore: number;
   aiScore: number;
   sentimentScore: number;
@@ -369,36 +401,6 @@ export const CONFIDENCE_GRADE_THRESHOLDS = {
 } as const;
 
 /**
- * 종합 점수 등급 기준
- *
- * 현재 상태: AI 통합 완료, 감정 분석 미반영 (sentimentScore = 0)
- * - 계산식: 0.3 × aiScore + 0.4 × techScore + 0.3 × sentimentScore
- * - 현재 범위: ~0.4 ~ 4.0 (감성 반영 시 최대 7.0)
- * - 프론트 표시: 100점 만점 변환 (score / 4.0 × 100)
- *
- * TODO: Admin 페이지에서 동적 관리
- */
-export const COMPOSITE_SCORE_GRADE_THRESHOLDS = {
-  CURRENT: {
-    EXCELLENT: 3.0, // 상위 ~10% (거의 모든 지표 우수)
-    GOOD: 2.0, // 상위 ~40% (대부분 지표 양호)
-    FAIR: 1.2, // 상위 ~70% (일부 지표 충족)
-  },
-  // 향후 점수 범위 확장 시 기준
-  FUTURE: {
-    EXCELLENT: 6.0,
-    GOOD: 4.0,
-    FAIR: 2.0,
-  },
-} as const;
-
-/**
- * 현재 사용 중인 점수 기준 모드
- * TODO: Admin에서 전환 가능하도록 개발
- */
-export const CURRENT_SCORE_MODE: 'CURRENT' | 'FUTURE' = 'CURRENT';
-
-/**
  * 신뢰도 점수를 등급으로 변환
  */
 export function getConfidenceGrade(confidence: number): {
@@ -420,44 +422,101 @@ export function getConfidenceGrade(confidence: number): {
 }
 
 /**
- * 종합 점수를 등급으로 변환
- *
- * @param score - 종합 점수 (현재: 0~1.4, 통합 후: 0~7.5)
- * @returns 등급 정보 (grade, color, badge)
+ * 레거시 등급 enum(EXCELLENT/GOOD/FAIR/LOW)을 S/A/B/C/D로 정규화한다.
+ * ADR 0006 전환 과정에서 구 응답이 섞여올 가능성에 대한 방어 로직.
+ * 알 수 없는 값은 'D'(신호 없음)로 안전하게 폴백한다.
  */
-export function getScoreGrade(score: number): {
-  grade: string;
-  color: string;
-  badge: string;
-} {
-  const thresholds = COMPOSITE_SCORE_GRADE_THRESHOLDS[CURRENT_SCORE_MODE];
+export function normalizeGrade(grade: CompositeGradeInput): CompositeGrade {
+  switch (grade) {
+    case 'S':
+    case 'A':
+    case 'B':
+    case 'C':
+    case 'D':
+      return grade;
+    // 레거시 enum 매핑 (4등급 → 5등급)
+    case 'EXCELLENT':
+      return 'A';
+    case 'GOOD':
+      return 'B';
+    case 'FAIR':
+      return 'C';
+    case 'LOW':
+      return 'D';
+    default:
+      return 'D';
+  }
+}
 
-  if (score >= thresholds.EXCELLENT) {
-    return {
-      grade: '우수',
-      color: 'text-emerald-400',
-      badge: CURRENT_SCORE_MODE === 'CURRENT' ? 'BETA' : '',
-    };
+/** 등급 표시 정보 (라벨/색/뱃지). presentation mapping만 담당. */
+export interface GradeDisplay {
+  /** 정규화된 등급 (S/A/B/C/D) */
+  grade: CompositeGrade;
+  /** 사용자용 라벨 */
+  label: string;
+  /** Tailwind 텍스트 색 클래스 */
+  color: string;
+  /** 게이지/막대용 배경색 클래스 */
+  bar: string;
+  /** BETA 뱃지 (§5 시계열 단절 커뮤니케이션) */
+  badge: 'BETA';
+}
+
+/**
+ * 종합 등급을 표시 정보로 변환하는 순수 매핑 함수.
+ *
+ * ADR 0006 §2.8: 프론트는 점수 임계값을 재계산/재정의하지 않는다.
+ * 백엔드 compositeGrade(S/A/B/C/D)를 그대로 입력받아 색/라벨만 매핑한다.
+ * 색상은 scoring_spec.yaml grade 색과 정합:
+ *   S → emerald(매우 강한 매수), A → cyan(강한 매수),
+ *   B → yellow(보통 매수), C → orange(약한 매수), D → slate(신호 없음).
+ *
+ * @param grade - 백엔드 compositeGrade (레거시 enum도 normalizeGrade로 흡수)
+ */
+export function getScoreGrade(grade: CompositeGradeInput): GradeDisplay {
+  const normalized = normalizeGrade(grade);
+  switch (normalized) {
+    case 'S':
+      return {
+        grade: 'S',
+        label: '매우 강한 매수',
+        color: 'text-emerald-400',
+        bar: 'bg-emerald-400',
+        badge: 'BETA',
+      };
+    case 'A':
+      return {
+        grade: 'A',
+        label: '강한 매수',
+        color: 'text-cyan-400',
+        bar: 'bg-cyan-400',
+        badge: 'BETA',
+      };
+    case 'B':
+      return {
+        grade: 'B',
+        label: '보통 매수',
+        color: 'text-yellow-400',
+        bar: 'bg-yellow-400',
+        badge: 'BETA',
+      };
+    case 'C':
+      return {
+        grade: 'C',
+        label: '약한 매수',
+        color: 'text-orange-400',
+        bar: 'bg-orange-400',
+        badge: 'BETA',
+      };
+    case 'D':
+      return {
+        grade: 'D',
+        label: '신호 없음',
+        color: 'text-slate-400',
+        bar: 'bg-slate-400',
+        badge: 'BETA',
+      };
   }
-  if (score >= thresholds.GOOD) {
-    return {
-      grade: '양호',
-      color: 'text-cyan-400',
-      badge: CURRENT_SCORE_MODE === 'CURRENT' ? 'BETA' : '',
-    };
-  }
-  if (score >= thresholds.FAIR) {
-    return {
-      grade: '보통',
-      color: 'text-yellow-400',
-      badge: CURRENT_SCORE_MODE === 'CURRENT' ? 'BETA' : '',
-    };
-  }
-  return {
-    grade: '낮음',
-    color: 'text-red-400',
-    badge: CURRENT_SCORE_MODE === 'CURRENT' ? 'BETA' : '',
-  };
 }
 
 /** priceRecommendation을 사용자 친화적 라벨로 변환 */
@@ -522,9 +581,13 @@ export function parseIndicatorBadges(reason?: string): string[] {
   return badges;
 }
 
-/** 등급 분포에서 우수+양호 비율 계산 */
+/**
+ * 등급 분포에서 상위 등급(S+A) 비율 계산.
+ * ADR 0006: 등급 키는 S/A/B/C/D. 레거시 EXCELLENT/GOOD도 방어적으로 합산.
+ */
 export function computeAGradeRatio(dist: Record<string, number>): number | null {
   const total = Object.values(dist).reduce((sum, v) => sum + v, 0);
-  const excellent = (dist['EXCELLENT'] ?? 0) + (dist['GOOD'] ?? 0);
-  return total > 0 ? Math.round((excellent / total) * 100) : null;
+  const topGrades =
+    (dist['S'] ?? 0) + (dist['A'] ?? 0) + (dist['EXCELLENT'] ?? 0) + (dist['GOOD'] ?? 0);
+  return total > 0 ? Math.round((topGrades / total) * 100) : null;
 }

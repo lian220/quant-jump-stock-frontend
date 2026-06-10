@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageSEO } from '@/components/seo';
-import { TIER_THRESHOLDS } from '@/lib/api/predictions';
+import { classifyByTier } from '@/lib/api/predictions';
 import { getNewsByTickers } from '@/lib/api/news';
 import { useBuySignals, useStrategies } from '@/hooks/useData';
 import type { NewsArticle } from '@/lib/api/news';
@@ -108,9 +108,8 @@ export default function RecommendationsPage() {
     const avgUpside = positiveUpside.length
       ? positiveUpside.reduce((sum, s) => sum + s.upsidePercent!, 0) / positiveUpside.length
       : 0;
-    const strongCount = recommendations.filter(
-      (s) => s.compositeScore >= TIER_THRESHOLDS.STRONG,
-    ).length;
+    // ADR 0006 §2.8: 점수 임계 재정의 금지 → 백엔드 grade(S/A) 기반 분류
+    const strongCount = classifyByTier(recommendations).strong.length;
 
     return {
       totalCount: recommendations.length,

@@ -384,10 +384,10 @@ export default function StockDetailPage() {
                   </div>
                   <div className="bg-slate-700/30 p-3 rounded-lg text-center">
                     <p className="text-2xl font-bold text-purple-400">
-                      {(
+                      {Math.round(
                         predictions.reduce((sum, p) => sum + p.compositeScore, 0) /
-                        predictions.length
-                      ).toFixed(2)}
+                          predictions.length,
+                      )}
                     </p>
                     <p className="text-xs text-slate-400">평균 점수</p>
                   </div>
@@ -396,7 +396,7 @@ export default function StockDetailPage() {
                 {/* 타임라인 리스트 */}
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {predictions.map((p, idx) => {
-                    const grade = getScoreGrade(p.compositeScore);
+                    const grade = getScoreGrade(p.compositeGrade);
                     return (
                       <div
                         key={`${p.analysisDate}-${idx}`}
@@ -409,12 +409,12 @@ export default function StockDetailPage() {
                           <Badge
                             className={`${grade.color} bg-slate-700/30 border-slate-600 text-xs`}
                           >
-                            {grade.grade}
+                            {grade.grade}등급
                           </Badge>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className={`text-sm font-bold ${grade.color}`}>
-                            {p.compositeScore.toFixed(2)}
+                            {Math.round(p.compositeScore)}점
                           </span>
                           {p.isRecommended && (
                             <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">

@@ -4,12 +4,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  getScoreGrade,
-  TIER_THRESHOLDS,
-  checkPredictionReliability,
-  type BuySignal,
-} from '@/lib/api/predictions';
+import { getScoreGrade, checkPredictionReliability, type BuySignal } from '@/lib/api/predictions';
+import { AxisContributionBars } from '@/components/predictions';
 import { formatRelativeTime } from '@/lib/utils';
 import type { NewsArticle } from '@/lib/api/news';
 
@@ -21,13 +17,13 @@ interface Props {
 }
 
 export function RecommendationsStockCard({ stock, relatedNews, isNavigating, onNavigate }: Props) {
-  const scoreGrade = getScoreGrade(stock.compositeScore);
-  const score = stock.compositeScore;
-  const isStrong = score >= TIER_THRESHOLDS.STRONG;
-  const isMedium = score >= TIER_THRESHOLDS.MEDIUM;
-  const displayScore = stock.compositeScoreDisplay;
+  // ADR 0006 §2.8: 백엔드 compositeGrade를 그대로 사용 (점수 임계 재계산 금지)
+  const scoreGrade = getScoreGrade(stock.compositeGrade);
+  const isStrong = scoreGrade.grade === 'S' || scoreGrade.grade === 'A';
+  const isMedium = scoreGrade.grade === 'B' || scoreGrade.grade === 'C';
+  const displayScore = stock.compositeScore; // 0~100 단일 스케일
   const gaugePercent = displayScore;
-  const gaugeColor = isStrong ? 'bg-emerald-400' : isMedium ? 'bg-cyan-400' : 'bg-slate-400';
+  const gaugeColor = scoreGrade.bar; // grade→color 단일 소스
   // 예측 신뢰도 검증 (P0-1: 모순 데이터 감지)
   const reliability = checkPredictionReliability(stock);
   const isUnreliable = reliability.status !== 'reliable';
@@ -36,9 +32,6 @@ export function RecommendationsStockCard({ stock, relatedNews, isNavigating, onN
   const priceRec = stock.priceRecommendation;
   const isSellSignal = !isUnreliable && priceRec === '매도';
   const isBuySignal = !isUnreliable && (priceRec === '강력매수' || priceRec === '매수');
-
-  const subScoreColor = (val: number) =>
-    val >= 80 ? 'text-emerald-400' : val >= 50 ? 'text-yellow-400' : 'text-red-400';
 
   return (
     <Card
@@ -66,23 +59,9 @@ export function RecommendationsStockCard({ stock, relatedNews, isNavigating, onN
             <p className="text-xs sm:text-sm text-slate-400 font-mono">{stock.ticker}</p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* #3: compositeGrade 뱃지 */}
-            <span
-              className={`text-xl font-black tabular-nums ${
-                stock.compositeGrade === 'A' ||
-                stock.compositeGrade === 'B' ||
-                stock.compositeGrade === 'EXCELLENT'
-                  ? 'text-emerald-400'
-                  : stock.compositeGrade === 'C' || stock.compositeGrade === 'GOOD'
-                    ? 'text-cyan-400'
-                    : stock.compositeGrade === 'FAIR'
-                      ? 'text-yellow-400'
-                      : stock.compositeGrade === 'D' || stock.compositeGrade === 'LOW'
-                        ? 'text-red-400'
-                        : 'text-slate-400'
-              }`}
-            >
-              {stock.compositeGrade}
+            {/* #3: compositeGrade 뱃지 (백엔드 grade → 색 단일 소스) */}
+            <span className={`text-xl font-black tabular-nums ${scoreGrade.color}`}>
+              {scoreGrade.grade}
             </span>
             {isUnreliable ? (
               <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-sm whitespace-nowrap">
@@ -201,48 +180,15 @@ export function RecommendationsStockCard({ stock, relatedNews, isNavigating, onN
           </div>
           <div className="flex items-center justify-between mt-1">
             <p className="text-xs text-slate-500">
-              {scoreGrade.grade === '우수'
-                ? '우수 - 매수 신호 강함'
-                : scoreGrade.grade === '양호'
-                  ? '양호 - 참고할 만함'
-                  : scoreGrade.grade === '보통'
-                    ? '보통 - 추가 확인 필요'
-                    : '낮음 - 신중하게'}
+              {scoreGrade.grade}등급 · {scoreGrade.label}
             </p>
             <p className="text-[10px] text-slate-600">100점에 가까울수록 매수 신호가 강해요</p>
           </div>
         </div>
 
-        {/* 점수 상세 (100점 만점) */}
-        <div
-          className={`grid ${stock.sentimentScore > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 sm:gap-2 mb-3 sm:mb-4`}
-        >
-          <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-            <p className="text-[10px] text-slate-400 mb-0.5 sm:mb-1">차트 분석</p>
-            <p
-              className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(stock.techScoreDisplay)}`}
-            >
-              {stock.techScoreDisplay}점
-            </p>
-          </div>
-          <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-            <p className="text-[10px] text-slate-400 mb-0.5 sm:mb-1">AI 예측</p>
-            <p
-              className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(stock.aiScoreDisplay)}`}
-            >
-              {stock.aiScoreDisplay}점
-            </p>
-          </div>
-          {stock.sentimentScore > 0 && (
-            <div className="bg-slate-700/30 p-2 sm:p-2.5 rounded-lg">
-              <p className="text-[10px] text-slate-400 mb-0.5 sm:mb-1">뉴스 분위기</p>
-              <p
-                className={`text-sm sm:text-base font-bold tabular-nums ${subScoreColor(stock.sentimentScoreDisplay)}`}
-              >
-                {stock.sentimentScoreDisplay}점
-              </p>
-            </div>
-          )}
+        {/* XAI 축별 기여도 막대 (ADR 0006 §2.9) — 추천이유는 아래 별도 섹션에서 표시 */}
+        <div className="bg-slate-700/30 p-2.5 sm:p-3 rounded-lg mb-3 sm:mb-4">
+          <AxisContributionBars stock={stock} showReason={false} />
         </div>
 
         {/* 가격 정보 (상승여력 바 없을 때만 fallback) */}
